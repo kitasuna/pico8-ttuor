@@ -7,7 +7,7 @@ __lua__
 #include fuel.lua
 #include obstacle.lua
 #include grav.lua
-#include mngr.lua
+#include score.lua
 #include level.lua
 
 --[[
@@ -152,11 +152,11 @@ function _init()
   qm.at("OBS_COLLISION")
   qm.at("GRAVITY")
 
-  -- Set up our game manager
-  gm = new_manager()
-  -- GM subscriptions
-  qm.as("FUEL_COLLISION", gm.handle_fuel_collision)
-  qm.as("OBS_COLLISION", gm.handle_obs_collision)
+  -- Set up our score manager
+  score_man = new_score_manager()
+  -- Score manager subscriptions
+  qm.as("FUEL_COLLISION", score_man.handle_fuel_collision)
+  qm.as("OBS_COLLISION", score_man.handle_obs_collision)
 
   -- Set up our fuel manager
   fuel_man = new_fuel_manager()

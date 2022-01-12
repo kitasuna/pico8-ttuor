@@ -1,4 +1,4 @@
-function new_manager()
+function new_score_manager()
   local manager = {
     score = 0,
   }
