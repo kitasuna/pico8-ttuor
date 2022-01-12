@@ -17,7 +17,6 @@ function qico()
     for k,v in pairs(t) do
       topic_str = topic_str.." "..k
     end
-    printh("TOPICS: "..topic_str)  
   end
 
   function add_subscriber(name, fn)
@@ -26,9 +25,7 @@ function qico()
 
   function process_queue()
     for k,v in pairs(q) do
-      printh("PROCEVENT: "..v.name)
       if t[v.name] != nil then
-        printh("FOUNDSUB: "..v.name)
         for ik,iv in pairs(t[v.name]) do
           iv(v.name, v.payload)
         end

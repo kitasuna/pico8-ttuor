@@ -10,8 +10,9 @@ function new_obstacle_manager()
 
   -- String -> Obstacle -> Void
   om.handle_collision = function(name, payload)
-    del(om.obstacles, payload)
-    printh("REMOBS: ")
+    if payload.player.invincible == false then
+      del(om.obstacles, payload.obstacle)
+    end
   end
 
   om.handle_gravity = function(name, payload)

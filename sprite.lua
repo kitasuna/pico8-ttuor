@@ -22,9 +22,23 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   flip_y
   )
 
-  player.handle_obs_collision = function(obs_index)
+  player.invincible = false
+
+  player.handle_obs_collision = function(name, payload)
+    -- ignore if player is invincible
+    if payload.player.invincible then
+      return 
+    end
     player.pos_x = 64
     player.pos_y = 64
+    player.invincible = true
+    add(timers, {
+      ttl = 120,
+      f = function() end,
+      cleanup = function()
+        player.invincible = false
+      end
+    })
   end
 
   player.handle_button = function(name, payload)

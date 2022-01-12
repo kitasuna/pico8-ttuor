@@ -20,6 +20,8 @@ __lua__
 -- gravity: gravity well object
 -- timers: table of running timers, these might fire events when they expire
 -- levels: holds level data
+-- level: current level pointer
+-- frame_counter: number of frames, loops back to zero after some ceiling
 --]]
 function _init()
   cls()
@@ -59,20 +61,24 @@ function _init()
   -- Gravity subscriptions
   qm.as("BUTTON", gravity.handle_button)
 
-
   -- Load levels
   levels = get_levels()
 
-  for k, fuel in pairs(levels[1].fuels) do
+  level = levels[1]
+
+  for k, fuel in pairs(level.fuels) do
     fuel_man.add_fuel(fuel)
   end
 
-  for k, obs in pairs(levels[1].obstacles) do
+  for k, obs in pairs(level.obstacles) do
     obs_man.add_obstacle(obs)
   end
 
   -- Set up timers table for later...
   timers = {}
+
+  -- Keep a frame counter around for stuff
+  frame_counter = 0
 end
 
 -- Sprite -> {pos_x, pos_y}
@@ -137,7 +143,7 @@ function _update60()
     obs.update()
     
     if (collides(player, obs)) then
-      qm.ae("OBS_COLLISION", obs)
+      qm.ae("OBS_COLLISION", { player=player, obstacle=obs})
     end
   end
 
@@ -151,8 +157,13 @@ function _update60()
     end
   end
 
-  if count(fuel_man.fuels) == 0 then
-    gm.score = 999 
+  frame_counter += 1
+  if frame_counter >= 1200 then
+    frame_counter = 0
+  end
+
+  if level.time > 0 then
+    level.time -= 1
   end
 
   -- Process queue
@@ -176,10 +187,11 @@ end
 
 function _draw()
   cls()
-  print("score: "..gm.score, 0, 120, CLR_IND)
-  print("obsc: "..count(obs_man.obstacles), 48, 120, 14)
+  print("time: "..level.time, 0, 120, 14)
 
-  spr(player.num, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
+  if player.invincible == false or (frame_counter % 4 == 1) then
+    spr(player.num, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
+  end
 
   foreach(fuel_man.fuels, function(fuel)
     spr(fuel.num, fuel.pos_x, fuel.pos_y)
