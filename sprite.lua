@@ -23,10 +23,8 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   )
 
   player.handle_obs_collision = function(obs_index)
-    rnd_x = flr(rnd(RESOLUTION_X - 16))
-    rnd_y = flr(rnd(RESOLUTION_Y - 16))
-    player.pos_x = rnd_x
-    player.pos_y = rnd_y
+    player.pos_x = 64
+    player.pos_y = 64
   end
 
   player.handle_button = function(name, payload)

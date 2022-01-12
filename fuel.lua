@@ -8,11 +8,9 @@ function new_fuel_manager()
     add(fm.fuels, tmp)
   end
 
-  -- String -> { index: Int }
+  -- String -> Fuel -> Void
   fm.handle_collision = function(name, payload)
-    rnd_x = flr(rnd(RESOLUTION_X - 16))
-    rnd_y = flr(rnd(RESOLUTION_Y - 16))
-    fm.fuels[payload.index] = new_fuel({pos_x = rnd_x, pos_y = rnd_y})
+    del(fm.fuels, payload)
   end
 
   -- String -> { pos_x: Int, pos_y: Int }
@@ -32,7 +30,11 @@ function new_fuel_manager()
       local fuel_mass = 1.0
       if gdistance < 48 then
         fuel.vel_x += dist_x_component * (G*fuel_mass) / (gdistance * gdistance)
+        if fuel.vel_x > MAX_VEL then fuel.vel_x = MAX_VEL end
+        if fuel.vel_x < -MAX_VEL then fuel.vel_x = -MAX_VEL end
         fuel.vel_y += dist_y_component * (G*fuel_mass) / (gdistance * gdistance)
+        if fuel.vel_y > MAX_VEL then fuel.vel_y = MAX_VEL end
+        if fuel.vel_y < -MAX_VEL then fuel.vel_y = -MAX_VEL end
       end
     end
   end

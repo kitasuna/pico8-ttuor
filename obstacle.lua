@@ -8,9 +8,10 @@ function new_obstacle_manager()
     add(om.obstacles, tmp)
   end
 
-  -- String -> { index: Int }
+  -- String -> Obstacle -> Void
   om.handle_collision = function(name, payload)
-    om.obstacles[payload.index] = nil
+    del(om.obstacles, payload)
+    printh("REMOBS: ")
   end
 
   om.handle_gravity = function(name, payload)
@@ -26,10 +27,14 @@ function new_obstacle_manager()
       local dist_x_component = -(dist_x / gdistance)
       local dist_y_component = -(dist_y / gdistance)
       local G = 2.0
-      local mass = 1.0
+      local mass = 3.0
       if gdistance < 48 then
         obs.vel_x += dist_x_component * (G*mass) / (gdistance * gdistance)
+        if obs.vel_x > MAX_VEL then obs.vel_x = MAX_VEL end
+        if obs.vel_x < -MAX_VEL then obs.vel_x = -MAX_VEL end
         obs.vel_y += dist_y_component * (G*mass) / (gdistance * gdistance)
+        if obs.vel_y > MAX_VEL then obs.vel_y = MAX_VEL end
+        if obs.vel_y < -MAX_VEL then obs.vel_y = -MAX_VEL end
       end
     end
   end
@@ -38,7 +43,7 @@ function new_obstacle_manager()
 end
 
 function new_obstacle(coords)
-  local tmp = new_sprite(32, coords.pos_x, coords.pos_y, 6, 6)
+  local tmp = new_sprite(32 + rnd(2), coords.pos_x, coords.pos_y, 6, 6)
 
   tmp.vel_x = 0
   tmp.vel_y = 0
