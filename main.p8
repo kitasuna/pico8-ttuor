@@ -192,13 +192,7 @@ function _init()
 
   level = levels[1]
 
-  for k, fuel in pairs(level.fuels) do
-    fuel_man.add_fuel(fuel)
-  end
-
-  for k, obs in pairs(level.obstacles) do
-    obs_man.add_obstacle(obs)
-  end
+  init_level(level)
 
   -- Set up timers table for later...
   timers = {}
@@ -210,6 +204,20 @@ function _init()
   __update = title_update
 end
 
+function init_level(l)
+  fuel_man.reset()
+  for k, fuel in pairs(l.fuels) do
+    fuel_man.add_fuel(fuel)
+  end
+
+  obs_man.reset()
+  for k, obs in pairs(l.obstacles) do
+    obs_man.add_obstacle(obs)
+  end
+
+  player.pos_x = l.player.pos_x
+  player.pos_y = l.player.pos_y
+end
 
 -- Sprite -> {pos_x, pos_y}
 -- Find coordinates some safe distance away from the player

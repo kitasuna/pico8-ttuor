@@ -8,12 +8,12 @@ function new_obstacle_manager()
     add(om.obstacles, tmp)
   end
 
+  om.reset = function()
+    om.obstacles = {}
+  end
+
   -- String -> Obstacle -> Void
   om.handle_collision = function(name, payload)
-    if payload.player.invincible == true then
-      return
-    end
-
     -- Bounce off player
     if payload.obstacle.vel_x != 0 or payload.obstacle.vel_y != 0 then
       payload.obstacle.vel_x = -payload.obstacle.vel_x

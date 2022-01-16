@@ -10,6 +10,10 @@ function get_levels()
         {pos_x = RESOLUTION_X - 8, pos_y = 1},
         {pos_x = RESOLUTION_X - 8, pos_y = RESOLUTION_Y - 10},
       },
+      player = {
+        pos_x = 120,
+        pos_y = 64,
+      },
       obstacles = {
         {pos_x= 10, pos_y = 1},
         {pos_x= 10, pos_y = 8},

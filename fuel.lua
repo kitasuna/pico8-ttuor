@@ -8,6 +8,10 @@ function new_fuel_manager()
     add(fm.fuels, tmp)
   end
 
+  fm.reset = function()
+    fm.fuels = {}
+  end
+
   -- String -> Fuel -> Void
   fm.handle_collision = function(name, payload)
     del(fm.fuels, payload)
