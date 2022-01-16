@@ -10,9 +10,26 @@ function new_obstacle_manager()
 
   -- String -> Obstacle -> Void
   om.handle_collision = function(name, payload)
-    if payload.player.invincible == false then
-      del(om.obstacles, payload.obstacle)
+    if payload.player.invincible == true then
+      return
     end
+
+    -- Bounce off player
+    if payload.obstacle.vel_x != 0 or payload.obstacle.vel_y != 0 then
+      payload.obstacle.vel_x = -payload.obstacle.vel_x
+      payload.obstacle.vel_y = -payload.obstacle.vel_y
+    end
+
+  end
+
+  -- Check if there are any obstacles at these coordinates
+  om.check_collision = function(player)
+    for k, obs in pairs(om.obstacles) do
+      if collides(player, obs) then
+        return true
+      end
+    end
+    return false
   end
 
   om.handle_gravity = function(name, payload)
@@ -44,7 +61,7 @@ function new_obstacle_manager()
 end
 
 function new_obstacle(coords)
-  local tmp = new_sprite(32 + rnd(2), coords.pos_x, coords.pos_y, 6, 6)
+  local tmp = new_sprite(32 + rnd(2), coords.pos_x, coords.pos_y, 8, 6)
 
   tmp.vel_x = 0
   tmp.vel_y = 0

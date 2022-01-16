@@ -7,13 +7,13 @@ function new_gravity()
     sprites = {}
   }
 
-  -- String -> { pos_x: Int, pos_y: Int, button: String }
+  -- String -> { pos_x: Int, pos_y: Int, input_mask: Int }
   tmp.handle_button = function(name, payload)
     if count(tmp.sprites) > 0 then
       return
     end
 
-    if payload.button == "O" then
+    if (payload.input_mask & (1 << 1)) > 0 then
       if tmp.active == true or tmp.cooldown == true then
         return
       end
