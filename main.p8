@@ -21,6 +21,7 @@ __lua__
 -- timers: table of running timers, these might fire events when they expire
 -- levels: holds level data
 -- level: current level pointer
+-- level_index: table index of current level
 --]]
 --
 function __draw() end
@@ -54,6 +55,15 @@ over_update = function()
   if btnp(BTN_X) or btnp(BTN_O) then
     _init()
   end
+end
+
+victory_draw = function()
+  cls()
+  print("VICTORY", 65, 65, CLR_DGN)
+  print("VICTORY", 64, 64, CLR_GRN)
+end
+
+victory_update = function()
 end
 
 game_draw = function()
@@ -118,6 +128,20 @@ game_update = function()
       if (collides(player, fuel)) then
         qm.ae("FUEL_COLLISION", fuel)
       end
+    end
+
+    if count(fuel_man.fuels) == 0 then
+      level_index += 1
+      if level_index > count(levels) then
+        __update = victory_update
+        __draw = victory_draw
+      else
+        gravity.reset()
+        level = levels[level_index]
+        init_level(level)
+      end
+
+      return
     end
 
     for k,obs in pairs(obs_man.obstacles) do
@@ -190,7 +214,8 @@ function _init()
   -- Load levels
   levels = get_levels()
 
-  level = levels[1]
+  level_index = 1
+  level = levels[level_index]
 
   init_level(level)
 

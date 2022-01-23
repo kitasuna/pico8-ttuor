@@ -46,6 +46,14 @@ function new_gravity()
     end
   end
 
+  tmp.reset = function()
+    tmp.active = false
+    tmp.cooldown = false
+    tmp.pos_x = 256
+    tmp.pos_y = 256
+    tmp.sprites = {}
+  end
+
   return tmp
 end
 
