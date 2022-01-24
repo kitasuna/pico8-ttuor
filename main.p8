@@ -9,6 +9,8 @@ __lua__
 #include grav.lua
 #include score.lua
 #include level.lua
+#include title.lua
+#include countdown.lua
 
 --[[
 -- GLOBALS
@@ -27,24 +29,6 @@ __lua__
 function __draw() end
 function __update() end
 
-title_draw = function()
-  cls()
-  print("ENTROPIST", 0, 0, CLR_YLW)
-  print("GET THESE", 24, 24, CLR_GRN)
-  print("DON'T TOUCH THESE", 24, 36, CLR_RED)
-  print("PRESS (X) FOR GRAVITY", 25, 48, CLR_IND)
-  spr(3, 15, 22)
-  spr(32, 15, 34)
-  spr(16, 15, 47, 1.0, 1.0)
-  spr(16, 15, 47, 1.0, 1.0, true, false)
-end
-
-title_update = function()
-    if btnp(BTN_X) or btnp(BTN_O) then
-      __update = game_update
-      __draw = game_draw
-    end
-end
 
 over_draw = function()
   cls()
@@ -139,6 +123,17 @@ game_update = function()
         gravity.reset()
         level = levels[level_index]
         init_level(level)
+        __update = countdown_update
+        __draw = countdown_draw
+        add(timers, {
+          ttl = COUNTDOWN_TIMEOUT,
+          f = function() end,
+          cleanup = function()
+            __update = game_update
+            __draw = game_draw
+          end
+        })
+        return
       end
 
       return
@@ -171,7 +166,6 @@ game_update = function()
     -- Process queue
     qm.proc()
 end
-
 
 function _init()
   cls()
@@ -215,9 +209,6 @@ function _init()
   levels = get_levels()
 
   level_index = 1
-  level = levels[level_index]
-
-  init_level(level)
 
   -- Set up timers table for later...
   timers = {}
@@ -242,6 +233,8 @@ function init_level(l)
 
   player.pos_x = l.player.pos_x
   player.pos_y = l.player.pos_y
+
+  timers = {}
 end
 
 -- Sprite -> {pos_x, pos_y}
