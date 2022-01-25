@@ -18,6 +18,9 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   player.vel_x = 0
   player.vel_y = 0
   player.invincible = false
+  player.frame_base = 3
+  player.frame_offset = 0
+  player.frame_step = 0
 
   player.handle_obs_collision = function(name, payload)
     -- ignore if player is invincible
@@ -39,14 +42,8 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   player.handle_button = function(name, payload)
       if payload.input_mask & (1 << 5) > 0 and abs(player.vel_y) < velocity_max then
         player.vel_y -= velocity_step_up
-        player.flip_x = false
-        player.flip_y = false
-        player.num = 1
       elseif payload.input_mask & (1 << 4) > 0 and abs(player.vel_y) < velocity_max then
         player.vel_y += velocity_step_up
-        player.flip_x = true
-        player.flip_y = true
-        player.num = 1
       elseif player.vel_y > 0 then
         player.vel_y -= velocity_step_down
       elseif player.vel_y < 0 then
@@ -55,20 +52,41 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
 
       if payload.input_mask & (1 << 3) > 0 and abs(player.vel_x) < velocity_max then
         player.vel_x -= velocity_step_up
-        player.num = 2
-        player.flip_x = false
-        player.flip_y = false
-
       elseif payload.input_mask & (1 << 2) > 0 and abs(player.vel_x) < velocity_max then
         player.vel_x += velocity_step_up
-        player.num = 2
-        player.flip_x = true
-        player.flip_y = true
       elseif player.vel_x > 0 then
         player.vel_x -= velocity_step_down
       elseif player.vel_x < 0 then
         player.vel_x += velocity_step_down
       end
+
+      if player.vel_y > 0 then
+        player.frame_base = 3
+      elseif player.vel_y < 0 then
+        player.frame_base = 9
+      elseif player.vel_x > 0 then
+        player.frame_base = 6
+        player.flip_x = false
+      elseif player.vel_x < 0 then
+        player.frame_base = 6
+        player.flip_x = true
+      end
+
+      if payload.input_mask > 0 then
+        player.frame_step += 1
+        if player.frame_step > 10 then
+          player.frame_offset += 1
+          player.frame_step = 0
+          if player.frame_offset > 2 then
+            player.frame_offset = 0
+          end
+        end
+      end
+      -- printh("Player: " ..player.base_sprite)
+  end
+
+  player.draw = function()
+    spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
   end
 
   player.move = function(obs_man)

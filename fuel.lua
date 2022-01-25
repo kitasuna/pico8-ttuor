@@ -47,7 +47,7 @@ function new_fuel_manager()
 end
 
 function new_fuel(coords)
-  local tmp = new_sprite(3, coords.pos_x, coords.pos_y, 4, 6)
+  local tmp = new_sprite(18, coords.pos_x, coords.pos_y, 4, 6)
 
   tmp.vel_x = 0
   tmp.vel_y = 0
