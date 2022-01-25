@@ -9,11 +9,11 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   flip_y
   )
 
-  local velocity_max = 1.2
+  local velocity_max = 1.0
   -- local velocity_step_up = 0.08
   -- local velocity_step_down = 0.08
-  local velocity_step_up = 0.3
-  local velocity_step_down = 0.3
+  local velocity_step_up = 0.2
+  local velocity_step_down = 0.2
 
   player.vel_x = 0
   player.vel_y = 0
@@ -74,7 +74,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
 
       if payload.input_mask > 0 then
         player.frame_step += 1
-        if player.frame_step > 10 then
+        if player.frame_step > 6 then
           player.frame_offset += 1
           player.frame_step = 0
           if player.frame_offset > 2 then
