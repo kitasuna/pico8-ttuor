@@ -46,7 +46,10 @@ function new_obstacle_manager()
       local dist_y_component = -(dist_y / gdistance)
       local G = 2.0
       local mass = 3.0
-      if gdistance < 48 then
+      if gdistance < 2 then
+        obs.vel_x = 0
+        obs.vel_y = 0
+      elseif gdistance < 48 then
         obs.vel_x += dist_x_component * (G*mass) / (gdistance * gdistance)
         if obs.vel_x > MAX_VEL then obs.vel_x = MAX_VEL end
         if obs.vel_x < -MAX_VEL then obs.vel_x = -MAX_VEL end

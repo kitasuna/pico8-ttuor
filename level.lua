@@ -2,7 +2,7 @@ function get_levels()
   return {
     {
       label="01",
-      time=1<<8,
+      time=12<<8,
       fuels = {
         {pos_x = 1, pos_y = 1},
       },
@@ -10,7 +10,10 @@ function get_levels()
         pos_x = 120,
         pos_y = 64,
       },
-      obstacles = {}
+      obstacles = {
+        {pos_x= 48, pos_y = 48},
+        {pos_x= 96, pos_y = 96},
+      }
     },
     {
       label="02",

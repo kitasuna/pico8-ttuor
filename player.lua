@@ -21,10 +21,11 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   player.frame_base = 3
   player.frame_offset = 0
   player.frame_step = 0
+  player.facing = 2 -- 0: up, 1: right, 2: down, 3: left
 
   player.handle_obs_collision = function(name, payload)
     -- ignore if player is invincible
-    if payload.player.invincible then
+    if true or payload.player.invincible then
       return 
     end
     player.pos_x = 64
@@ -40,20 +41,28 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   end
 
   player.handle_button = function(name, payload)
+      -- Up
       if payload.input_mask & (1 << 5) > 0 and abs(player.vel_y) < velocity_max then
         player.vel_y -= velocity_step_up
+        player.facing = 0
+      -- Down
       elseif payload.input_mask & (1 << 4) > 0 and abs(player.vel_y) < velocity_max then
         player.vel_y += velocity_step_up
+        player.facing = 2
       elseif player.vel_y > 0 then
         player.vel_y -= velocity_step_down
       elseif player.vel_y < 0 then
         player.vel_y += velocity_step_down
       end
 
+      -- Left
       if payload.input_mask & (1 << 3) > 0 and abs(player.vel_x) < velocity_max then
         player.vel_x -= velocity_step_up
+        player.facing = 3
+      -- Right
       elseif payload.input_mask & (1 << 2) > 0 and abs(player.vel_x) < velocity_max then
         player.vel_x += velocity_step_up
+        player.facing = 1
       elseif player.vel_x > 0 then
         player.vel_x -= velocity_step_down
       elseif player.vel_x < 0 then
@@ -82,7 +91,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
           end
         end
       end
-      -- printh("Player: " ..player.base_sprite)
   end
 
   player.draw = function()

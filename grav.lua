@@ -14,15 +14,26 @@ function new_gravity()
     end
 
     if (payload.input_mask & (1 << 1)) > 0 then
-      if tmp.active == true or tmp.cooldown == true then
+      if tmp.cooldown == true then
         return
       end
 
       tmp.active = true
-      tmp.pos_x = payload.pos_x
-      tmp.pos_y = payload.pos_y
-      add(tmp.sprites, new_sprite(16, payload.pos_x - 4, payload.pos_y, 4, 8, false, false))
-      add(tmp.sprites, new_sprite(16, payload.pos_x + 3, payload.pos_y, 4, 8, true, false))
+      if payload.facing == 0 then
+        tmp.pos_x = payload.pos_x
+        tmp.pos_y = payload.pos_y - 10
+      elseif payload.facing == 2 then
+        tmp.pos_x = payload.pos_x
+        tmp.pos_y = payload.pos_y + 10
+      elseif payload.facing == 1 then
+        tmp.pos_x = payload.pos_x + 10
+        tmp.pos_y = payload.pos_y
+      else
+        tmp.pos_x = payload.pos_x - 10
+        tmp.pos_y = payload.pos_y
+      end
+
+      add(tmp.sprites, new_sprite(16, tmp.pos_x, tmp.pos_y, 4, 8, false, false))
       -- Display sprite for 30 frames
       add(timers, {
         ttl = 30,
