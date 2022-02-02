@@ -12,16 +12,6 @@ function new_obstacle_manager()
     om.obstacles = {}
   end
 
-  -- String -> Obstacle -> Void
-  om.handle_collision = function(name, payload)
-    -- Bounce off player
-    if payload.obstacle.vel_x != 0 or payload.obstacle.vel_y != 0 then
-      payload.obstacle.vel_x = -payload.obstacle.vel_x
-      payload.obstacle.vel_y = -payload.obstacle.vel_y
-    end
-
-  end
-
   -- Check if there are any obstacles at these coordinates
   om.check_collision = function(player)
     for k, obs in pairs(om.obstacles) do
@@ -60,6 +50,11 @@ function new_obstacle_manager()
     end
   end
 
+  om.handle_obs_grav_collision = function(name, payload)
+    printh("OBS GRAV COLL666!")
+    del(om.obstacles, payload.obs)
+  end
+
   return om
 end
 
@@ -69,15 +64,54 @@ function new_obstacle(coords)
   tmp.vel_x = 0
   tmp.vel_y = 0
 
-  tmp.update = function(obs)
-    tmp.pos_x += tmp.vel_x
+  tmp.update = function()
+    local map_offset_x = 40
+    local map_offset_y = 32
+    local next_x = (tmp.pos_x + tmp.vel_x - map_offset_x) + (tmp.vel_x > 0 and 7 or 0)
+    local next_y = (tmp.pos_y + tmp.vel_y - map_offset_y) + (tmp.vel_y > 0 and 7 or 0)
+    local now_map_x = (tmp.pos_x - map_offset_x) \ 8
+    local now_map_y = (tmp.pos_y - map_offset_y) \ 8
+    local next_map_x = (next_x) \ 8
+    local next_map_y = (next_y) \ 8
+
+    if fget(mget(next_map_x, now_map_y), FLAG_WALL) == true then
+      tmp.vel_x = 0
+      if tmp.vel_y != 0 then
+        tmp.vel_y = tmp.vel_y / 3
+        add(timers, {
+          ttl = 40,
+          f = function() end,
+          cleanup = function()
+            tmp.vel_y = 0
+          end
+        })
+        end
+    else
+      tmp.pos_x += tmp.vel_x
+    end
+
+    if fget(mget(now_map_x, next_map_y), FLAG_WALL) == true then
+      tmp.vel_y = 0
+      if tmp.vel_x != 0 then
+        tmp.vel_x = tmp.vel_x / 3
+        add(timers, {
+          ttl = 40,
+          f = function() end,
+          cleanup = function()
+            tmp.vel_x = 0
+          end
+        })
+      end
+    else
+      tmp.pos_y += tmp.vel_y
+    end
+
     if tmp.pos_x >= RESOLUTION_X - tmp.size_x then
       tmp.vel_x = -tmp.vel_x
     elseif tmp.pos_x < 0 then
       tmp.vel_x = -tmp.vel_x
     end
 
-    tmp.pos_y += tmp.vel_y
     if tmp.pos_y >= RESOLUTION_Y - tmp.size_y then
       tmp.vel_y = -tmp.vel_y
     elseif tmp.pos_y < 0 then

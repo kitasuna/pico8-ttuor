@@ -18,7 +18,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   player.vel_x = 0
   player.vel_y = 0
   player.invincible = false
-  player.frame_base = 3
+  player.frame_base = 1
   player.frame_offset = 0
   player.frame_step = 0
   player.facing = 2 -- 0: up, 1: right, 2: down, 3: left
@@ -70,14 +70,14 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
       end
 
       if player.vel_y > 0 then
-        player.frame_base = 3
+        player.frame_base = 1
       elseif player.vel_y < 0 then
         player.frame_base = 9
       elseif player.vel_x > 0 then
-        player.frame_base = 6
+        player.frame_base = 5
         player.flip_x = false
       elseif player.vel_x < 0 then
-        player.frame_base = 6
+        player.frame_base = 5
         player.flip_x = true
       end
 
@@ -86,7 +86,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
         if player.frame_step > 6 then
           player.frame_offset += 1
           player.frame_step = 0
-          if player.frame_offset > 2 then
+          if player.frame_offset > 3 then
             player.frame_offset = 0
           end
         end
@@ -98,9 +98,20 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   end
 
   player.move = function(obs_man)
-    player.pos_x += player.vel_x
+    -- Get player x/y map cell
+    local map_offset_x = 40
+    local map_offset_y = 32
+    local player_next_x = (player.pos_x + player.vel_x - map_offset_x) + (player.vel_x > 0 and 7 or 0)
+    local player_next_y = (player.pos_y + player.vel_y - map_offset_y) + (player.vel_y > 0 and 7 or 0)
+    local map_x = (player_next_x) \ 8
+    local map_y = (player_next_y) \ 8
+    if fget(mget(map_x, map_y), 1) == false then
+      player.pos_x += player.vel_x
+    end
 
-    player.pos_y += player.vel_y
+    if fget(mget(map_x, map_y), 1) == false then
+      player.pos_y += player.vel_y
+    end
 
     -- prevent players from sneaking past obstacles while invincible
     if player.invincible == true and obs_man.check_collision(player) then

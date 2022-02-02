@@ -2,10 +2,19 @@ function new_gravity()
   local tmp = {
     active = false,
     cooldown = false,
+    crit_mass = 0,
+    size_x = 8,
+    size_y = 8,
     pos_x = 0,
     pos_y = 0,
     sprites = {}
   }
+
+  -- String -> { obs: Obstacle }
+  tmp.handle_obs_grav_collision = function(name, payload)
+    printh("OBS GRAV COLL!")
+    tmp.crit_mass += 1
+  end
 
   -- String -> { pos_x: Int, pos_y: Int, input_mask: Int }
   tmp.handle_button = function(name, payload)
