@@ -2,6 +2,7 @@ function get_levels()
   return {
     {
       label="01",
+      critical_mass=1,
       time=22<<8,
       fuels = {},
       player = {

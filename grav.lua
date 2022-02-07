@@ -1,78 +1,83 @@
-function new_gravity()
-  local tmp = {
-    active = false,
-    cooldown = false,
-    crit_mass = 0,
-    size_x = 8,
-    size_y = 8,
-    pos_x = 0,
-    pos_y = 0,
-    sprites = {}
+function new_gravity_manager()
+  local gm = {
+    gravities = {},
   }
 
-  -- String -> { obs: Obstacle }
-  tmp.handle_obs_grav_collision = function(name, payload)
-    printh("OBS GRAV COLL!")
-    tmp.crit_mass += 1
+  gm.add_gravity = function(coords)
+    local tmp = new_gravity(coords)
+    add(om.obstacles, tmp)
   end
 
-  -- String -> { pos_x: Int, pos_y: Int, input_mask: Int }
-  tmp.handle_button = function(name, payload)
-    if count(tmp.sprites) > 0 then
-      return
+  gm.reset = function()
+    gm.gravities = {}
+  end
+
+  -- Used to check for obstacle / gravity collision
+  gm.check_collision = function(obs)
+    for k, g in pairs(gm.gravities) do
+      if collides(obs, g) then
+        return true
+      end
     end
+    return false
+  end
 
+  -- String -> { obs: Obstacle, grav: Gravity }
+  gm.handle_obs_grav_collision = function(name, payload)
+    -- TODO also change sprite here
+    for k, g in pairs(gm.gravities) do
+      if g == payload.grav then
+        g.mass += 1
+        g.num = 37
+      end
+    end
+  end
+
+  -- String -> { pos_x: Int, pos_y: Int, facing: Int, input_mask: Int }
+  gm.handle_button = function(name, payload)
     if (payload.input_mask & (1 << 1)) > 0 then
-      if tmp.cooldown == true then
-        return
-      end
-
-      tmp.active = true
+      local pos_x = payload.pos_x
+      local pos_y = payload.pos_y
       if payload.facing == 0 then
-        tmp.pos_x = payload.pos_x
-        tmp.pos_y = payload.pos_y - 10
+        pos_x = payload.pos_x
+        pos_y = payload.pos_y - 10
       elseif payload.facing == 2 then
-        tmp.pos_x = payload.pos_x
-        tmp.pos_y = payload.pos_y + 10
+        pos_x = payload.pos_x
+        pos_y = payload.pos_y + 10
       elseif payload.facing == 1 then
-        tmp.pos_x = payload.pos_x + 10
-        tmp.pos_y = payload.pos_y
+        pos_x = payload.pos_x + 10
+        pos_y = payload.pos_y
       else
-        tmp.pos_x = payload.pos_x - 10
-        tmp.pos_y = payload.pos_y
+        pos_x = payload.pos_x - 10
+        pos_y = payload.pos_y
       end
 
-      add(tmp.sprites, new_sprite(16, tmp.pos_x, tmp.pos_y, 4, 8, false, false))
+      local tmp = new_gravity({pos_x=pos_x, pos_y=pos_y})
+
+      add(gm.gravities, tmp)
+
       -- Display sprite for 30 frames
       add(timers, {
         ttl = 30,
         f = function() end,
         cleanup = function()
-          tmp.active = false
-          tmp.cooldown = true
-          tmp.sprites = {}
-        end
-      })
-      -- Have an add'l 30 frames of cooldown
-      add(timers, {
-        ttl = 60,
-        f = function() end,
-        cleanup = function()
-          tmp.active = false
-          tmp.cooldown = false
-          tmp.sprites = {}
+          if tmp.mass <= 1 then
+            del(gm.gravities, tmp)
+          end
         end
       })
     end
   end
 
-  tmp.reset = function()
-    tmp.active = false
-    tmp.cooldown = false
-    tmp.pos_x = 256
-    tmp.pos_y = 256
-    tmp.sprites = {}
-  end
+  return gm
+end
+
+function new_gravity(coords)
+  local tmp = new_sprite(16, coords.pos_x, coords.pos_y, 4, 8, false, false)
+
+  tmp.active = true
+  tmp.mass = 1
+
 
   return tmp
 end
