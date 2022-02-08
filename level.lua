@@ -7,10 +7,11 @@ function get_levels()
       fuels = {},
       player = {
         pos_x = 56,
-        pos_y = 76,
+        pos_y = 60,
       },
       obstacles = {
-        {pos_x= 48, pos_y = 48},
+        -- {pos_x= 57, pos_y = 40},
+        -- {pos_x= 57, pos_y = 95},
       }
     },
   }

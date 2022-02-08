@@ -35,6 +35,11 @@ function new_gravity_manager()
 
   -- String -> { pos_x: Int, pos_y: Int, facing: Int, input_mask: Int }
   gm.handle_button = function(name, payload)
+    -- Check if there are any gravs present already
+    if count(gm.gravities) > 0 then
+      return
+    end
+
     if (payload.input_mask & (1 << 1)) > 0 then
       local pos_x = payload.pos_x
       local pos_y = payload.pos_y

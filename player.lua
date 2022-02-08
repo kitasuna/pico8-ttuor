@@ -41,56 +41,88 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   end
 
   player.handle_button = function(name, payload)
-      -- Up
-      if payload.input_mask & (1 << 5) > 0 and abs(player.vel_y) < velocity_max then
-        player.vel_y -= velocity_step_up
+    -- Try returning if grav button is being held down
+    if payload.input_mask & (1 << 1) > 0 then
+      player.vel_x = 0
+      player.vel_y = 0
+      if payload.input_mask & (1 << 5) > 0 then
         player.facing = 0
-      -- Down
-      elseif payload.input_mask & (1 << 4) > 0 and abs(player.vel_y) < velocity_max then
-        player.vel_y += velocity_step_up
-        player.facing = 2
-      elseif player.vel_y > 0 then
-        player.vel_y -= velocity_step_down
-      elseif player.vel_y < 0 then
-        player.vel_y += velocity_step_down
-      end
-
-      -- Left
-      if payload.input_mask & (1 << 3) > 0 and abs(player.vel_x) < velocity_max then
-        player.vel_x -= velocity_step_up
-        player.facing = 3
-      -- Right
-      elseif payload.input_mask & (1 << 2) > 0 and abs(player.vel_x) < velocity_max then
-        player.vel_x += velocity_step_up
-        player.facing = 1
-      elseif player.vel_x > 0 then
-        player.vel_x -= velocity_step_down
-      elseif player.vel_x < 0 then
-        player.vel_x += velocity_step_down
-      end
-
-      if player.vel_y > 0 then
-        player.frame_base = 1
-      elseif player.vel_y < 0 then
         player.frame_base = 9
-      elseif player.vel_x > 0 then
+      elseif payload.input_mask & (1 << 4) > 0 then
+        player.facing = 2
+        player.frame_base = 1
+      elseif payload.input_mask & (1 << 2) > 0 then
+        player.facing = 1
         player.frame_base = 5
         player.flip_x = false
-      elseif player.vel_x < 0 then
+      elseif payload.input_mask & (1 << 3) > 0 then
+        player.facing = 3
         player.frame_base = 5
         player.flip_x = true
       end
+      return
+    end
 
-      if payload.input_mask > 0 then
-        player.frame_step += 1
-        if player.frame_step > 6 then
-          player.frame_offset += 1
-          player.frame_step = 0
-          if player.frame_offset > 3 then
-            player.frame_offset = 0
-          end
+    -- Up
+    if payload.input_mask & (1 << 5) > 0 then
+      player.facing = 0
+      if abs(player.vel_y) < velocity_max then
+        player.vel_y -= velocity_step_up
+      end
+    -- Down
+    elseif payload.input_mask & (1 << 4) > 0 then
+      player.facing = 2
+      if abs(player.vel_y) < velocity_max then
+        player.vel_y += velocity_step_up
+      end
+    elseif player.vel_y < 0 then
+      player.facing = 0
+      player.vel_y += velocity_step_down
+    elseif player.vel_y > 0 then
+      player.facing = 2
+      player.vel_y -= velocity_step_down
+    end
+
+    -- Left
+    if payload.input_mask & (1 << 3) > 0 then
+      player.facing = 3
+      if abs(player.vel_x) < velocity_max then
+        player.vel_x -= velocity_step_up
+      end
+    -- Right
+    elseif payload.input_mask & (1 << 2) > 0 then
+      player.facing = 1
+      if abs(player.vel_x) < velocity_max  then
+        player.vel_x += velocity_step_up
+      end
+    elseif player.vel_x > 0 then
+      player.vel_x -= velocity_step_down
+    elseif player.vel_x < 0 then
+      player.vel_x += velocity_step_down
+    end
+
+    if player.facing == 2 then
+      player.frame_base = 1
+    elseif player.facing == 0 then
+      player.frame_base = 9
+    elseif player.facing == 1 then
+      player.frame_base = 5
+      player.flip_x = false
+    elseif player.facing == 3 then
+      player.frame_base = 5
+      player.flip_x = true
+    end
+
+    if payload.input_mask > 0 then
+      player.frame_step += 1
+      if player.frame_step > 6 then
+        player.frame_offset += 1
+        player.frame_step = 0
+        if player.frame_offset > 3 then
+          player.frame_offset = 0
         end
       end
+    end
   end
 
   player.draw = function()
