@@ -22,6 +22,7 @@ function new_obstacle_manager()
     return false
   end
 
+  -- String -> {pos_x: Int, pos_y: Int, mass: Int }
   om.handle_gravity = function(name, payload)
 
     -- Find any obs in range
@@ -34,13 +35,10 @@ function new_obstacle_manager()
       local gdistance = sqrt(dist_x2 + dist_y2)
       local dist_x_component = -(dist_x / gdistance)
       local dist_y_component = -(dist_y / gdistance)
-      local G = 2.0
-      local mass = 3.0
-      if gdistance < 2 then
-        obs.vel_x = 0
-        obs.vel_y = 0
-      elseif gdistance < 48 then
-        obs.vel_x += dist_x_component * (G*mass) / (gdistance * gdistance)
+      local G = 3.0
+      local mass = 1.0
+      if gdistance < 22*payload.mass then
+        obs.vel_x += dist_x_component * (G*mass*payload.mass) / (gdistance * gdistance)
         if obs.vel_x > MAX_VEL then obs.vel_x = MAX_VEL end
         if obs.vel_x < -MAX_VEL then obs.vel_x = -MAX_VEL end
         obs.vel_y += dist_y_component * (G*mass) / (gdistance * gdistance)
@@ -65,8 +63,8 @@ function new_obstacle(coords)
   tmp.vel_y = 0
 
   tmp.update = function()
-    local map_offset_x = 40
-    local map_offset_y = 32
+    local map_offset_x = 16
+    local map_offset_y = 16
     local next_x = (tmp.pos_x + tmp.vel_x - map_offset_x) + (tmp.vel_x > 0 and 7 or 0)
     local next_y = (tmp.pos_y + tmp.vel_y - map_offset_y) + (tmp.vel_y > 0 and 7 or 0)
     local now_map_x = (tmp.pos_x - map_offset_x) \ 8

@@ -45,21 +45,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
     if payload.input_mask & (1 << 1) > 0 then
       player.vel_x = 0
       player.vel_y = 0
-      if payload.input_mask & (1 << 5) > 0 then
-        player.facing = 0
-        player.frame_base = 9
-      elseif payload.input_mask & (1 << 4) > 0 then
-        player.facing = 2
-        player.frame_base = 1
-      elseif payload.input_mask & (1 << 2) > 0 then
-        player.facing = 1
-        player.frame_base = 5
-        player.flip_x = false
-      elseif payload.input_mask & (1 << 3) > 0 then
-        player.facing = 3
-        player.frame_base = 5
-        player.flip_x = true
-      end
       return
     end
 
@@ -131,8 +116,8 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
 
   player.move = function(obs_man)
     -- Get player x/y map cell
-    local map_offset_x = 40
-    local map_offset_y = 32
+    local map_offset_x = 16
+    local map_offset_y = 16
     local player_next_x = (player.pos_x + player.vel_x - map_offset_x) + (player.vel_x > 0 and 7 or 0)
     local player_next_y = (player.pos_y + player.vel_y - map_offset_y) + (player.vel_y > 0 and 7 or 0)
     local map_x = (player_next_x) \ 8

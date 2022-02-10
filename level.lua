@@ -6,12 +6,12 @@ function get_levels()
       time=22<<8,
       fuels = {},
       player = {
-        pos_x = 56,
-        pos_y = 60,
+        pos_x = 32,
+        pos_y = 32,
       },
       obstacles = {
-        -- {pos_x= 57, pos_y = 40},
-        -- {pos_x= 57, pos_y = 95},
+        {pos_x= 32, pos_y = 28},
+        {pos_x= 32, pos_y = 85},
       }
     },
   }
