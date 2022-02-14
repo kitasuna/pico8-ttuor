@@ -122,11 +122,11 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
     local player_next_y = (player.pos_y + player.vel_y - map_offset_y) + (player.vel_y > 0 and 7 or 0)
     local map_x = (player_next_x) \ 8
     local map_y = (player_next_y) \ 8
-    if fget(mget(map_x, map_y), 1) == false then
+    if fget(mget(map_x, map_y), FLAG_FLOOR) == true then
       player.pos_x += player.vel_x
     end
 
-    if fget(mget(map_x, map_y), 1) == false then
+    if fget(mget(map_x, map_y), FLAG_FLOOR) == true then
       player.pos_y += player.vel_y
     end
 
