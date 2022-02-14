@@ -10,8 +10,8 @@ function get_levels()
         pos_y = 32,
       },
       obstacles = {
-        {pos_x= 32, pos_y = 28},
-        {pos_x= 32, pos_y = 85},
+        -- {pos_x= 32, pos_y = 28},
+        -- {pos_x= 32, pos_y = 85},
       }
     },
   }

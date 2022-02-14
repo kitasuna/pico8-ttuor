@@ -5,7 +5,6 @@ BTN_D = 3
 BTN_O = 4
 BTN_X = 5
 
-
 CLR_BLK = 0
 CLR_DBL = 1
 CLR_PRP = 2

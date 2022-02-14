@@ -15,6 +15,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   local velocity_step_up = 0.2
   local velocity_step_down = 0.2
 
+  player.state = "GROUNDED"
   player.vel_x = 0
   player.vel_y = 0
   player.invincible = false
@@ -42,20 +43,29 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
 
   player.handle_button = function(name, payload)
     -- Try returning if grav button is being held down
-    if payload.input_mask & (1 << 1) > 0 then
+    if payload.input_mask & (1 << BTN_O) > 0 then
       player.vel_x = 0
       player.vel_y = 0
       return
     end
 
+    if payload.input_mask & (1 << BTN_X) > 0 then
+      if player.state == "FLOATING" then
+        player.state = "GROUNDED"
+      else
+        player.state = "FLOATING"
+      end
+      return
+    end
+
     -- Up
-    if payload.input_mask & (1 << 5) > 0 then
+    if payload.input_mask & (1 << BTN_U) > 0 then
       player.facing = 0
       if abs(player.vel_y) < velocity_max then
         player.vel_y -= velocity_step_up
       end
-    -- Down
-    elseif payload.input_mask & (1 << 4) > 0 then
+      -- Down
+    elseif payload.input_mask & (1 << BTN_D) > 0 then
       player.facing = 2
       if abs(player.vel_y) < velocity_max then
         player.vel_y += velocity_step_up
@@ -69,13 +79,13 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
     end
 
     -- Left
-    if payload.input_mask & (1 << 3) > 0 then
+    if payload.input_mask & (1 << BTN_L) > 0 then
       player.facing = 3
       if abs(player.vel_x) < velocity_max then
         player.vel_x -= velocity_step_up
       end
-    -- Right
-    elseif payload.input_mask & (1 << 2) > 0 then
+      -- Right
+    elseif payload.input_mask & (1 << BTN_R) > 0 then
       player.facing = 1
       if abs(player.vel_x) < velocity_max  then
         player.vel_x += velocity_step_up

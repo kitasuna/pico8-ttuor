@@ -27,7 +27,7 @@ function new_gravity_manager()
     -- TODO also change sprite here
     for k, g in pairs(gm.gravities) do
       if g == payload.grav then
-        g.grow()
+        -- g.grow()
       end
     end
   end
@@ -35,7 +35,7 @@ function new_gravity_manager()
   -- String -> { pos_x: Int, pos_y: Int, facing: Int, input_mask: Int }
   gm.handle_button = function(name, payload)
 
-    if (payload.input_mask & (1 << 1)) > 0 and count(gm.gravities) < 1 then
+    if (payload.input_mask & (1 << BTN_O)) > 0 and count(gm.gravities) < 1 then
       local pos_x = payload.pos_x
       local pos_y = payload.pos_y
       if payload.facing == 0 then
@@ -56,10 +56,15 @@ function new_gravity_manager()
       grav_count += 1
 
       add(gm.gravities, tmp)
-    elseif (payload.input_mask & (1 << 1)) == 0 and count(gm.gravities) > 0 then
+    elseif (payload.input_mask & (1 << BTN_O)) == 0 and count(gm.gravities) > 0 then
       for k, g in pairs(gm.gravities) do
         g.release()
       end
+    end
+
+    if (payload.input_mask & (1 << BTN_X)) > 0 then
+      -- Launch gravity, so eliminate existing gravs?
+      -- Maybe need to work this out in level design first
     end
   end
 
@@ -119,12 +124,7 @@ function new_gravity(coords)
 
   tmp.draw = function()
     spr(tmp.frames[tmp.frame_index], tmp.pos_x, tmp.pos_y, 1.0, 1.0, tmp.flip_x, tmp.flip_y)
-  end
-
-  tmp.grow = function()
-    tmp.state = "PERSISTENT"
-    tmp.mass += 1
-    tmp.num = 37
+    circ(tmp.pos_x+4, tmp.pos_y+4, 22, CLR_RED)
   end
 
   return tmp

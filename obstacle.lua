@@ -28,8 +28,8 @@ function new_obstacle_manager()
     -- Find any obs in range
     -- Calculate change in velocity based on distance of obs from payload pos
     for k, obs in pairs(om.obstacles) do
-      local dist_x = obs.pos_x - payload.pos_x
-      local dist_y = obs.pos_y - payload.pos_y
+      local dist_x = obs.pos_x+4 - payload.pos_x
+      local dist_y = obs.pos_y+4 - payload.pos_y
       local dist_x2 = dist_x * dist_x
       local dist_y2 = dist_y * dist_y
       local gdistance = sqrt(dist_x2 + dist_y2)
@@ -72,7 +72,7 @@ function new_obstacle(coords)
     local next_map_x = (next_x) \ 8
     local next_map_y = (next_y) \ 8
 
-    if fget(mget(next_map_x, now_map_y), FLAG_WALL) == true then
+    if fget(mget(next_map_x, now_map_y), FLAG_FLOOR) == false then
       tmp.vel_x = 0
       if tmp.vel_y != 0 then
         tmp.vel_y = tmp.vel_y / 3
