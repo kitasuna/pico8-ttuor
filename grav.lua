@@ -1,12 +1,8 @@
 function new_gravity_manager()
   local gm = {
     gravities = {},
+    projectiles = {},
   }
-
-  gm.add_gravity = function(coords)
-    local tmp = new_gravity(coords)
-    add(om.obstacles, tmp)
-  end
 
   gm.reset = function()
     gm.gravities = {}
@@ -22,9 +18,8 @@ function new_gravity_manager()
     return false
   end
 
-  -- String -> { obs: Obstacle, grav: Gravity }
-  gm.handle_obs_grav_collision = function(name, payload)
-    -- TODO also change sprite here
+  -- String -> { entity: Entity, grav: Gravity }
+  gm.handle_ent_grav_collision = function(name, payload)
     for k, g in pairs(gm.gravities) do
       if g == payload.grav then
         -- g.grow()
@@ -32,19 +27,19 @@ function new_gravity_manager()
     end
   end
 
-  -- String -> { pos_x: Int, pos_y: Int, facing: Int, input_mask: Int }
+  -- String -> { pos_x: Int, pos_y: Int, direction: Int, input_mask: Int }
   gm.handle_button = function(name, payload)
 
     if (payload.input_mask & (1 << BTN_O)) > 0 and count(gm.gravities) < 1 then
       local pos_x = payload.pos_x
       local pos_y = payload.pos_y
-      if payload.facing == 0 then
+      if payload.direction == 0 then
         pos_x = payload.pos_x
         pos_y = payload.pos_y - 10
-      elseif payload.facing == 2 then
+      elseif payload.direction == 2 then
         pos_x = payload.pos_x
         pos_y = payload.pos_y + 10
-      elseif payload.facing == 1 then
+      elseif payload.direction == 1 then
         pos_x = payload.pos_x + 10
         pos_y = payload.pos_y
       else
@@ -65,6 +60,31 @@ function new_gravity_manager()
     if (payload.input_mask & (1 << BTN_X)) > 0 then
       -- Launch gravity, so eliminate existing gravs?
       -- Maybe need to work this out in level design first
+      -- printh("found x press")
+      if count(gm.projectiles) > 0 then
+        -- del(gm.projectiles, gm.projectiles[1])
+        return
+      end
+
+      local pos_x = payload.pos_x
+      local pos_y = payload.pos_y
+      if payload.direction == 0 then
+        pos_x = payload.pos_x
+        pos_y = payload.pos_y - 10
+      elseif payload.direction == 2 then
+        pos_x = payload.pos_x
+        pos_y = payload.pos_y + 10
+      elseif payload.direction == 1 then
+        pos_x = payload.pos_x + 10
+        pos_y = payload.pos_y
+      else
+        pos_x = payload.pos_x - 10
+        pos_y = payload.pos_y
+      end
+      printh("got position")
+      local tmp = new_projectile({pos_x=pos_x, pos_y=pos_y}, payload.direction)
+      add(gm.projectiles, tmp)
+      printh("pjs: "..count(gm.projectiles))
     end
   end
 
@@ -74,6 +94,10 @@ function new_gravity_manager()
       if g.state == "DEAD" then
         del(gm.gravities, g)
       end
+    end
+
+    for k, g in pairs(gm.projectiles) do
+      g.update()
     end
   end
 
@@ -131,3 +155,86 @@ function new_gravity(coords)
 
 end
 
+function new_projectile(coords, direction)
+  local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 4, 8, false, false)
+  tmp.mass = 1
+  -- tmp.state = "HELD"
+  -- tmp.frame_base = 48
+  tmp.frames = {37, 38, 39, 40, 41, 42, 39, 40}
+  tmp.frame_index = 1
+  tmp.frame_half_step = 1
+  tmp.frame_step = 4
+  tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
+  local launch_velocity = 1.2
+  if direction == DIRECTION_UP then
+    tmp.vel_x = 0
+    tmp.vel_y = -launch_velocity
+  elseif direction == DIRECTION_DOWN then
+    tmp.vel_x = 0
+    tmp.vel_y = launch_velocity
+  elseif direction == DIRECTION_RIGHT then
+    tmp.vel_x = launch_velocity
+    tmp.vel_y = 0
+  elseif direction == DIRECTION_LEFT then
+    tmp.vel_x = -launch_velocity
+    tmp.vel_y = 0
+  end
+
+  tmp.update = function()
+    tmp.frame_half_step += 1
+    if tmp.frame_half_step > tmp.frame_step then
+      tmp.frame_half_step = 1
+      tmp.frame_index += 1
+      if tmp.frame_index > count(tmp.frames) then
+        tmp.frame_index = 1
+      end
+    end
+
+    ent_update(tmp)()
+
+  end
+
+  tmp.draw = function()
+    spr(tmp.frames[tmp.frame_index], tmp.pos_x, tmp.pos_y, 1.0, 1.0, tmp.flip_x, tmp.flip_y)
+  end
+
+  return tmp
+end
+
+function calc_grav(coords_p, coords_g, vel_p, mass_p, mass_g, cheat_distance)
+  local dist_x = coords_p.x - coords_g.x
+  local dist_y = coords_p.y - coords_g.y
+  local dist_x2 = dist_x * dist_x
+  local dist_y2 = dist_y * dist_y
+  local gdistance = cheat_distance or sqrt(dist_x2 + dist_y2)
+  printh("GD: "..gdistance)
+  local dist_x_component = -(dist_x / gdistance)
+  local dist_y_component = -(dist_y / gdistance)
+  local G = 3.0
+  local new_vel_x = vel_p.x + dist_x_component * (G*mass_p*mass_g) / (gdistance * gdistance)
+  if new_vel_x > MAX_VEL then new_vel_x = MAX_VEL end
+  if new_vel_x < -MAX_VEL then new_vel_x = -MAX_VEL end
+  local new_vel_y = vel_p.y + dist_y_component * (G*mass_p*mass_g) / (gdistance * gdistance)
+  if new_vel_y > MAX_VEL then new_vel_y = MAX_VEL end
+  if new_vel_y < -MAX_VEL then new_vel_y = -MAX_VEL end
+  if gdistance < 0.5 then
+    return { gdistance = 0, vel = { x = 0, y = 0 } }
+  end
+  return { gdistance = gdistance, vel = { x = new_vel_x, y = new_vel_y } }
+end
+
+--[[
+function calc_cheat_grav(coords_p, gdistance, mass_p, mass_g)
+  local G = 3.0
+  local new_vel_x = vel_p.x + dist_x_component * (G*mass_p*mass_g) / (gdistance * gdistance)
+  if new_vel_x > MAX_VEL then new_vel_x = MAX_VEL end
+  if new_vel_x < -MAX_VEL then new_vel_x = -MAX_VEL end
+  local new_vel_y = vel_p.y + dist_y_component * (G*mass_p*mass_g) / (gdistance * gdistance)
+  if new_vel_y > MAX_VEL then new_vel_y = MAX_VEL end
+  if new_vel_y < -MAX_VEL then new_vel_y = -MAX_VEL end
+  if gdistance < 0.5 then
+    return { gdistance = 0, vel = { x = 0, y = 0 } }
+  end
+  return { gdistance = gdistance, vel = { x = new_vel_x, y = new_vel_y } }
+end
+]]--
