@@ -15,7 +15,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   local velocity_step_up = 0.2
   local velocity_step_down = 0.2
 
-  player.state = "GROUNDED"
+  player.state = PLAYER_STATE_GROUNDED
   player.vel_x = 0
   player.vel_y = 0
   player.invincible = false
@@ -24,6 +24,14 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   player.frame_step = 0
   player.facing = DIRECTION_DOWN
   player.can_travel = (1 << FLAG_FLOOR)
+
+  player.handle_proj_player_collision = function(name, payload)
+    player.state = PLAYER_STATE_GROUNDED
+    player.vel_x = 0
+    player.vel_y = 0
+    player.can_travel = (1 << FLAG_FLOOR)
+    player.facing = DIRECTION_DOWN
+  end
 
   player.handle_obs_collision = function(name, payload)
     -- ignore if player is invincible
@@ -61,10 +69,9 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
     if (payload.input_mask & (1 << BTN_X) > 0) and (payload.projectile != nil) and (player.state == PLAYER_STATE_GROUNDED) then
         player.state = PLAYER_STATE_FLOATING
         player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
-        local grav_result = calc_grav(
+        local grav_result = calc_cheat_grav(
         {x=player.pos_x, y=player.pos_y},
         {x=payload.projectile.pos_x, y=payload.projectile.pos_y},
-        {x=0, y=0}, -- Pretend the player has no initial vel
         1.0,
         128.0
         )

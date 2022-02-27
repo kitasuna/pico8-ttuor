@@ -27,6 +27,11 @@ function new_gravity_manager()
     end
   end
 
+  -- String -> { projectile: Projectile }
+  gm.handle_proj_player_collision = function(name, payload)
+    del(gm.projectiles, payload.projectile) 
+  end
+
   -- String -> { pos_x: Int, pos_y: Int, direction: Int, input_mask: Int }
   gm.handle_button = function(name, payload)
 
@@ -111,10 +116,7 @@ function new_gravity(coords)
   tmp.ttl = 30
   tmp.state = "HELD"
   -- tmp.frame_base = 48
-  tmp.frames = {48, 49, 50}
   tmp.frame_index = 1
-  tmp.frame_half_step = 1
-  tmp.frame_step = 4
 
   tmp.update = function()
     if tmp.state == "PERSISTENT" then
@@ -128,14 +130,11 @@ function new_gravity(coords)
       end
     end
 
-    tmp.frame_half_step += 1
-    if tmp.frame_half_step > tmp.frame_step then
-      tmp.frame_half_step = 1
-      tmp.frame_index += 1
-      if tmp.frame_index > count(tmp.frames) then
-        tmp.frame_index = 1
-      end
+    tmp.frame_index += 1
+    if tmp.frame_index > 22 then
+      tmp.frame_index = 1
     end
+
   end
 
   tmp.release = function()
@@ -147,8 +146,8 @@ function new_gravity(coords)
   end
 
   tmp.draw = function()
-    spr(tmp.frames[tmp.frame_index], tmp.pos_x, tmp.pos_y, 1.0, 1.0, tmp.flip_x, tmp.flip_y)
-    circ(tmp.pos_x+4, tmp.pos_y+4, 22, CLR_RED)
+    -- spr(tmp.frames[tmp.frame_index], tmp.pos_x, tmp.pos_y, 1.0, 1.0, tmp.flip_x, tmp.flip_y)
+    circ(tmp.pos_x+4, tmp.pos_y+4, 22 - tmp.frame_index, CLR_PRP)
   end
 
   return tmp
@@ -156,7 +155,7 @@ function new_gravity(coords)
 end
 
 function new_projectile(coords, direction)
-  local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 4, 8, false, false)
+  local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 2, 2, false, false)
   tmp.mass = 1
   -- tmp.state = "HELD"
   -- tmp.frame_base = 48
@@ -201,12 +200,12 @@ function new_projectile(coords, direction)
   return tmp
 end
 
-function calc_grav(coords_p, coords_g, vel_p, mass_p, mass_g, cheat_distance)
+function calc_grav(coords_p, coords_g, vel_p, mass_p, mass_g)
   local dist_x = coords_p.x - coords_g.x
   local dist_y = coords_p.y - coords_g.y
   local dist_x2 = dist_x * dist_x
   local dist_y2 = dist_y * dist_y
-  local gdistance = cheat_distance or sqrt(dist_x2 + dist_y2)
+  local gdistance = sqrt(dist_x2 + dist_y2)
   printh("GD: "..gdistance)
   local dist_x_component = -(dist_x / gdistance)
   local dist_y_component = -(dist_y / gdistance)
@@ -223,18 +222,18 @@ function calc_grav(coords_p, coords_g, vel_p, mass_p, mass_g, cheat_distance)
   return { gdistance = gdistance, vel = { x = new_vel_x, y = new_vel_y } }
 end
 
---[[
-function calc_cheat_grav(coords_p, gdistance, mass_p, mass_g)
-  local G = 3.0
-  local new_vel_x = vel_p.x + dist_x_component * (G*mass_p*mass_g) / (gdistance * gdistance)
-  if new_vel_x > MAX_VEL then new_vel_x = MAX_VEL end
-  if new_vel_x < -MAX_VEL then new_vel_x = -MAX_VEL end
-  local new_vel_y = vel_p.y + dist_y_component * (G*mass_p*mass_g) / (gdistance * gdistance)
-  if new_vel_y > MAX_VEL then new_vel_y = MAX_VEL end
-  if new_vel_y < -MAX_VEL then new_vel_y = -MAX_VEL end
+function calc_cheat_grav(coords_p, coords_g, mass_p, mass_g)
+  local dist_x = coords_p.x - coords_g.x
+  local dist_y = coords_p.y - coords_g.y
+  local dist_x2 = dist_x * dist_x
+  local dist_y2 = dist_y * dist_y
+  local gdistance = sqrt(dist_x2 + dist_y2)
+  local dist_x_component = -(dist_x / gdistance)
+  local dist_y_component = -(dist_y / gdistance)
+  local new_vel_x = dist_x_component * 1.0
+  local new_vel_y = dist_y_component * 1.0
   if gdistance < 0.5 then
     return { gdistance = 0, vel = { x = 0, y = 0 } }
   end
   return { gdistance = gdistance, vel = { x = new_vel_x, y = new_vel_y } }
 end
-]]--
