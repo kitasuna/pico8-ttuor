@@ -9,12 +9,14 @@ function get_levels()
       },
       time=22<<8,
       player = {
-        pos_x = 32,
-        pos_y = 32,
+        pos_x = ((1*8) + 16),
+        pos_y = ((4*8) + 16),
       },
       ents = {
-        {type=ENT_BOX, pos_x= 48, pos_y = 56},
-        -- {type=ENT_ITEM, pos_x= 40, pos_y = 86},
+        {type=ENT_BOX, pos_x= (8*8)+16, pos_y = (6*8)+16},
+        {type=ENT_BOX, pos_x= (11*8)+16, pos_y = (11*8)+16},
+        {type=ENT_ITEM, pos_x= 40, pos_y = 86},
+        {type=ENT_BEAM, pos_x = (8*10)+16, pos_y = (9*8)+16},
       }
     },
   }

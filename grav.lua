@@ -65,7 +65,6 @@ function new_gravity_manager()
     if (payload.input_mask & (1 << BTN_X)) > 0 then
       -- Launch gravity, so eliminate existing gravs?
       -- Maybe need to work this out in level design first
-      -- printh("found x press")
       if count(gm.projectiles) > 0 then
         -- del(gm.projectiles, gm.projectiles[1])
         return
@@ -86,10 +85,8 @@ function new_gravity_manager()
         pos_x = payload.pos_x - 10
         pos_y = payload.pos_y
       end
-      printh("got position")
       local tmp = new_projectile({pos_x=pos_x, pos_y=pos_y}, payload.direction)
       add(gm.projectiles, tmp)
-      printh("pjs: "..count(gm.projectiles))
     end
   end
 
@@ -206,7 +203,6 @@ function calc_grav(coords_p, coords_g, vel_p, mass_p, mass_g)
   local dist_x2 = dist_x * dist_x
   local dist_y2 = dist_y * dist_y
   local gdistance = sqrt(dist_x2 + dist_y2)
-  printh("GD: "..gdistance)
   local dist_x_component = -(dist_x / gdistance)
   local dist_y_component = -(dist_y / gdistance)
   local G = 3.0

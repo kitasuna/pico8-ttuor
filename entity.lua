@@ -13,6 +13,11 @@ function new_entity_manager()
     add(ent_man.ents, tmp)
   end
 
+  ent_man.add_beam = function(coords)
+    local tmp = new_beam(coords)
+    add(ent_man.ents, tmp)
+  end
+
   ent_man.reset = function()
     ent_man.ents = {}
   end
@@ -40,7 +45,6 @@ function new_entity_manager()
       1.0,
       payload.mass
       )
-      printh("GD: "..grav_result.gdistance..", X: "..grav_result.vel.x..", Y: "..grav_result.vel.y)
       if grav_result.gdistance < 0.5 and fget(e.num, FLAG_ABSORBED_BY_GRAV) == false then
         e.vel_x = 0
         e.vel_y = 0
@@ -62,6 +66,11 @@ function new_entity_manager()
     end
   end
 
+  -- String -> { box: Box, beam: Beam }
+  ent_man.handle_beam_box_collision = function(name, payload)
+    payload.beam.blocked_by = payload.box
+  end
+
   return ent_man
 end
 
@@ -73,6 +82,7 @@ function new_item(coords)
   tmp.can_travel = 1 << FLAG_FLOOR
 
   tmp.update = ent_update(tmp)
+  tmp.draw = ent_draw(tmp)
   return tmp
 end
 
@@ -81,10 +91,77 @@ function new_box(coords)
 
   tmp.vel_x = 0
   tmp.vel_y = 0
+  tmp.type = ENT_BOX
   tmp.can_travel = 1 << FLAG_FLOOR
 
   tmp.update = ent_update(tmp)
+  tmp.draw = ent_draw(tmp)
   return tmp
+end
+
+function new_beam(coords)
+  -- Start size at 8x8
+  local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 8)
+  tmp.vel_x = 0
+  tmp.vel_y = 0
+  tmp.type = ENT_BEAM
+  tmp.blocked_by = nil
+  tmp.can_travel = 1 << FLAG_FLOOR -- maybe need to add gaps here later
+
+  tmp.update = beam_update(tmp)
+  tmp.draw = beam_draw(tmp)
+  return tmp
+end
+
+function beam_update(beam)
+  return function()
+    -- Check for horizonal, increasing case
+    -- Maybe add a "facing" prop to this later
+    if beam.blocked_by != nil then
+      -- Update blocked_by if necessary
+      beam.size_x = 128
+      if collides(beam.blocked_by, beam) == true then
+        printh("collided!")
+        beam.size_x = beam.blocked_by.pos_x - beam.pos_x
+        return
+      else
+        beam.blocked_by = nil
+        printh("UNSET BLOCKED_BY!")
+      end
+    end
+
+    local collision = false
+    local map_offset_x = 16
+    local map_offset_y = 16
+    local curr_map_x = (beam.pos_x - map_offset_x) \ 8
+    local curr_map_y = (beam.pos_y - map_offset_y) \ 8
+    local beam_max_x = beam.pos_x
+    while collision == false do
+      local next_map_x = ((beam_max_x + 1) - map_offset_x) \ 8
+      local flag = fget(mget(next_map_x, curr_map_y))
+      if (fget(mget(next_map_x, curr_map_y)) & beam.can_travel) == 0 then
+        collision = true
+        break;
+      end
+
+      beam_max_x += 8
+    end
+    beam.size_x = beam_max_x - beam.pos_x
+  end
+end
+
+function beam_draw(beam)
+  return function()
+    for i=1,beam.size_x do
+      spr(beam.num, beam.pos_x + (i - 1), beam.pos_y)
+    end
+  end
+end
+
+function ent_draw(ent)
+  return function()
+    spr(ent.num, ent.pos_x, ent.pos_y)
+  end
 end
 
 function ent_update(tmp)
