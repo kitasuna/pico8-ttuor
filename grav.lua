@@ -32,6 +32,15 @@ function new_gravity_manager()
     del(gm.projectiles, payload.projectile) 
   end
 
+  gm.handle_player_death = function(name, payload)
+    for k, g in pairs(gm.gravities) do
+      del(gm.gravities, g) 
+    end
+    for k, g in pairs(gm.projectiles) do
+      del(gm.projectiles, g) 
+    end
+  end
+
   -- String -> { pos_x: Int, pos_y: Int, direction: Int, input_mask: Int }
   gm.handle_button = function(name, payload)
 
@@ -53,7 +62,6 @@ function new_gravity_manager()
       end
 
       local tmp = new_gravity({pos_x=pos_x, pos_y=pos_y})
-      grav_count += 1
 
       add(gm.gravities, tmp)
     elseif (payload.input_mask & (1 << BTN_O)) == 0 and count(gm.gravities) > 0 then
@@ -98,8 +106,13 @@ function new_gravity_manager()
       end
     end
 
-    for k, g in pairs(gm.projectiles) do
-      g.update()
+    for k, p in pairs(gm.projectiles) do
+      p.update()
+
+      if p.ttl < 0 then
+        del(gm.projectiles, p)
+        qm.ae("PROJ_EXPIRATION", {})
+      end
     end
   end
 
@@ -161,6 +174,7 @@ function new_projectile(coords, direction)
   tmp.frame_half_step = 1
   tmp.frame_step = 4
   tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
+  tmp.ttl = 180
   local launch_velocity = 1.2
   if direction == DIRECTION_UP then
     tmp.vel_x = 0
@@ -185,6 +199,8 @@ function new_projectile(coords, direction)
         tmp.frame_index = 1
       end
     end
+
+    tmp.ttl -= 1
 
     ent_update(tmp)()
 

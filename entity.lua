@@ -121,12 +121,10 @@ function beam_update(beam)
       -- Update blocked_by if necessary
       beam.size_x = 128
       if collides(beam.blocked_by, beam) == true then
-        printh("collided!")
         beam.size_x = beam.blocked_by.pos_x - beam.pos_x
         return
       else
         beam.blocked_by = nil
-        printh("UNSET BLOCKED_BY!")
       end
     end
 

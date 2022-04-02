@@ -14,8 +14,10 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   -- local velocity_step_down = 0.08
   local velocity_step_up = 0.2
   local velocity_step_down = 0.2
+  local slide_step_down = 0.035
 
   player.state = PLAYER_STATE_GROUNDED
+  player.deaths = 0
   player.vel_x = 0
   player.vel_y = 0
   player.invincible = false
@@ -25,12 +27,20 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   player.facing = DIRECTION_DOWN
   player.can_travel = (1 << FLAG_FLOOR)
 
-  player.handle_proj_player_collision = function(name, payload)
+  player.reset = function(l)
+    player.frame_base = 1
+    player.frame_offset = 1
+    player.facing = DIRECTON_DOWN
+    player.can_travel = (1 << FLAG_FLOOR)
     player.state = PLAYER_STATE_GROUNDED
     player.vel_x = 0
     player.vel_y = 0
-    player.can_travel = (1 << FLAG_FLOOR)
-    player.facing = DIRECTION_DOWN
+    player.pos_x = l.player.pos_x
+    player.pos_y = l.player.pos_y
+  end
+
+  player.handle_proj_player_collision = function(name, payload)
+    sc_sliding(player)
   end
 
   player.handle_obs_collision = function(name, payload)
@@ -50,7 +60,23 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
     })
   end
 
+  player.handle_proj_expiration = function(name, payload)
+    if player.state == PLAYER_STATE_FLOATING then
+      sc_sliding(player) 
+    end
+  end
+
   player.handle_button = function(name, payload)
+    -- If they're sliding, they can't do much
+    if player.state == PLAYER_STATE_SLIDING then
+      return
+    end
+
+    -- If they're dying, disable input
+    if player.state == PLAYER_STATE_DEAD_FALLING then
+      return
+    end
+
     -- If they're floating and the press isn't a float toggle, return
     if player.state == PLAYER_STATE_FLOATING and (payload.input_mask & (1 << BTN_X) == 0) then
       return
@@ -58,10 +84,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
 
     -- If they're floating and the press IS a float toggle, ground them and return
     if player.state == PLAYER_STATE_FLOATING and (payload.input_mask & (1 << BTN_X) > 0) then
-        player.state = PLAYER_STATE_GROUNDED
-        player.can_travel = (1 << FLAG_FLOOR)
-        player.vel_x = 0
-        player.vel_y = 0
+        sc_sliding(player)
         return
     end
 
@@ -75,8 +98,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
         1.0,
         128.0
         )
-
-        printh("GD: "..grav_result.gdistance..", X: "..grav_result.vel.x..", Y: "..grav_result.vel.y)
 
         player.vel_x = grav_result.vel.x
         player.vel_y = grav_result.vel.y
@@ -157,10 +178,14 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
       spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
     elseif player.state == PLAYER_STATE_FLOATING then
       spr(13, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
+    elseif player.state == PLAYER_STATE_SLIDING then
+      spr(14, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
+    elseif player.state == PLAYER_STATE_DEAD_FALLING then
+      sspr(0, 8, 8, 8, player.pos_x + (player.frame_offset * 2), player.pos_y + (player.frame_offset * 2), 8 \ (player.frame_offset + 1), 8 \ (player.frame_offset + 1))
     end
   end
 
-  player.move = function(ent_man)
+  player.update = function(ent_man)
     -- Get player x/y map cell
     local map_offset_x = 16
     local map_offset_y = 12
@@ -175,6 +200,32 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
     local next_map_y = (player_next_y - map_offset_y) \ 8
     local can_move_x = true
     local can_move_y = true
+
+    if player.state == PLAYER_STATE_DEAD_FALLING then
+      if player.frame_offset < 3 then
+        player.frame_step += 1
+        if player.frame_step > 20 then
+          player.frame_offset += 1
+          player.frame_step = 0
+        end
+      else
+        qm.ae("PLAYER_DEATH", {level = level})
+        return
+      end
+    end
+
+    -- if centered over a gap, and not floating, increment deaths (and probably trigger some event?)
+    if fget(mget(curr_map_x, curr_map_y), FLAG_GAP) and (player.state != PLAYER_STATE_FLOATING and player.state != PLAYER_STATE_DEAD_FALLING) then
+      player.deaths += 1
+      player.can_move_x = false
+      player.can_move_y = false
+      player.vel_x = 0
+      player.vel_y = 0
+      player.state = PLAYER_STATE_DEAD_FALLING
+      player.frame_step = 0
+      player.frame_offset = 0
+      return
+    end
 
     if fget(mget(next_map_x, curr_map_y)) & player.can_travel == 0 then
       can_move_x = false
@@ -215,7 +266,37 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
       player.pos_y += player.vel_y
     end
 
+    -- the slide
+    if player.state == PLAYER_STATE_SLIDING then
+      if player.vel_x > 0 then
+        player.vel_x -= slide_step_down
+      elseif player.vel_x < 0 then
+        player.vel_x += slide_step_down
+      end
+
+      if player.vel_y > 0 then
+        player.vel_y -= slide_step_down
+      elseif player.vel_y < 0 then
+        player.vel_y += slide_step_down
+      end
+
+      if (player.vel_x <= slide_step_down and player.vel_x >= -slide_step_down) then
+        player.vel_x = 0
+      end
+      if (player.vel_y <= slide_step_down and player.vel_y >= -slide_step_down) then
+        player.vel_y = 0
+      end
+
+      if player.vel_x == 0 and player.vel_y == 0 and player.state == PLAYER_STATE_SLIDING then
+        player.state = PLAYER_STATE_GROUNDED
+      end
+    end
   end
 
   return player
+end
+
+function sc_sliding(player)
+    player.state = PLAYER_STATE_SLIDING
+    player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
 end
