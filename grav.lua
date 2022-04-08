@@ -165,7 +165,7 @@ function new_gravity(coords)
 end
 
 function new_projectile(coords, direction)
-  local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 2, 2, false, false)
+  local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 6, 6, false, false)
   tmp.mass = 1
   -- tmp.state = "HELD"
   -- tmp.frame_base = 48

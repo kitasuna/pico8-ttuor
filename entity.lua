@@ -45,7 +45,7 @@ function new_entity_manager()
       1.0,
       payload.mass
       )
-      if grav_result.gdistance < 0.5 and fget(e.num, FLAG_ABSORBED_BY_GRAV) == false then
+      if grav_result.gdistance < 1 and fget(e.num, FLAG_ABSORBED_BY_GRAV) == false then
         e.vel_x = 0
         e.vel_y = 0
         e.pos_x = payload.pos_x
@@ -69,6 +69,7 @@ function new_entity_manager()
   -- String -> { box: Box, beam: Beam }
   ent_man.handle_beam_box_collision = function(name, payload)
     payload.beam.blocked_by = payload.box
+    printh("box blocked by")
   end
 
   return ent_man
@@ -101,7 +102,7 @@ end
 
 function new_beam(coords)
   -- Start size at 8x8
-  local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 8)
+  local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 4)
   tmp.vel_x = 0
   tmp.vel_y = 0
   tmp.type = ENT_BEAM
@@ -150,8 +151,17 @@ end
 
 function beam_draw(beam)
   return function()
+    if frame_counter % 4 == 1 then
+      return
+    end
+    local y_offset = beam.pos_y + 2
+    local x_max = beam.pos_x + beam.size_x - 1
     for i=1,beam.size_x do
-      spr(beam.num, beam.pos_x + (i - 1), beam.pos_y)
+      line(beam.pos_x, y_offset, x_max, y_offset, CLR_BLU)
+      line(beam.pos_x, y_offset + 1, x_max, y_offset + 1)
+      line(beam.pos_x, y_offset + 2, x_max, y_offset + 2)
+      line(beam.pos_x, y_offset + 3, x_max, y_offset + 3)
+      -- spr(50 + (frame_counter % 3), x_max, y_offset - 2)
     end
   end
 end

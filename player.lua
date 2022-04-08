@@ -1,12 +1,10 @@
-function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
+function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   local player = new_sprite(
   sprite_num,
   pos_x,
   pos_y,
   size_x,
-  size_y,
-  flip_x,
-  flip_y
+  size_y
   )
 
   local velocity_max = 1.0
@@ -27,10 +25,18 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
   player.facing = DIRECTION_DOWN
   player.can_travel = (1 << FLAG_FLOOR)
 
+  printh("FACINGTOP: "..player.facing)
+  player.frames = {
+    { anim={7, 8, 7, 9}, flip=false },
+    { anim={4, 5, 4, 6}, flip=false },
+    { anim={1, 2, 1, 3}, flip=false },
+    { anim={4, 5, 4, 6}, flip=true }
+  }
+
   player.reset = function(l)
     player.frame_base = 1
     player.frame_offset = 1
-    player.facing = DIRECTON_DOWN
+    player.facing = DIRECTION_DOWN
     player.can_travel = (1 << FLAG_FLOOR)
     player.state = PLAYER_STATE_GROUNDED
     player.vel_x = 0
@@ -155,10 +161,8 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
       player.frame_base = 9
     elseif player.facing == DIRECTION_RIGHT then
       player.frame_base = 5
-      player.flip_x = false
     elseif player.facing == DIRECTION_LEFT then
       player.frame_base = 5
-      player.flip_x = true
     end
 
     if payload.input_mask > 0 then
@@ -175,7 +179,9 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
 
   player.draw = function()
     if player.state == PLAYER_STATE_GROUNDED then
-      spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
+      -- spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
+      local frames = player.frames[player.facing + 1]
+      spr(frames.anim[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, frames.flip, false)
     elseif player.state == PLAYER_STATE_FLOATING then
       spr(13, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
     elseif player.state == PLAYER_STATE_SLIDING then
@@ -187,6 +193,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
 
   player.update = function(ent_man)
     -- Get player x/y map cell
+    printh("FacingUpdate: "..player.facing)
     local map_offset_x = 16
     local map_offset_y = 12
     local player_center_x = player.pos_x + (player.size_x \ 2)
@@ -248,7 +255,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y, flip_x, flip_y)
       player.size_x,
       player.size_y
     )
-    -- local player_at_next = player
     for k, ent in pairs(ent_man.ents) do
       if fget(ent.num, FLAG_COLLIDES_PLAYER) == true then
         if collides(player_at_next, ent) then 
