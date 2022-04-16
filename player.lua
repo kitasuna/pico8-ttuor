@@ -25,13 +25,14 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   player.facing = DIRECTION_DOWN
   player.can_travel = (1 << FLAG_FLOOR)
 
-  printh("FACINGTOP: "..player.facing)
-  player.frames = {
+  player.frames_walking = {
     { anim={7, 8, 7, 9}, flip=false },
     { anim={4, 5, 4, 6}, flip=false },
     { anim={1, 2, 1, 3}, flip=false },
     { anim={4, 5, 4, 6}, flip=true }
   }
+
+  player.frames_zapped = { 16, 17, 18, 16, 17, 18, 16, 17, 18 }
 
   player.reset = function(l)
     player.frame_base = 1
@@ -47,6 +48,17 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
 
   player.handle_proj_player_collision = function(name, payload)
     sc_sliding(player)
+  end
+
+  player.handle_beam_player_collision = function(name, payload)
+      player.deaths += 1
+      player.can_move_x = false
+      player.can_move_y = false
+      player.vel_x = 0
+      player.vel_y = 0
+      player.state = PLAYER_STATE_DEAD_ZAPPED
+      player.frame_step = 0
+      player.frame_offset = 0
   end
 
   player.handle_obs_collision = function(name, payload)
@@ -79,7 +91,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
     end
 
     -- If they're dying, disable input
-    if player.state == PLAYER_STATE_DEAD_FALLING then
+    if player.state == PLAYER_STATE_DEAD_FALLING or player.state == PLAYER_STATE_DEAD_ZAPPED then
       return
     end
 
@@ -180,20 +192,21 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   player.draw = function()
     if player.state == PLAYER_STATE_GROUNDED then
       -- spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
-      local frames = player.frames[player.facing + 1]
+      local frames = player.frames_walking[player.facing + 1]
       spr(frames.anim[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, frames.flip, false)
     elseif player.state == PLAYER_STATE_FLOATING then
-      spr(13, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
+      spr(10, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
     elseif player.state == PLAYER_STATE_SLIDING then
-      spr(14, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
+      spr(12 + player.facing, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
     elseif player.state == PLAYER_STATE_DEAD_FALLING then
-      sspr(0, 8, 8, 8, player.pos_x + (player.frame_offset * 2), player.pos_y + (player.frame_offset * 2), 8 \ (player.frame_offset + 1), 8 \ (player.frame_offset + 1))
+      sspr(88, 0, 8, 8, player.pos_x + (player.frame_offset * 2), player.pos_y + (player.frame_offset * 2), 8 \ (player.frame_offset + 1), 8 \ (player.frame_offset + 1))
+    elseif player.state == PLAYER_STATE_DEAD_ZAPPED then
+      local frames = player.frames_zapped
+      spr(frames[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, false, false)
     end
   end
 
   player.update = function(ent_man)
-    -- Get player x/y map cell
-    printh("FacingUpdate: "..player.facing)
     local map_offset_x = 16
     local map_offset_y = 12
     local player_center_x = player.pos_x + (player.size_x \ 2)
@@ -212,6 +225,19 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
       if player.frame_offset < 3 then
         player.frame_step += 1
         if player.frame_step > 20 then
+          player.frame_offset += 1
+          player.frame_step = 0
+        end
+      else
+        qm.ae("PLAYER_DEATH", {level = level})
+        return
+      end
+    end
+
+    if player.state == PLAYER_STATE_DEAD_ZAPPED then
+      if player.frame_offset < 9 then
+        player.frame_step += 1
+        if player.frame_step > 5 then
           player.frame_offset += 1
           player.frame_step = 0
         end
