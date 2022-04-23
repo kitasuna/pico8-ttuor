@@ -14,7 +14,8 @@ function get_levels()
       ents = {
         {type=ENT_BOX, pos_x= (8*8)+16, pos_y = (6*8)+16},
         {type=ENT_BOX, pos_x= (11*8)+16, pos_y = (11*8)+16},
-        {type=ENT_ITEM, pos_x= 40, pos_y = 86},
+        {type=ENT_ITEM, pos_x= (14*8)+16, pos_y = (11*8)+16},
+        -- {type=ENT_ITEM, pos_x= 40, pos_y = 86},
         {type=ENT_BEAM, pos_x = (8*11)+16, pos_y = (9*8)+16},
       }
     },

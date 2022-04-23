@@ -32,34 +32,6 @@ function new_entity_manager()
     return false
   end
 
-  -- String -> {pos_x: Int, pos_y: Int, mass: Int }
-  ent_man.handle_gravity = function(name, payload)
-
-    -- Find any ents in range
-    -- Calculate change in velocity based on distance of entity from payload pos
-    for k, e in pairs(ent_man.ents) do
-      local grav_result = calc_grav(
-      {x=e.pos_x, y=e.pos_y},
-      {x=payload.pos_x, y=payload.pos_y},
-      {x=e.vel_x, y=e.vel_y},
-      1.0,
-      payload.mass
-      )
-      if grav_result.gdistance < 1 and fget(e.num, FLAG_ABSORBED_BY_GRAV) == false then
-        e.vel_x = 0
-        e.vel_y = 0
-        e.pos_x = payload.pos_x
-        e.pos_y = payload.pos_y
-        return
-      end
-
-      if grav_result.gdistance < 22*payload.mass then
-        e.vel_x = grav_result.vel.x
-        e.vel_y = grav_result.vel.y
-      end
-    end
-  end
-
   ent_man.handle_ent_grav_collision = function(name, payload)
     if fget(payload.entity.num, FLAG_ABSORBED_BY_GRAV) == true then
       del(ent_man.ents, payload.entity)
@@ -69,10 +41,62 @@ function new_entity_manager()
   -- String -> { box: Box, beam: Beam }
   ent_man.handle_beam_box_collision = function(name, payload)
     payload.beam.blocked_by = payload.box
-    printh("box blocked by")
+  end
+
+  -- String -> { item: Item, beam: Beam }
+  ent_man.handle_beam_item_collision = function(name, payload)
+    payload.item.state = "BROKEN"
+    payload.item.feels_grav = false
+    payload.item.vel_x = 0
+    payload.item.vel_y = 0
+    add(timers, {
+      ttl = 120,
+      f = function() end,
+      cleanup = function()
+        del(ent_man.ents, payload.item)
+      end
+    })
   end
 
   return ent_man
+end
+
+-- Entity -> XPos -> YPos -> Direction -> Entity
+function do_gravity(ent, pos_x, pos_y, direction)
+    printh("Doing grav on:"..ent.type)
+  if ent.feels_grav == true then
+    printh("Feeling grav!")
+    local ent_vel = 1
+    if direction == DIRECTION_UP then
+      -- vel should be downwards
+      ent.vel_x = 0
+      ent.vel_y = ent_vel
+      ent.tgt_x = ent.pos_x
+      ent.tgt_y = pos_y
+      elseif direction == DIRECTION_DOWN then
+      -- vel should be upwards
+      ent.vel_x = 0
+      ent.vel_y = -ent_vel
+      ent.tgt_x = ent.pos_x
+      ent.tgt_y = pos_y
+      elseif direction == DIRECTION_RIGHT then
+        --vel should be to the left
+      ent.vel_x = -ent_vel
+      ent.vel_y = 0
+      ent.tgt_x = pos_x
+      ent.tgt_y = ent.pos_y
+      elseif direction == DIRECTION_LEFT then
+      --vel should be to the right
+      ent.vel_x = ent_vel
+      ent.vel_y = 0
+      ent.tgt_x = pos_x
+      ent.tgt_y = ent.pos_y
+    end
+    printh("tgt: "..ent.tgt_x..","..ent.tgt_y)
+    printh("vel: "..ent.vel_x..","..ent.vel_y)
+  end
+
+  return ent
 end
 
 function new_item(coords)
@@ -80,7 +104,13 @@ function new_item(coords)
 
   tmp.vel_x = 0
   tmp.vel_y = 0
+  tmp.type = ENT_ITEM
   tmp.can_travel = 1 << FLAG_FLOOR
+  tmp.state = "NONE"
+  tmp.frames = { NONE={frames={28}, len=20}, BROKEN={frames={29}, len=20} }
+  tmp.frame_half_step = 0
+  tmp.frame_offset = 1
+  tmp.feels_grav = true
 
   tmp.update = ent_update(tmp)
   tmp.draw = ent_draw(tmp)
@@ -88,12 +118,17 @@ function new_item(coords)
 end
 
 function new_box(coords)
-  local tmp = new_sprite(33, coords.pos_x, coords.pos_y, 8, 8)
+  local tmp = new_sprite(43, coords.pos_x, coords.pos_y, 8, 8)
 
   tmp.vel_x = 0
   tmp.vel_y = 0
   tmp.type = ENT_BOX
   tmp.can_travel = 1 << FLAG_FLOOR
+  tmp.state = "NONE"
+  tmp.frames = { NONE={frames={43},len=10} }
+  tmp.frame_half_step = 0
+  tmp.frame_offset = 1
+  tmp.feels_grav = true
 
   tmp.update = ent_update(tmp)
   tmp.draw = ent_draw(tmp)
@@ -167,6 +202,11 @@ function beam_draw(beam)
 end
 
 function ent_draw(ent)
+  if ent.state != nil then
+    return function()
+      spr(ent.frames[ent.state].frames[ent.frame_offset], ent.pos_x, ent.pos_y)  
+    end
+  end
   return function()
     spr(ent.num, ent.pos_x, ent.pos_y)
   end
@@ -193,6 +233,8 @@ function ent_update(tmp)
           f = function() end,
           cleanup = function()
             tmp.vel_y = 0
+            tmp.tgt_x = nil
+            tmp.tgt_y = nil
           end
         })
         end
@@ -210,11 +252,25 @@ function ent_update(tmp)
           f = function() end,
           cleanup = function()
             tmp.vel_x = 0
+            tmp.tgt_x = nil
+            tmp.tgt_y = nil
           end
         })
       end
     else
       tmp.pos_y += tmp.vel_y
+    end
+
+    -- stop if we've reached the target
+    if tmp.tgt_x != nil and tmp.tgt_y != nil then
+      local ginfo = ldistance(tmp.pos_x + 4, tmp.pos_y + 4, tmp.tgt_x, tmp.tgt_y)
+      if ginfo.d < 5 then
+        -- Center on the target
+        tmp.vel_x = 0
+        tmp.vel_y = 0
+        tmp.tgt_x = nil
+        tmp.tgt_y = nil
+      end
     end
   end
 end

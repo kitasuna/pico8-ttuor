@@ -62,10 +62,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   end
 
   player.handle_obs_collision = function(name, payload)
-    -- ignore if player is invincible
-    if true or payload.player.invincible then
-      return 
-    end
     player.pos_x = 64
     player.pos_y = 64
     player.invincible = true
