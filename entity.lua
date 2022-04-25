@@ -45,7 +45,7 @@ function new_entity_manager()
 
   -- String -> { item: Item, beam: Beam }
   ent_man.handle_beam_item_collision = function(name, payload)
-    payload.item.state = "BROKEN"
+    payload.item.state = ENT_STATE_BROKEN
     payload.item.feels_grav = false
     payload.item.vel_x = 0
     payload.item.vel_y = 0
@@ -58,14 +58,77 @@ function new_entity_manager()
     })
   end
 
+  ent_man.handle_gbeam_removed = function(name, payload)
+    for k, ent in pairs(ent_man.ents) do
+      if ent.tgt_x != nil or ent.tgt_y != nil then
+        ent.vel_x = 0
+        ent.vel_y = 0
+        ent.tgt_x = nil
+        ent.tgt_y = nil
+      end
+    end
+  end
+
+  ent_man.handle_button = function(name, payload)
+    for k, ent in pairs(ent_man.ents) do
+      if ent.state == ENT_STATE_HELD then
+        if (payload.input_mask & (1 << BTN_O)) == 0 then
+          -- unhand that item!
+          ent.state = ENT_STATE_NORMAL
+        end
+      end
+    end
+  end
+
+  -- String -> { rotation: Rotation, pos_x: Int, pos_y Int }
+  ent_man.handle_player_rotation = function(name, payload)
+    for k, ent in pairs(ent_man.ents) do
+      if ent.state == ENT_STATE_HELD then
+        printh("rotevent: "..payload.rotation)
+        printh("player0: "..payload.pos_x..","..player.pos_y)
+        -- Get coords relative to event coords (payload.pos_x/pos_y)
+        local rot_type = payload.rotation
+        local rel_x = flr(get_center_x(ent) - payload.pos_x)
+        -- y coords are flipped since we're basically working in 4th quadrant
+        -- in our base coord system
+        local rel_y = flr(get_center_y(ent) - payload.pos_y)
+        printh("rel: "..rel_x..","..rel_y)
+        printh("ent: "..ent.pos_x..","..ent.pos_y)
+        printh("player1: "..payload.pos_x..","..player.pos_y)
+        if rot_type == "ROTATION_90_LEFT" then
+          ent.pos_x = payload.pos_x - (-rel_y) - (ent.size_x \ 2)
+          ent.pos_y = payload.pos_y - rel_x - (ent.size_y \ 2)
+        elseif rot_type == "ROTATION_90_RIGHT" then
+          ent.pos_x = payload.pos_x + (-rel_y) - (ent.size_x \ 2)
+          ent.pos_y = payload.pos_y + rel_x - (ent.size_y \ 2)
+        elseif rot_type == "ROTATION_180_RIGHT" then
+          ent.pos_x = payload.pos_x - rel_x - (ent.size_x \ 2)
+          ent.pos_y = ent.pos_y
+        elseif rot_type == "ROTATION_180_LEFT" then
+          ent.pos_x = payload.pos_x - rel_x - (ent.size_x \2)-- - ent.size_x
+          ent.pos_y = ent.pos_y
+        elseif rot_type == "ROTATION_180_UP" then
+          ent.pos_x = ent.pos_x
+          ent.pos_y = payload.pos_y - rel_y - (ent.size_y \ 2)
+        elseif rot_type == "ROTATION_180_DOWN" then
+          ent.pos_x = ent.pos_x
+          ent.pos_y = payload.pos_y - rel_y - (ent.size_y \ 2)
+          --printh("rotright newent: "..ent.pos_x..","..ent.pos_y)
+        end
+
+        printh("newent: "..ent.pos_x..","..ent.pos_y)
+        -- we only need to do this for one ent, so return
+        return
+      end
+    end
+  end
+
   return ent_man
 end
 
 -- Entity -> XPos -> YPos -> Direction -> Entity
 function do_gravity(ent, pos_x, pos_y, direction)
-    printh("Doing grav on:"..ent.type)
   if ent.feels_grav == true then
-    printh("Feeling grav!")
     local ent_vel = 1
     if direction == DIRECTION_UP then
       -- vel should be downwards
@@ -92,8 +155,6 @@ function do_gravity(ent, pos_x, pos_y, direction)
       ent.tgt_x = pos_x
       ent.tgt_y = ent.pos_y
     end
-    printh("tgt: "..ent.tgt_x..","..ent.tgt_y)
-    printh("vel: "..ent.vel_x..","..ent.vel_y)
   end
 
   return ent
@@ -106,8 +167,8 @@ function new_item(coords)
   tmp.vel_y = 0
   tmp.type = ENT_ITEM
   tmp.can_travel = 1 << FLAG_FLOOR
-  tmp.state = "NONE"
-  tmp.frames = { NONE={frames={28}, len=20}, BROKEN={frames={29}, len=20} }
+  tmp.state = ENT_STATE_NORMAL
+  tmp.frames = { NORMAL={frames={28}, len=20}, BROKEN={frames={29}, len=20}, HELD={frames={28}, len=10} }
   tmp.frame_half_step = 0
   tmp.frame_offset = 1
   tmp.feels_grav = true
@@ -124,8 +185,8 @@ function new_box(coords)
   tmp.vel_y = 0
   tmp.type = ENT_BOX
   tmp.can_travel = 1 << FLAG_FLOOR
-  tmp.state = "NONE"
-  tmp.frames = { NONE={frames={43},len=10} }
+  tmp.state = ENT_STATE_NORMAL
+  tmp.frames = { NORMAL={frames={43},len=10}, HELD={frames={43},len=10} }
   tmp.frame_half_step = 0
   tmp.frame_offset = 1
   tmp.feels_grav = true
@@ -270,6 +331,8 @@ function ent_update(tmp)
         tmp.vel_y = 0
         tmp.tgt_x = nil
         tmp.tgt_y = nil
+        tmp.state = ENT_STATE_HELD
+        qm.ae("ENTITY_REACHES_TARGET", {})
       end
     end
   end

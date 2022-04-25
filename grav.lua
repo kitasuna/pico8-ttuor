@@ -2,7 +2,8 @@ function new_gravity_manager()
   local gm = {
     gravities = {},
     projectiles = {},
-    gbeams = {},
+    gbeam = nil,
+    state = "ENABLED",
   }
 
   gm.reset = function()
@@ -44,35 +45,36 @@ function new_gravity_manager()
 
   -- String -> { pos_x: Int, pos_y: Int, direction: Int, input_mask: Int }
   gm.handle_button = function(name, payload)
-
-     if (payload.input_mask & (1 << BTN_O)) > 0 and count(gm.gbeams) < 1 then
-       local pos_x = payload.pos_x
-       local pos_y = payload.pos_y
-       printh("OrigPos: "..payload.pos_x..","..payload.pos_y)
-       printh("Direction: "..payload.direction)
-       if payload.direction == DIRECTION_UP then
-         pos_y -= 6
-       elseif payload.direction == DIRECTION_DOWN then
-         pos_y += 6
-       elseif payload.direction == DIRECTION_RIGHT then
-         pos_x += 6
-       elseif payload.direction == DIRECTION_LEFT then
-         pos_x -= 6
-       end
-       printh("NewPos: "..pos_x..","..pos_y)
-       local tmp = new_gbeam({pos= {x=pos_x, y=pos_y}, direction=payload.direction})
-
-       add(gm.gbeams, tmp)
+    if gm.state == "DISABLED" and (payload.input_mask & (1 << BTN_O)) == 0 then
+      gm.state = "ENABLED"
+      return
+    elseif gm.state == "DISABLED" then
+      return
     end
 
-    if (payload.input_mask & (1 << BTN_X)) > 0 then
-      -- Launch gravity, so eliminate existing gravs?
-      -- Maybe need to work this out in level design first
-      if count(gm.projectiles) > 0 then
-        -- del(gm.projectiles, gm.projectiles[1])
-        return
+    if (payload.input_mask & (1 << BTN_O)) > 0 and gm.gbeam == nil then
+      local pos_x = payload.pos_x
+      local pos_y = payload.pos_y
+      if payload.direction == DIRECTION_UP then
+        pos_y -= 6
+      elseif payload.direction == DIRECTION_DOWN then
+        pos_y += 6
+      elseif payload.direction == DIRECTION_RIGHT then
+        pos_x += 6
+      elseif payload.direction == DIRECTION_LEFT then
+        pos_x -= 6
       end
+      local tmp = new_gbeam({pos= {x=pos_x, y=pos_y}, direction=payload.direction})
 
+      gm.gbeam = tmp
+    elseif (payload.input_mask & (1 << BTN_O)) == 0 and gm.gbeam != nil then
+      -- Remove gbeam
+      gm.gbeam = nil 
+      -- Add event to stop affected items
+      qm.ae("GBEAM_REMOVED", {})
+    end
+        
+    if (payload.input_mask & (1 << BTN_X)) > 0 and count(gm.projectiles) == 0 then
       local pos_x = payload.pos_x
       local pos_y = payload.pos_y
       if payload.direction == 0 then
@@ -93,6 +95,12 @@ function new_gravity_manager()
     end
   end
 
+  gm.handle_entity_reaches_target = function(name, payload)
+    -- ej add handling here...
+    gm.state = "DISABLED"
+    gm.gbeam = nil 
+  end
+
   gm.update = function()
     for k, g in pairs(gm.gravities) do
       g.update()
@@ -101,11 +109,8 @@ function new_gravity_manager()
       end
     end
 
-    for k, g in pairs(gm.gbeams) do
-      g.update()
-      if g.state == "DEAD" then
-        del(gm.gbeams, g)
-      end
+    if gm.gbeam != nil then
+      gm.gbeam.update()
     end
 
     for k, p in pairs(gm.projectiles) do
@@ -188,8 +193,6 @@ function new_gbeam(payload)
   tmp.direction = payload.direction
   -- Set to max extent, can always pull this in later
   tmp.tail = { pos = move_in_direction(payload.direction, payload.pos, 30) }
-  -- tmp.size = { x=1, y=1 }
-  tmp.ttl = 30
   tmp.state = "HELD"
 
   -- Move in direction until we hit:
@@ -202,25 +205,21 @@ function new_gbeam(payload)
   while (iter_pos.x != flr(tmp.tail.pos.x) or iter_pos.y != flr(tmp.tail.pos.y)) and not collision_found do
     iter_pos = move_in_direction(payload.direction, iter_pos, 1)
     -- make sprite at this position
-    local tmp_sprite = new_sprite(0, iter_pos.x, iter_pos.y, 2, 2)
+    local tmp_sprite = new_sprite(0, iter_pos.x, iter_pos.y, 4, 4)
     for k, ent in pairs(ent_man.ents) do
-      if collides(tmp_sprite, ent) then
-        tmp.tail.pos.x = iter_pos.x
-        tmp.tail.pos.y = iter_pos.y
-        collision_found = true
-        do_gravity(ent, tmp.head.pos.x, tmp.head.pos.y, payload.direction)
-        break
+      if ent.type != ENT_BEAM then
+        if collides(tmp_sprite, ent) then
+          tmp.tail.pos.x = iter_pos.x
+          tmp.tail.pos.y = iter_pos.y
+          collision_found = true
+          do_gravity(ent, tmp.head.pos.x, tmp.head.pos.y, payload.direction)
+          break
+        end
       end
     end
   end
 
   tmp.update = function()
-    tmp.ttl -= 1
-    if tmp.ttl <= 0 then
-      tmp.state = "DEAD"
-      return
-    end
-
   end
 
   tmp.draw = function()
@@ -284,22 +283,6 @@ function new_projectile(coords, direction)
   return tmp
 end
 
-function calc_grav(coords_p, coords_g, vel_p, mass_p, mass_g)
-  local ginfo = ldistance(coords_p.x, coords_p.y, coords_g.x, coords_g.y)
-  local gdistance = ginfo.d
-  local G = 3.0
-  local new_vel_x = vel_p.x + ginfo.dxc * (G*mass_p*mass_g) / (gdistance * gdistance)
-  if new_vel_x > MAX_VEL then new_vel_x = MAX_VEL end
-  if new_vel_x < -MAX_VEL then new_vel_x = -MAX_VEL end
-  local new_vel_y = vel_p.y + ginfo.dyc * (G*mass_p*mass_g) / (gdistance * gdistance)
-  if new_vel_y > MAX_VEL then new_vel_y = MAX_VEL end
-  if new_vel_y < -MAX_VEL then new_vel_y = -MAX_VEL end
-  if ginfo.d < 0.5 then
-    return { gdistance = 0, vel = { x = 0, y = 0 } }
-  end
-  return { gdistance = ginfo.d, vel = { x = new_vel_x, y = new_vel_y } }
-end
-
 function ldistance(x0, y0, x1, y1)
   local dist_x = x0 - x1
   local dist_y = y0 - y1
@@ -320,3 +303,4 @@ function calc_cheat_grav(coords_p, coords_g, mass_p, mass_g)
   end
   return { gdistance = ginfo.d, vel = { x = new_vel_x, y = new_vel_y } }
 end
+

@@ -55,9 +55,11 @@ game_draw = function()
 
   camera(-64 + player.pos_x,-64 + player.pos_y)
   map(0, 0, level.map_offset.pos_x, level.map_offset.pos_y, 128, 32)
-  print("ps: "..player.state, player.pos_x-64, player.pos_y-64, 14)
-  print("ds: "..player.deaths, player.pos_x-64, player.pos_y-56, 14)
-  print("fo: "..player.frame_offset, player.pos_x-64, player.pos_y-48, 14)
+  print("ps: "..player.state, player.pos_x-64, player.pos_y-64, CLR_PNK)
+  print("gs: "..grav_man.state, player.pos_x-64, player.pos_y-56, CLR_PRP)
+  print("es: "..ent_man.ents[1].state, player.pos_x-64, player.pos_y-48, CLR_GRN)
+  -- print("ds: "..player.deaths, player.pos_x-64, player.pos_y-56, 14)
+  -- print("fo: "..player.frame_offset, player.pos_x-64, player.pos_y-48, 14)
   -- print("v: "..player.vel_x..":"..player.vel_y, 15)
   -- printh("v: "..player.vel_x..":"..player.vel_y)
   if player.invincible == false or (frame_counter % 4 == 1) then
@@ -72,9 +74,9 @@ game_draw = function()
     grav.draw()
   end)
 
-  foreach(grav_man.gbeams, function(grav)
-    grav.draw()
-  end)
+  if grav_man.gbeam != nil then
+    grav_man.gbeam.draw()
+  end
 
   foreach(grav_man.projectiles, function(grav)
     grav.draw()
@@ -204,7 +206,7 @@ end
 function _init()
   cls()
 
-  -- Get that kico
+  -- Set up event queue
   qm = qico()
   qm.at("BUTTON")
   qm.at("FUEL_COLLISION")
@@ -215,6 +217,10 @@ function _init()
   qm.at("BEAM_ITEM_COLLISION")
   qm.at("PLAYER_DEATH")
   qm.at("PROJ_EXPIRATION")
+  qm.at("GBEAM_REMOVED")
+  qm.at("ENTITY_REACHES_TARGET")
+  qm.at("ENTITY_REACHES_TARGET")
+  qm.at("PLAYER_ROTATION")
 
   -- Set up our score manager
   score_man = new_score_manager()
@@ -230,6 +236,9 @@ function _init()
   qm.as("ENTITY_GRAV_COLLISION", ent_man.handle_ent_grav_collision)
   qm.as("BEAM_BOX_COLLISION", ent_man.handle_beam_box_collision)
   qm.as("BEAM_ITEM_COLLISION", ent_man.handle_beam_item_collision)
+  qm.as("GBEAM_REMOVED", ent_man.handle_gbeam_removed)
+  qm.as("BUTTON", ent_man.handle_button)
+  qm.as("PLAYER_ROTATION", ent_man.handle_player_rotation)
 
   -- Create gravity manager
   grav_man = new_gravity_manager()
@@ -238,6 +247,7 @@ function _init()
   qm.as("ENTITY_GRAV_COLLISION", grav_man.handle_ent_grav_collision)
   qm.as("PROJ_PLAYER_COLLISION", grav_man.handle_proj_player_collision)
   qm.as("PLAYER_DEATH", grav_man.handle_player_death)
+  qm.as("ENTITY_REACHES_TARGET", grav_man.handle_entity_reaches_target)
 
   -- Add sprite
   player = new_player(1, 64, 64, 6, 6)
@@ -246,6 +256,7 @@ function _init()
   qm.as("BEAM_PLAYER_COLLISION", player.handle_beam_player_collision)
   qm.as("PROJ_PLAYER_COLLISION", player.handle_proj_player_collision)
   qm.as("PROJ_EXPIRATION", player.handle_proj_expiration)
+  qm.as("ENTITY_REACHES_TARGET", player.handle_entity_reaches_target)
 
   -- Load levels
   levels = get_levels()
@@ -263,6 +274,7 @@ function _init()
 end
 
 function init_level(l)
+  printh("init level")
   player.reset(l)
   ent_man.reset()
   for k, e in pairs(l.ents) do

@@ -80,6 +80,10 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
     end
   end
 
+  player.handle_entity_reaches_target = function(name, payload)
+    player.state = PLAYER_STATE_HOLDING
+  end
+
   player.handle_button = function(name, payload)
     -- If they're sliding, they can't do much
     if player.state == PLAYER_STATE_SLIDING then
@@ -100,6 +104,40 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
     if player.state == PLAYER_STATE_FLOATING and (payload.input_mask & (1 << BTN_X) > 0) then
         sc_sliding(player)
         return
+    end
+
+    -- If they're holding, all they can do is change the facing or release holding
+    if player.state == PLAYER_STATE_HOLDING then
+      if payload.input_mask & (1 << BTN_O) == 0 then
+        player.state = PLAYER_STATE_GROUNDED 
+        return
+      end
+
+      local new_facing = player.facing
+      if payload.input_mask & (1 << BTN_U) > 0 then
+        new_facing = DIRECTION_UP
+      end
+
+      if payload.input_mask & (1 << BTN_D) > 0 then
+        new_facing = DIRECTION_DOWN
+      end
+
+      if payload.input_mask & (1 << BTN_L) > 0 then
+        new_facing = DIRECTION_LEFT
+      end
+
+      if payload.input_mask & (1 << BTN_R) > 0 then
+        new_facing = DIRECTION_RIGHT
+      end
+
+      local rotation = resolve_rotation(player.facing, new_facing)
+      if rotation != "ROTATION_0" then
+        -- event
+        printh("resolved rot: "..rotation)
+        qm.ae("PLAYER_ROTATION", {rotation=rotation, pos_x=get_center_x(player), pos_y=get_center_y(player)})
+      end
+      player.facing = new_facing
+      return
     end
 
     -- If they're grounded, there's a projectile, and the press is a float toggle, make them float!
@@ -186,7 +224,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   end
 
   player.draw = function()
-    if player.state == PLAYER_STATE_GROUNDED then
+    if player.state == PLAYER_STATE_GROUNDED or player.state == PLAYER_STATE_HOLDING then
       -- spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
       local frames = player.frames_walking[player.facing + 1]
       spr(frames.anim[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, frames.flip, false)
@@ -205,8 +243,8 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   player.update = function(ent_man)
     local map_offset_x = 16
     local map_offset_y = 12
-    local player_center_x = player.pos_x + (player.size_x \ 2)
-    local player_center_y = player.pos_y + (player.size_y \ 2)
+    local player_center_x = get_center_x(player)
+    local player_center_y = get_center_y(player)
 
     local player_next_x = (player_center_x + player.vel_x) -- + (player.facing != 3 and 5 or 1)
     local player_next_y = player_center_y + player.vel_y -- + (player.facing == 2 and 7 or 0)
@@ -327,4 +365,44 @@ end
 function sc_sliding(player)
     player.state = PLAYER_STATE_SLIDING
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
+end
+
+-- Given two facings, decide how much rotation we just did
+function resolve_rotation(start_facing, end_facing)
+  if start_facing == end_facing then
+    return "ROTATION_0"
+  elseif start_facing == DIRECTION_UP and end_facing == DIRECTION_DOWN then
+    return "ROTATION_180_DOWN"
+  elseif start_facing == DIRECTION_UP and end_facing == DIRECTION_LEFT then
+    return "ROTATION_90_LEFT"
+  elseif start_facing == DIRECTION_UP and end_facing == DIRECTION_RIGHT then
+    return "ROTATION_90_RIGHT"
+  elseif start_facing == DIRECTION_DOWN and end_facing == DIRECTION_UP then
+    return "ROTATION_180_UP"
+  elseif start_facing == DIRECTION_DOWN and end_facing == DIRECTION_RIGHT then
+    return "ROTATION_90_LEFT"
+  elseif start_facing == DIRECTION_DOWN and end_facing == DIRECTION_LEFT then
+    return "ROTATION_90_RIGHT"
+  elseif start_facing == DIRECTION_LEFT and end_facing == DIRECTION_RIGHT then
+    return "ROTATION_180_RIGHT"
+  elseif start_facing == DIRECTION_LEFT and end_facing == DIRECTION_DOWN then
+    return "ROTATION_90_LEFT"
+  elseif start_facing == DIRECTION_LEFT and end_facing == DIRECTION_UP then
+    return "ROTATION_90_RIGHT"
+  elseif start_facing == DIRECTION_RIGHT and end_facing == DIRECTION_UP then
+    return "ROTATION_90_LEFT"
+  elseif start_facing == DIRECTION_RIGHT and end_facing == DIRECTION_DOWN then
+    return "ROTATION_90_RIGHT"
+  elseif start_facing == DIRECTION_RIGHT and end_facing == DIRECTION_LEFT then
+    return "ROTATION_180_LEFT"
+  end
+  return "ROTATION_UNKNOWN"
+end
+
+function get_center_x(sprite)
+    return flr(sprite.pos_x + (sprite.size_x \ 2))
+end
+
+function get_center_y(sprite)
+    return flr(sprite.pos_y + (sprite.size_y \ 2))
 end
