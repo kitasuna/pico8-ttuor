@@ -22,14 +22,8 @@ function new_entity_manager()
     ent_man.ents = {}
   end
 
-  -- Check if there are any ents at these coordinates
-  ent_man.check_collision = function(player)
-    for k, e in pairs(ent_man.ents) do
-      if collides(player, e) then
-        return true
-      end
-    end
-    return false
+  ent_man.handle_player_item_collision = function(name, payload)
+      del(ent_man.ents, payload.entity)
   end
 
   ent_man.handle_ent_grav_collision = function(name, payload)
@@ -84,17 +78,12 @@ function new_entity_manager()
   ent_man.handle_player_rotation = function(name, payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.state == ENT_STATE_HELD then
-        printh("rotevent: "..payload.rotation)
-        printh("player0: "..payload.pos_x..","..player.pos_y)
         -- Get coords relative to event coords (payload.pos_x/pos_y)
         local rot_type = payload.rotation
         local rel_x = flr(get_center_x(ent) - payload.pos_x)
         -- y coords are flipped since we're basically working in 4th quadrant
         -- in our base coord system
         local rel_y = flr(get_center_y(ent) - payload.pos_y)
-        printh("rel: "..rel_x..","..rel_y)
-        printh("ent: "..ent.pos_x..","..ent.pos_y)
-        printh("player1: "..payload.pos_x..","..player.pos_y)
         if rot_type == "ROTATION_90_LEFT" then
           ent.pos_x = payload.pos_x - (-rel_y) - (ent.size_x \ 2)
           ent.pos_y = payload.pos_y - rel_x - (ent.size_y \ 2)
@@ -113,10 +102,8 @@ function new_entity_manager()
         elseif rot_type == "ROTATION_180_DOWN" then
           ent.pos_x = ent.pos_x
           ent.pos_y = payload.pos_y - rel_y - (ent.size_y \ 2)
-          --printh("rotright newent: "..ent.pos_x..","..ent.pos_y)
         end
 
-        printh("newent: "..ent.pos_x..","..ent.pos_y)
         -- we only need to do this for one ent, so return
         return
       end

@@ -16,6 +16,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
 
   player.state = PLAYER_STATE_GROUNDED
   player.deaths = 0
+  player.score = 0
   player.vel_x = 0
   player.vel_y = 0
   player.invincible = false
@@ -48,6 +49,10 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
 
   player.handle_proj_player_collision = function(name, payload)
     sc_sliding(player)
+  end
+
+  player.handle_player_item_collision = function(name, payload)
+      player.score += 1
   end
 
   player.handle_beam_player_collision = function(name, payload)

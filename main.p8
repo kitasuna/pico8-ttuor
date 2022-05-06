@@ -6,7 +6,6 @@ __lua__
 #include player.lua
 #include entity.lua
 #include grav.lua
-#include score.lua
 #include level.lua
 #include title.lua
 #include countdown.lua
@@ -58,6 +57,8 @@ game_draw = function()
   print("ps: "..player.state, player.pos_x-64, player.pos_y-64, CLR_PNK)
   print("gs: "..grav_man.state, player.pos_x-64, player.pos_y-56, CLR_PRP)
   print("es: "..ent_man.ents[1].state, player.pos_x-64, player.pos_y-48, CLR_GRN)
+  print("d: "..player.deaths, player.pos_x+32, player.pos_y-64, CLR_RED)
+  print("s: "..player.score, player.pos_x+32, player.pos_y-56, CLR_BLU)
   -- print("ds: "..player.deaths, player.pos_x-64, player.pos_y-56, 14)
   -- print("fo: "..player.frame_offset, player.pos_x-64, player.pos_y-48, 14)
   -- print("v: "..player.vel_x..":"..player.vel_y, 15)
@@ -132,6 +133,10 @@ game_update = function()
 
 
     for k, ent in pairs(ent_man.ents) do
+      if ent.type == ENT_ITEM and collides(ent, player) then
+        qm.ae("PLAYER_ITEM_COLLISION", { entity=ent })
+      end
+
       if ent.type == ENT_BEAM and player.state != PLAYER_STATE_DEAD_ZAPPED and collides(ent, player) then
         qm.ae("BEAM_PLAYER_COLLISION", { entity=ent })
       end
@@ -221,9 +226,7 @@ function _init()
   qm.at("ENTITY_REACHES_TARGET")
   qm.at("ENTITY_REACHES_TARGET")
   qm.at("PLAYER_ROTATION")
-
-  -- Set up our score manager
-  score_man = new_score_manager()
+  qm.at("PLAYER_ITEM_COLLISION")
 
   gm = {}
   gm.handle_player_death = function(name, payload)
@@ -239,6 +242,7 @@ function _init()
   qm.as("GBEAM_REMOVED", ent_man.handle_gbeam_removed)
   qm.as("BUTTON", ent_man.handle_button)
   qm.as("PLAYER_ROTATION", ent_man.handle_player_rotation)
+  qm.as("PLAYER_ITEM_COLLISION", ent_man.handle_player_item_collision)
 
   -- Create gravity manager
   grav_man = new_gravity_manager()
@@ -257,6 +261,7 @@ function _init()
   qm.as("PROJ_PLAYER_COLLISION", player.handle_proj_player_collision)
   qm.as("PROJ_EXPIRATION", player.handle_proj_expiration)
   qm.as("ENTITY_REACHES_TARGET", player.handle_entity_reaches_target)
+  qm.as("PLAYER_ITEM_COLLISION", player.handle_player_item_collision)
 
   -- Load levels
   levels = get_levels()
