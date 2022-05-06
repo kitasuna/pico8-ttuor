@@ -263,15 +263,17 @@ end
 function ent_update(tmp)
   return function()
     local map_offset_x = 16
-    local map_offset_y = 16
-    local next_x = (tmp.pos_x + tmp.vel_x - map_offset_x) + (tmp.vel_x > 0 and 7 or 0)
-    local next_y = (tmp.pos_y + tmp.vel_y - map_offset_y) + (tmp.vel_y > 0 and 7 or 0)
-    local now_map_x = (tmp.pos_x - map_offset_x) \ 8
-    local now_map_y = (tmp.pos_y - map_offset_y) \ 8
-    local next_map_x = (next_x) \ 8
-    local next_map_y = (next_y) \ 8
+    local map_offset_y = 12
+    local ent_center_x = get_center_x(tmp)
+    local ent_center_y = get_center_y(tmp)
+    local ent_next_x = (ent_center_x + tmp.vel_x)--  + (tmp.vel_x > 0 and 7 or 0)
+    local ent_next_y = (ent_center_y + tmp.vel_y)--  + (tmp.vel_y > 0 and 7 or 0)
+    local curr_map_x = (ent_center_x - map_offset_x) \ 8
+    local next_map_x = (ent_next_x - map_offset_x) \ 8
+    local curr_map_y = (ent_center_y - map_offset_y) \ 8
+    local next_map_y = (ent_next_y - map_offset_y) \ 8
 
-    local next_map_tile_x = mget(next_map_x, now_map_y)
+    local next_map_tile_x = mget(next_map_x, curr_map_y)
     if fget(next_map_tile_x) & tmp.can_travel == 0 then
       tmp.vel_x = 0
       if tmp.vel_y != 0 then
@@ -290,7 +292,7 @@ function ent_update(tmp)
       tmp.pos_x += tmp.vel_x
     end
 
-    local next_map_tile_y = mget(now_map_x, next_map_y)
+    local next_map_tile_y = mget(curr_map_x, next_map_y)
     if fget(next_map_tile_y) & tmp.can_travel == 0 then
       tmp.vel_y = 0
       if tmp.vel_x != 0 then

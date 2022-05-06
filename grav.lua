@@ -78,17 +78,17 @@ function new_gravity_manager()
       local pos_x = payload.pos_x
       local pos_y = payload.pos_y
       if payload.direction == 0 then
-        pos_x = payload.pos_x
+        pos_x = payload.pos_x - 3
         pos_y = payload.pos_y - 10
       elseif payload.direction == 2 then
-        pos_x = payload.pos_x
+        pos_x = payload.pos_x - 3
         pos_y = payload.pos_y + 10
       elseif payload.direction == 1 then
         pos_x = payload.pos_x + 10
-        pos_y = payload.pos_y
+        pos_y = payload.pos_y - 3
       else
         pos_x = payload.pos_x - 10
-        pos_y = payload.pos_y
+        pos_y = payload.pos_y - 3
       end
       local tmp = new_projectile({pos_x=pos_x, pos_y=pos_y}, payload.direction)
       add(gm.projectiles, tmp)
@@ -126,51 +126,6 @@ function new_gravity_manager()
   return gm
 end
 
-function new_gravity(coords)
-  local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 2, 2, false, false)
-
-  tmp.mass = 1
-  tmp.ttl = 30
-  tmp.state = "HELD"
-  -- tmp.frame_base = 48
-  tmp.frame_index = 1
-
-  tmp.update = function()
-    if tmp.state == "PERSISTENT" then
-      tmp.frames = {37, 38, 39}
-    end
-
-    if tmp.state == "RELEASED" then
-      tmp.ttl -= 1
-      if tmp.ttl <= 0 then
-        tmp.state = "DEAD"
-      end
-    end
-
-    tmp.frame_index += 1
-    if tmp.frame_index > 22 then
-      tmp.frame_index = 1
-    end
-
-  end
-
-  tmp.release = function()
-    if tmp.state == "HELD" and tmp.mass == 1 then
-      tmp.state = "RELEASED"
-    elseif tmp.state == "HELD" and tmp.mass > 1 then
-      tmp.state = "PERSISTENT"
-    end
-  end
-
-  tmp.draw = function()
-    -- spr(tmp.frames[tmp.frame_index], tmp.pos_x, tmp.pos_y, 1.0, 1.0, tmp.flip_x, tmp.flip_y)
-    circ(tmp.pos_x+4, tmp.pos_y+4, 22 - tmp.frame_index, CLR_PRP)
-  end
-
-  return tmp
-
-end
-
 -- Int -> Coords -> Int -> Coords
 function move_in_direction(direction, pos, vel)
   if direction == DIRECTION_UP then
@@ -184,6 +139,7 @@ function move_in_direction(direction, pos, vel)
   end
   return pos
 end
+
 -- { pos :: Coords, direction :: Int }
 function new_gbeam(payload)
   -- local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 2, 2, false, false)
@@ -237,8 +193,6 @@ end
 function new_projectile(coords, direction)
   local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 6, 6, false, false)
   tmp.mass = 1
-  -- tmp.state = "HELD"
-  -- tmp.frame_base = 48
   tmp.frames = {37, 38, 39, 40, 41, 42, 39, 40}
   tmp.frame_index = 1
   tmp.frame_half_step = 1

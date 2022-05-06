@@ -8,10 +8,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   )
 
   local velocity_max = 1.0
-  -- local velocity_step_up = 0.08
-  -- local velocity_step_down = 0.08
-  local velocity_step_up = 0.2
-  local velocity_step_down = 0.2
   local slide_step_down = 0.035
 
   player.state = PLAYER_STATE_GROUNDED
@@ -138,7 +134,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
       local rotation = resolve_rotation(player.facing, new_facing)
       if rotation != "ROTATION_0" then
         -- event
-        printh("resolved rot: "..rotation)
         qm.ae("PLAYER_ROTATION", {rotation=rotation, pos_x=get_center_x(player), pos_y=get_center_y(player)})
       end
       player.facing = new_facing
@@ -173,37 +168,29 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
     -- Up
     if payload.input_mask & (1 << BTN_U) > 0 then
       player.facing = DIRECTION_UP
-      if abs(player.vel_y) < velocity_max then
-        player.vel_y -= velocity_step_up
-      end
-      -- Down
+      player.vel_y = -velocity_max
+    -- Down
     elseif payload.input_mask & (1 << BTN_D) > 0 then
       player.facing = DIRECTION_DOWN
-      if abs(player.vel_y) < velocity_max then
-        player.vel_y += velocity_step_up
-      end
-    elseif player.vel_y < 0 then
-      player.facing = DIRECTION_UP
-      player.vel_y += velocity_step_down
-    elseif player.vel_y > 0 then
-      player.facing = DIRECTION_DOWN
-      player.vel_y -= velocity_step_down
+      player.vel_y = velocity_max
+    end
+
+    if payload.input_mask & (1 << BTN_U) == 0 and
+      payload.input_mask & (1 << BTN_D) == 0 then
+      player.vel_y = 0
     end
 
     if payload.input_mask & (1 << BTN_L) > 0 then
       player.facing = DIRECTION_LEFT
-      if abs(player.vel_x) < velocity_max then
-        player.vel_x -= velocity_step_up
-      end
+      player.vel_x = -velocity_max
     elseif payload.input_mask & (1 << BTN_R) > 0 then
       player.facing = DIRECTION_RIGHT
-      if abs(player.vel_x) < velocity_max  then
-        player.vel_x += velocity_step_up
-      end
-    elseif player.vel_x > 0 then
-      player.vel_x -= velocity_step_down
-    elseif player.vel_x < 0 then
-      player.vel_x += velocity_step_down
+      player.vel_x = velocity_max
+    end
+
+    if payload.input_mask & (1 << BTN_L) == 0 and
+      payload.input_mask & (1 << BTN_R) == 0 then
+      player.vel_x = 0
     end
 
     if player.facing == DIRECTION_DOWN then
@@ -337,7 +324,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
       player.pos_y += player.vel_y
     end
 
-    -- the slide
+    -- the slide, deceleration and stopping
     if player.state == PLAYER_STATE_SLIDING then
       if player.vel_x > 0 then
         player.vel_x -= slide_step_down

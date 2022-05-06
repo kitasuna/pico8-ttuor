@@ -117,8 +117,8 @@ game_update = function()
     player.update(ent_man)
 
     qm.ae("BUTTON", {
-      pos_x = player.pos_x + (player.size_x \ 2),
-      pos_y = player.pos_y + (player.size_y \ 2),
+      pos_x = get_center_x(player),
+      pos_y = get_center_y(player),
       input_mask = input_mask,
       direction = player.facing,
       projectile = (count(grav_man.projectiles) > 0) and grav_man.projectiles[1] or nil
