@@ -185,7 +185,7 @@ end
 
 function new_beam(coords)
   -- Start size at 8x8
-  local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 4)
+  local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 6)
   tmp.vel_x = 0
   tmp.vel_y = 0
   tmp.type = ENT_BEAM
