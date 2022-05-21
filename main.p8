@@ -53,7 +53,7 @@ game_draw = function()
   cls()
 
   camera(-64 + player.pos_x,-64 + player.pos_y)
-  map(0, 0, level.map_offset.pos_x, level.map_offset.pos_y, 128, 32)
+  map(0, 0, level.map_offset_x, level.map_offset_y, 128, 32)
   print("ps: "..player.state, player.pos_x-64, player.pos_y-64, CLR_PNK)
   print("gs: "..grav_man.state, player.pos_x-64, player.pos_y-56, CLR_PRP)
   print("es: "..ent_man.ents[1].state, player.pos_x-64, player.pos_y-48, CLR_GRN)
@@ -116,13 +116,17 @@ game_update = function()
 
     player.update(ent_man)
 
-    qm.ae("BUTTON", {
-      pos_x = get_center_x(player),
-      pos_y = get_center_y(player),
-      input_mask = input_mask,
-      direction = player.facing,
-      projectile = (count(grav_man.projectiles) > 0) and grav_man.projectiles[1] or nil
-    })
+    -- Bit of a hack, but ignore button presses if the player is in a 
+    -- state that we consider "DEAD"
+    if player.is_dead() == false then
+      qm.ae("BUTTON", {
+        direction = player.facing,
+        pos_x = get_center_x(player),
+        pos_y = get_center_y(player),
+        input_mask = input_mask,
+        projectile = (count(grav_man.projectiles) > 0) and grav_man.projectiles[1] or nil
+      })
+    end
 
     grav_man.update()
     for k, g in pairs(grav_man.projectiles) do
@@ -227,6 +231,7 @@ function _init()
   qm.at("ENTITY_REACHES_TARGET")
   qm.at("PLAYER_ROTATION")
   qm.at("PLAYER_ITEM_COLLISION")
+  qm.at("LEVEL_INIT")
 
   gm = {}
   gm.handle_player_death = function(name, payload)
@@ -243,6 +248,7 @@ function _init()
   qm.as("BUTTON", ent_man.handle_button)
   qm.as("PLAYER_ROTATION", ent_man.handle_player_rotation)
   qm.as("PLAYER_ITEM_COLLISION", ent_man.handle_player_item_collision)
+  qm.as("LEVEL_INIT", ent_man.handle_level_init)
 
   -- Create gravity manager
   grav_man = new_gravity_manager()
@@ -262,6 +268,7 @@ function _init()
   qm.as("PROJ_EXPIRATION", player.handle_proj_expiration)
   qm.as("ENTITY_REACHES_TARGET", player.handle_entity_reaches_target)
   qm.as("PLAYER_ITEM_COLLISION", player.handle_player_item_collision)
+  qm.as("LEVEL_INIT", player.handle_level_init)
 
   -- Load levels
   levels = get_levels()
@@ -279,7 +286,6 @@ function _init()
 end
 
 function init_level(l)
-  printh("init level")
   player.reset(l)
   ent_man.reset()
   for k, e in pairs(l.ents) do
@@ -294,9 +300,11 @@ function init_level(l)
     end
   end
 
-  player.pos_x = l.player.pos_x
-  player.pos_y = l.player.pos_y
+  player.pos_x = l.player_pos_x
+  player.pos_y = l.player_pos_y
 
+  printh("x,y:"..l.map_offset_x..","..l.map_offset_y)
+  qm.ae("LEVEL_INIT", { map_offset_x=l.map_offset_x, map_offset_y=l.map_offset_y})
   timers = {}
 end
 

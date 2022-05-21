@@ -1,6 +1,8 @@
 function new_entity_manager()
   local ent_man = {
     ents = {},
+    map_offset_x = 0,
+    map_offset_y = 0,
   }
 
   ent_man.add_item = function(coords)
@@ -30,6 +32,11 @@ function new_entity_manager()
     if fget(payload.entity.num, FLAG_ABSORBED_BY_GRAV) == true then
       del(ent_man.ents, payload.entity)
     end
+  end
+
+  ent_man.handle_level_init = function(name, payload)
+    ent_man.map_offset_x = payload.map_offset_x
+    ent_man.map_offset_y = payload.map_offset_y
   end
 
   -- String -> { box: Box, beam: Beam }
@@ -213,13 +220,11 @@ function beam_update(beam)
     end
 
     local collision = false
-    local map_offset_x = 16
-    local map_offset_y = 16
-    local curr_map_x = (beam.pos_x - map_offset_x) \ 8
-    local curr_map_y = (beam.pos_y - map_offset_y) \ 8
+    local curr_map_x = (beam.pos_x - ent_man.map_offset_x) \ 8
+    local curr_map_y = (beam.pos_y - ent_man.map_offset_y) \ 8
     local beam_max_x = beam.pos_x
     while collision == false do
-      local next_map_x = ((beam_max_x + 1) - map_offset_x) \ 8
+      local next_map_x = ((beam_max_x + 1) - ent_man.map_offset_x) \ 8
       local flag = fget(mget(next_map_x, curr_map_y))
       if (fget(mget(next_map_x, curr_map_y)) & beam.can_travel) == 0 then
         collision = true
@@ -262,16 +267,14 @@ end
 
 function ent_update(tmp)
   return function()
-    local map_offset_x = 16
-    local map_offset_y = 12
     local ent_center_x = get_center_x(tmp)
     local ent_center_y = get_center_y(tmp)
     local ent_next_x = (ent_center_x + tmp.vel_x)--  + (tmp.vel_x > 0 and 7 or 0)
     local ent_next_y = (ent_center_y + tmp.vel_y)--  + (tmp.vel_y > 0 and 7 or 0)
-    local curr_map_x = (ent_center_x - map_offset_x) \ 8
-    local next_map_x = (ent_next_x - map_offset_x) \ 8
-    local curr_map_y = (ent_center_y - map_offset_y) \ 8
-    local next_map_y = (ent_next_y - map_offset_y) \ 8
+    local curr_map_x = (ent_center_x - ent_man.map_offset_x) \ 8
+    local next_map_x = (ent_next_x - ent_man.map_offset_x) \ 8
+    local curr_map_y = (ent_center_y - ent_man.map_offset_y) \ 8
+    local next_map_y = (ent_next_y - ent_man.map_offset_y) \ 8
 
     local next_map_tile_x = mget(next_map_x, curr_map_y)
     if fget(next_map_tile_x) & tmp.can_travel == 0 then

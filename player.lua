@@ -21,6 +21,8 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   player.frame_step = 0
   player.facing = DIRECTION_DOWN
   player.can_travel = (1 << FLAG_FLOOR)
+  player.map_offset_x = 0
+  player.map_offset_y = 0
 
   player.frames_walking = {
     { anim={7, 8, 7, 9}, flip=false },
@@ -31,6 +33,16 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
 
   player.frames_zapped = { 16, 17, 18, 16, 17, 18, 16, 17, 18 }
 
+  -- API, allows other entities to check on player
+  player.is_dead = function()
+    if player.state == PLAYER_STATE_DEAD_ZAPPED or
+      player.state == PLAYER_STATE_DEAD_FALLING then
+      return true
+    end
+
+    return false
+  end
+
   player.reset = function(l)
     player.frame_base = 1
     player.frame_offset = 1
@@ -39,8 +51,8 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
     player.state = PLAYER_STATE_GROUNDED
     player.vel_x = 0
     player.vel_y = 0
-    player.pos_x = l.player.pos_x
-    player.pos_y = l.player.pos_y
+    player.pos_x = l.player_pos_x
+    player.pos_y = l.player_pos_y
   end
 
   player.handle_proj_player_collision = function(name, payload)
@@ -85,6 +97,12 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
 
   player.handle_entity_reaches_target = function(name, payload)
     player.state = PLAYER_STATE_HOLDING
+  end
+
+  player.handle_level_init = function(name, payload)
+    -- TODO: We probably want more happening in here, like position etc
+    player.map_offset_x = payload.map_offset_x
+    player.map_offset_y = payload.map_offset_y - 4 -- cheat a little here
   end
 
   player.handle_button = function(name, payload)
@@ -235,17 +253,15 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   end
 
   player.update = function(ent_man)
-    local map_offset_x = 16
-    local map_offset_y = 12
     local player_center_x = get_center_x(player)
     local player_center_y = get_center_y(player)
 
     local player_next_x = (player_center_x + player.vel_x) -- + (player.facing != 3 and 5 or 1)
     local player_next_y = player_center_y + player.vel_y -- + (player.facing == 2 and 7 or 0)
-    local curr_map_x = (player_center_x - map_offset_x) \ 8
-    local next_map_x = (player_next_x - map_offset_x) \ 8
-    local curr_map_y = (player_center_y - map_offset_y) \ 8
-    local next_map_y = (player_next_y - map_offset_y) \ 8
+    local curr_map_x = (player_center_x - player.map_offset_x) \ 8
+    local next_map_x = (player_next_x - player.map_offset_x) \ 8
+    local curr_map_y = (player_center_y - player.map_offset_y) \ 8
+    local next_map_y = (player_next_y - player.map_offset_y) \ 8
     local can_move_x = true
     local can_move_y = true
 
