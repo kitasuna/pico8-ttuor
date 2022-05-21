@@ -44,7 +44,9 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   end
 
   player.handle_proj_player_collision = function(name, payload)
-    sc_sliding(player)
+    if player.state == PLAYER_STATE_FLOATING then
+      sc_sliding(player)
+    end
   end
 
   player.handle_player_item_collision = function(name, payload)
