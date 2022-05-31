@@ -76,19 +76,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
       player.frame_offset = 0
   end
 
-  player.handle_obs_collision = function(name, payload)
-    player.pos_x = 64
-    player.pos_y = 64
-    player.invincible = true
-    add(timers, {
-      ttl = 120,
-      f = function() end,
-      cleanup = function()
-        player.invincible = false
-      end
-    })
-  end
-
   player.handle_proj_expiration = function(name, payload)
     if player.state == PLAYER_STATE_FLOATING then
       sc_sliding(player) 
