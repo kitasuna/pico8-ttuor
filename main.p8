@@ -42,8 +42,9 @@ end
 
 victory_draw = function()
   cls()
-  print("VICTORY", 65, 65, CLR_DGN)
-  print("VICTORY", 64, 64, CLR_GRN)
+  camera()
+  print("VICTORY", 50, 65, CLR_DGN)
+  print("VICTORY", 51, 64, CLR_GRN)
 end
 
 victory_update = function()
@@ -115,7 +116,7 @@ game_update = function()
       input_mask = input_mask | (1 << BTN_X)
     end
 
-    player.update(ent_man)
+    player.update(ent_man, level)
 
     -- Bit of a hack, but ignore button presses if the player is in a 
     -- state that we consider "DEAD"
@@ -129,7 +130,7 @@ game_update = function()
       })
     end
 
-    grav_man.update()
+    grav_man.update(level)
     for k, g in pairs(grav_man.projectiles) do
       if collides(g, player) then
         qm.ae("PROJ_PLAYER_COLLISION", { projectile = g })
@@ -163,11 +164,6 @@ game_update = function()
       end
     end
 
-    local curr_map_x = (get_center_x(player) - player.map_offset_x) \ 8
-    local curr_map_y = (get_center_y(player) - player.map_offset_y) \ 8
-    if fget(mget(curr_map_x, curr_map_y), FLAG_STAIRS) then
-      printh("STAIRS!"..frame_counter)
-    end
 
     --printh("x,y: "..player.pos_x..","..player.pos_y)
 
@@ -199,7 +195,7 @@ game_update = function()
 
     for k,e in pairs(ent_man.ents) do
       -- Update pos first
-      e.update()
+      e.update(level)
     end
 
     for k,timer in pairs(timers) do
@@ -226,6 +222,7 @@ function _init()
 
   -- Set up event queue
   qm = qico()
+  -- Add some topics
   qm.at("BUTTON")
   qm.at("FUEL_COLLISION")
   qm.at("ENTITY_GRAV_COLLISION")
@@ -241,12 +238,35 @@ function _init()
   qm.at("PLAYER_ROTATION")
   qm.at("PLAYER_ITEM_COLLISION")
   qm.at("LEVEL_INIT")
+  qm.at("PLAYER_GOAL")
 
   gm = {}
   gm.handle_player_death = function(name, payload)
     init_level(payload.level)
   end
+
+  gm.handle_player_goal = function(name, payload)
+    level_index += 1 
+    if level_index > count(levels) then
+      __update = victory_update
+      __draw = victory_draw
+    else
+      level = levels[level_index]
+      init_level(level)
+      add(timers, {
+        ttl = COUNTDOWN_TIMEOUT,
+        f = function() end,
+        cleanup = function()
+          __update = game_update
+          __draw = game_draw
+        end
+      })
+      __update = countdown_update
+      __draw = countdown_draw
+    end
+  end
   qm.as("PLAYER_DEATH", gm.handle_player_death)
+  qm.as("PLAYER_GOAL", gm.handle_player_goal)
 
   -- Set up our entity manager
   ent_man = new_entity_manager()
@@ -282,7 +302,7 @@ function _init()
   -- Load levels
   levels = get_levels()
 
-  level_index = 2
+  level_index = 1
 
   -- Set up timers table for later...
   timers = {}

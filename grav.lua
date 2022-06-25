@@ -101,7 +101,7 @@ function new_gravity_manager()
     gm.gbeam = nil 
   end
 
-  gm.update = function()
+  gm.update = function(level)
     for k, g in pairs(gm.gravities) do
       g.update()
       if g.state == "DEAD" then
@@ -114,7 +114,7 @@ function new_gravity_manager()
     end
 
     for k, p in pairs(gm.projectiles) do
-      p.update()
+      p.update(level)
 
       if p.ttl < 0 then
         del(gm.projectiles, p)
@@ -214,7 +214,7 @@ function new_projectile(coords, direction)
     tmp.vel_y = 0
   end
 
-  tmp.update = function()
+  tmp.update = function(level)
     tmp.frame_half_step += 1
     if tmp.frame_half_step > tmp.frame_step then
       tmp.frame_half_step = 1
@@ -226,7 +226,7 @@ function new_projectile(coords, direction)
 
     tmp.ttl -= 1
 
-    ent_update(tmp)()
+    ent_update(tmp)(level)
 
   end
 

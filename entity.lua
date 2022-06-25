@@ -266,15 +266,15 @@ function ent_draw(ent)
 end
 
 function ent_update(tmp)
-  return function()
+  return function(level)
     local ent_center_x = get_center_x(tmp)
     local ent_center_y = get_center_y(tmp)
     local ent_next_x = (ent_center_x + tmp.vel_x)--  + (tmp.vel_x > 0 and 7 or 0)
     local ent_next_y = (ent_center_y + tmp.vel_y)--  + (tmp.vel_y > 0 and 7 or 0)
-    local curr_map_x = (ent_center_x - ent_man.map_offset_x) \ 8
-    local next_map_x = (ent_next_x - ent_man.map_offset_x) \ 8
-    local curr_map_y = (ent_center_y - ent_man.map_offset_y) \ 8
-    local next_map_y = (ent_next_y - ent_man.map_offset_y) \ 8
+    local curr_map_x = ((ent_center_x - ent_man.map_offset_x) \ 8) + level.start_tile_x
+    local next_map_x = ((ent_next_x - ent_man.map_offset_x) \ 8) + level.start_tile_x
+    local curr_map_y = ((ent_center_y - ent_man.map_offset_y) \ 8) + level.start_tile_y
+    local next_map_y = ((ent_next_y - ent_man.map_offset_y) \ 8) + level.start_tile_y
 
     local next_map_tile_x = mget(next_map_x, curr_map_y)
     if fget(next_map_tile_x) & tmp.can_travel == 0 then
