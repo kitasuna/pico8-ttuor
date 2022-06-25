@@ -1,6 +1,8 @@
 function new_entity_manager()
   local ent_man = {
     ents = {},
+    map_offset_x = 0,
+    map_offset_y = 0,
   }
 
   ent_man.add_item = function(coords)
@@ -22,42 +24,8 @@ function new_entity_manager()
     ent_man.ents = {}
   end
 
-  -- Check if there are any ents at these coordinates
-  ent_man.check_collision = function(player)
-    for k, e in pairs(ent_man.ents) do
-      if collides(player, e) then
-        return true
-      end
-    end
-    return false
-  end
-
-  -- String -> {pos_x: Int, pos_y: Int, mass: Int }
-  ent_man.handle_gravity = function(name, payload)
-
-    -- Find any ents in range
-    -- Calculate change in velocity based on distance of entity from payload pos
-    for k, e in pairs(ent_man.ents) do
-      local grav_result = calc_grav(
-      {x=e.pos_x, y=e.pos_y},
-      {x=payload.pos_x, y=payload.pos_y},
-      {x=e.vel_x, y=e.vel_y},
-      1.0,
-      payload.mass
-      )
-      if grav_result.gdistance < 1 and fget(e.num, FLAG_ABSORBED_BY_GRAV) == false then
-        e.vel_x = 0
-        e.vel_y = 0
-        e.pos_x = payload.pos_x
-        e.pos_y = payload.pos_y
-        return
-      end
-
-      if grav_result.gdistance < 22*payload.mass then
-        e.vel_x = grav_result.vel.x
-        e.vel_y = grav_result.vel.y
-      end
-    end
+  ent_man.handle_player_item_collision = function(name, payload)
+      del(ent_man.ents, payload.entity)
   end
 
   ent_man.handle_ent_grav_collision = function(name, payload)
@@ -66,13 +34,124 @@ function new_entity_manager()
     end
   end
 
+  ent_man.handle_level_init = function(name, payload)
+    ent_man.map_offset_x = payload.map_offset_x
+    ent_man.map_offset_y = payload.map_offset_y
+  end
+
   -- String -> { box: Box, beam: Beam }
   ent_man.handle_beam_box_collision = function(name, payload)
     payload.beam.blocked_by = payload.box
-    printh("box blocked by")
+  end
+
+  -- String -> { item: Item, beam: Beam }
+  ent_man.handle_beam_item_collision = function(name, payload)
+    payload.item.state = ENT_STATE_BROKEN
+    payload.item.feels_grav = false
+    payload.item.vel_x = 0
+    payload.item.vel_y = 0
+    add(timers, {
+      ttl = 120,
+      f = function() end,
+      cleanup = function()
+        del(ent_man.ents, payload.item)
+      end
+    })
+  end
+
+  ent_man.handle_gbeam_removed = function(name, payload)
+    for k, ent in pairs(ent_man.ents) do
+      if ent.tgt_x != nil or ent.tgt_y != nil then
+        ent.vel_x = 0
+        ent.vel_y = 0
+        ent.tgt_x = nil
+        ent.tgt_y = nil
+      end
+    end
+  end
+
+  ent_man.handle_button = function(name, payload)
+    for k, ent in pairs(ent_man.ents) do
+      if ent.state == ENT_STATE_HELD then
+        if (payload.input_mask & (1 << BTN_O)) == 0 then
+          -- unhand that item!
+          ent.state = ENT_STATE_NORMAL
+        end
+      end
+    end
+  end
+
+  -- String -> { rotation: Rotation, pos_x: Int, pos_y Int }
+  ent_man.handle_player_rotation = function(name, payload)
+    for k, ent in pairs(ent_man.ents) do
+      if ent.state == ENT_STATE_HELD then
+        -- Get coords relative to event coords (payload.pos_x/pos_y)
+        local rot_type = payload.rotation
+        local rel_x = flr(get_center_x(ent) - payload.pos_x)
+        -- y coords are flipped since we're basically working in 4th quadrant
+        -- in our base coord system
+        local rel_y = flr(get_center_y(ent) - payload.pos_y)
+        if rot_type == "ROTATION_90_LEFT" then
+          ent.pos_x = payload.pos_x - (-rel_y) - (ent.size_x \ 2)
+          ent.pos_y = payload.pos_y - rel_x - (ent.size_y \ 2)
+        elseif rot_type == "ROTATION_90_RIGHT" then
+          ent.pos_x = payload.pos_x + (-rel_y) - (ent.size_x \ 2)
+          ent.pos_y = payload.pos_y + rel_x - (ent.size_y \ 2)
+        elseif rot_type == "ROTATION_180_RIGHT" then
+          ent.pos_x = payload.pos_x - rel_x - (ent.size_x \ 2)
+          ent.pos_y = ent.pos_y
+        elseif rot_type == "ROTATION_180_LEFT" then
+          ent.pos_x = payload.pos_x - rel_x - (ent.size_x \2)-- - ent.size_x
+          ent.pos_y = ent.pos_y
+        elseif rot_type == "ROTATION_180_UP" then
+          ent.pos_x = ent.pos_x
+          ent.pos_y = payload.pos_y - rel_y - (ent.size_y \ 2)
+        elseif rot_type == "ROTATION_180_DOWN" then
+          ent.pos_x = ent.pos_x
+          ent.pos_y = payload.pos_y - rel_y - (ent.size_y \ 2)
+        end
+
+        -- we only need to do this for one ent, so return
+        return
+      end
+    end
   end
 
   return ent_man
+end
+
+-- Entity -> XPos -> YPos -> Direction -> Entity
+function do_gravity(ent, pos_x, pos_y, direction)
+  if ent.feels_grav == true then
+    local ent_vel = 1
+    if direction == DIRECTION_UP then
+      -- vel should be downwards
+      ent.vel_x = 0
+      ent.vel_y = ent_vel
+      ent.tgt_x = ent.pos_x
+      ent.tgt_y = pos_y
+      elseif direction == DIRECTION_DOWN then
+      -- vel should be upwards
+      ent.vel_x = 0
+      ent.vel_y = -ent_vel
+      ent.tgt_x = ent.pos_x
+      ent.tgt_y = pos_y
+      elseif direction == DIRECTION_RIGHT then
+        --vel should be to the left
+      ent.vel_x = -ent_vel
+      ent.vel_y = 0
+      ent.tgt_x = pos_x
+      ent.tgt_y = ent.pos_y
+      elseif direction == DIRECTION_LEFT then
+      --vel should be to the right
+      ent.vel_x = ent_vel
+      ent.vel_y = 0
+      ent.tgt_x = pos_x
+      ent.tgt_y = ent.pos_y
+    end
+  end
+
+  return ent
 end
 
 function new_item(coords)
@@ -80,7 +159,13 @@ function new_item(coords)
 
   tmp.vel_x = 0
   tmp.vel_y = 0
+  tmp.type = ENT_ITEM
   tmp.can_travel = 1 << FLAG_FLOOR
+  tmp.state = ENT_STATE_NORMAL
+  tmp.frames = { NORMAL={frames={28}, len=20}, BROKEN={frames={29}, len=20}, HELD={frames={28}, len=10} }
+  tmp.frame_half_step = 0
+  tmp.frame_offset = 1
+  tmp.feels_grav = true
 
   tmp.update = ent_update(tmp)
   tmp.draw = ent_draw(tmp)
@@ -88,12 +173,17 @@ function new_item(coords)
 end
 
 function new_box(coords)
-  local tmp = new_sprite(33, coords.pos_x, coords.pos_y, 8, 8)
+  local tmp = new_sprite(43, coords.pos_x, coords.pos_y, 8, 8)
 
   tmp.vel_x = 0
   tmp.vel_y = 0
   tmp.type = ENT_BOX
   tmp.can_travel = 1 << FLAG_FLOOR
+  tmp.state = ENT_STATE_NORMAL
+  tmp.frames = { NORMAL={frames={43},len=10}, HELD={frames={43},len=10} }
+  tmp.frame_half_step = 0
+  tmp.frame_offset = 1
+  tmp.feels_grav = true
 
   tmp.update = ent_update(tmp)
   tmp.draw = ent_draw(tmp)
@@ -102,7 +192,7 @@ end
 
 function new_beam(coords)
   -- Start size at 8x8
-  local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 4)
+  local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 6)
   tmp.vel_x = 0
   tmp.vel_y = 0
   tmp.type = ENT_BEAM
@@ -130,13 +220,11 @@ function beam_update(beam)
     end
 
     local collision = false
-    local map_offset_x = 16
-    local map_offset_y = 16
-    local curr_map_x = (beam.pos_x - map_offset_x) \ 8
-    local curr_map_y = (beam.pos_y - map_offset_y) \ 8
+    local curr_map_x = (beam.pos_x - ent_man.map_offset_x) \ 8
+    local curr_map_y = (beam.pos_y - ent_man.map_offset_y) \ 8
     local beam_max_x = beam.pos_x
     while collision == false do
-      local next_map_x = ((beam_max_x + 1) - map_offset_x) \ 8
+      local next_map_x = ((beam_max_x + 1) - ent_man.map_offset_x) \ 8
       local flag = fget(mget(next_map_x, curr_map_y))
       if (fget(mget(next_map_x, curr_map_y)) & beam.can_travel) == 0 then
         collision = true
@@ -167,23 +255,28 @@ function beam_draw(beam)
 end
 
 function ent_draw(ent)
+  if ent.state != nil then
+    return function()
+      spr(ent.frames[ent.state].frames[ent.frame_offset], ent.pos_x, ent.pos_y)  
+    end
+  end
   return function()
     spr(ent.num, ent.pos_x, ent.pos_y)
   end
 end
 
 function ent_update(tmp)
-  return function()
-    local map_offset_x = 16
-    local map_offset_y = 16
-    local next_x = (tmp.pos_x + tmp.vel_x - map_offset_x) + (tmp.vel_x > 0 and 7 or 0)
-    local next_y = (tmp.pos_y + tmp.vel_y - map_offset_y) + (tmp.vel_y > 0 and 7 or 0)
-    local now_map_x = (tmp.pos_x - map_offset_x) \ 8
-    local now_map_y = (tmp.pos_y - map_offset_y) \ 8
-    local next_map_x = (next_x) \ 8
-    local next_map_y = (next_y) \ 8
+  return function(level)
+    local ent_center_x = get_center_x(tmp)
+    local ent_center_y = get_center_y(tmp)
+    local ent_next_x = (ent_center_x + tmp.vel_x)--  + (tmp.vel_x > 0 and 7 or 0)
+    local ent_next_y = (ent_center_y + tmp.vel_y)--  + (tmp.vel_y > 0 and 7 or 0)
+    local curr_map_x = ((ent_center_x - ent_man.map_offset_x) \ 8) + level.start_tile_x
+    local next_map_x = ((ent_next_x - ent_man.map_offset_x) \ 8) + level.start_tile_x
+    local curr_map_y = ((ent_center_y - ent_man.map_offset_y) \ 8) + level.start_tile_y
+    local next_map_y = ((ent_next_y - ent_man.map_offset_y) \ 8) + level.start_tile_y
 
-    local next_map_tile_x = mget(next_map_x, now_map_y)
+    local next_map_tile_x = mget(next_map_x, curr_map_y)
     if fget(next_map_tile_x) & tmp.can_travel == 0 then
       tmp.vel_x = 0
       if tmp.vel_y != 0 then
@@ -193,6 +286,8 @@ function ent_update(tmp)
           f = function() end,
           cleanup = function()
             tmp.vel_y = 0
+            tmp.tgt_x = nil
+            tmp.tgt_y = nil
           end
         })
         end
@@ -200,7 +295,7 @@ function ent_update(tmp)
       tmp.pos_x += tmp.vel_x
     end
 
-    local next_map_tile_y = mget(now_map_x, next_map_y)
+    local next_map_tile_y = mget(curr_map_x, next_map_y)
     if fget(next_map_tile_y) & tmp.can_travel == 0 then
       tmp.vel_y = 0
       if tmp.vel_x != 0 then
@@ -210,11 +305,27 @@ function ent_update(tmp)
           f = function() end,
           cleanup = function()
             tmp.vel_x = 0
+            tmp.tgt_x = nil
+            tmp.tgt_y = nil
           end
         })
       end
     else
       tmp.pos_y += tmp.vel_y
+    end
+
+    -- stop if we've reached the target
+    if tmp.tgt_x != nil and tmp.tgt_y != nil then
+      local ginfo = ldistance(tmp.pos_x + 4, tmp.pos_y + 4, tmp.tgt_x, tmp.tgt_y)
+      if ginfo.d < 5 then
+        -- Center on the target
+        tmp.vel_x = 0
+        tmp.vel_y = 0
+        tmp.tgt_x = nil
+        tmp.tgt_y = nil
+        tmp.state = ENT_STATE_HELD
+        qm.ae("ENTITY_REACHES_TARGET", {})
+      end
     end
   end
 end
