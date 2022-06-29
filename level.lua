@@ -24,11 +24,11 @@ function get_levels()
       map_offset_x = 16, -- use these values (in pixels) to offset the coordinates of entities and player
       map_offset_y = 16,
       player_pos_x = ((1*8) + 16),
-      player_pos_y = ((3*8) + 16),
+      player_pos_y = ((6*8) + 16),
       map_tile_width = 5,
       map_tile_height = 10,
       ents = {
-        {type=ENT_BOX, pos_x= (8*8)+16, pos_y = (5*8)+16},
+        {type=ENT_BOX, pos_x= (1*8)+16, pos_y = (3*8)+16},
       }
     },
   }
