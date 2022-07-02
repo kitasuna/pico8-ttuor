@@ -85,6 +85,32 @@ function get_levels()
         ent_at(ENT_ITEM, 3, 9),
       }
     },
+    {
+      label="05",
+      start_tile_x = 59, -- x index of the upper-left map tile to draw
+      start_tile_y = 0, -- y index of the upper left map tile to draw
+      map_offset_x = 16, -- use these values (in pixels) to offset the coordinates of entities and player
+      map_offset_y = 16,
+      player_pos_x = ((7*8) + 16),
+      player_pos_y = ((9*8) + 16),
+      -- Map tile width / height is the total number of tiles to draw
+      map_tile_width = 17,
+      map_tile_height = 13,
+      ents = {
+        -- Assuming that (start_tile_x, start_tile_y) is the origin tile
+        -- given the expression:
+        -- (TILE_NUMBER*8) + MAP_OFFSET
+        -- update TILE_NUMBER to be the starting tile for the entity
+        ent_at(ENT_ITEM, 13, 4),
+        ent_at(ENT_BEAM, 12, 7),
+        ent_at(ENT_BOX, 13, 1),
+        ent_at(ENT_BEAM, 1, 6),
+        ent_at(ENT_BEAM, 1, 1),
+        ent_at(ENT_BEAM, 1, 8),
+        ent_at(ENT_BOX, 1, 9),
+        -- ent_at(ENT_ITEM, 3, 9),
+      }
+    },
   }
 end
 
