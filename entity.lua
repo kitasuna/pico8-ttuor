@@ -220,11 +220,11 @@ function beam_update(beam)
     end
 
     local collision = false
-    local curr_map_x = (beam.pos_x - ent_man.map_offset_x) \ 8
-    local curr_map_y = (beam.pos_y - ent_man.map_offset_y) \ 8
+    local curr_map_x = ((beam.pos_x - ent_man.map_offset_x) \ 8) + level.start_tile_x
+    local curr_map_y = ((beam.pos_y - ent_man.map_offset_y) \ 8) + level.start_tile_y
     local beam_max_x = beam.pos_x
     while collision == false do
-      local next_map_x = ((beam_max_x + 1) - ent_man.map_offset_x) \ 8
+      local next_map_x = (((beam_max_x + 1) - ent_man.map_offset_x) \ 8) + level.start_tile_x
       local flag = fget(mget(next_map_x, curr_map_y))
       if (fget(mget(next_map_x, curr_map_y)) & beam.can_travel) == 0 then
         collision = true
