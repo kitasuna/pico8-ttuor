@@ -4,8 +4,6 @@ function get_levels()
       label="01",
       start_tile_x = 0, -- x index of the upper-left map tile to draw
       start_tile_y = 0, -- y index of the upper left map tile to draw
-      map_offset_x = 0, -- use these values (in pixels) to offset the coordinates of entities and player
-      map_offset_y = 0, -- ... relative to the starting offset coordinate?
       player_pos_x = ((1*8) + 0),
       player_pos_y = ((3*8) + 0),
       map_tile_width = 16,
@@ -21,10 +19,8 @@ function get_levels()
       label="02",
       start_tile_x = 18, -- x index of the upper-left map tile to draw
       start_tile_y = 0, -- y index of the upper left map tile to draw
-      map_offset_x = 16, -- use these values (in pixels) to offset the coordinates of entities and player
-      map_offset_y = 16,
-      player_pos_x = ((1*8) + 16),
-      player_pos_y = ((7*8) + 16),
+      player_pos_x = ((1*8) + 0),
+      player_pos_y = ((7*8) + 0),
       -- Map tile width / height is the total number of tiles to draw
       map_tile_width = 12,
       map_tile_height = 10,
@@ -33,21 +29,19 @@ function get_levels()
         -- given the expression:
         -- (TILE_NUMBER*8) + MAP_OFFSET
         -- update TILE_NUMBER to be the starting tile for the entity
-        {type=ENT_ITEM, pos_x= (5*8)+16, pos_y = (5*8)+16},
-        {type=ENT_BOX, pos_x= (4*8)+16, pos_y = (5*8)+16},
-        {type=ENT_BOX, pos_x= (6*8)+16, pos_y = (5*8)+16},
-        {type=ENT_BOX, pos_x= (5*8)+16, pos_y = (4*8)+16},
-        {type=ENT_BOX, pos_x= (5*8)+16, pos_y = (6*8)+16},
+        {type=ENT_ITEM, pos_x= (5*8)+0, pos_y = (5*8)+0},
+        {type=ENT_BOX, pos_x= (4*8)+0, pos_y = (5*8)+0},
+        {type=ENT_BOX, pos_x= (6*8)+0, pos_y = (5*8)+0},
+        {type=ENT_BOX, pos_x= (5*8)+0, pos_y = (4*8)+0},
+        {type=ENT_BOX, pos_x= (5*8)+0, pos_y = (6*8)+0},
       }
     },
     {
       label="03",
       start_tile_x = 32, -- x index of the upper-left map tile to draw
       start_tile_y = 0, -- y index of the upper left map tile to draw
-      map_offset_x = 16, -- use these values (in pixels) to offset the coordinates of entities and player
-      map_offset_y = 16,
-      player_pos_x = ((10*8) + 16),
-      player_pos_y = ((6*8) + 16),
+      player_pos_x = ((10*8)),
+      player_pos_y = ((6*8)),
       -- Map tile width / height is the total number of tiles to draw
       map_tile_width = 13,
       map_tile_height = 14,
@@ -68,10 +62,8 @@ function get_levels()
       label="04",
       start_tile_x = 46, -- x index of the upper-left map tile to draw
       start_tile_y = 0, -- y index of the upper left map tile to draw
-      map_offset_x = 16, -- use these values (in pixels) to offset the coordinates of entities and player
-      map_offset_y = 16,
-      player_pos_x = ((2*8) + 16),
-      player_pos_y = ((2*8) + 16),
+      player_pos_x = ((2*8) + 0),
+      player_pos_y = ((2*8) + 0),
       -- Map tile width / height is the total number of tiles to draw
       map_tile_width = 12,
       map_tile_height = 13,
@@ -89,10 +81,8 @@ function get_levels()
       label="05",
       start_tile_x = 59, -- x index of the upper-left map tile to draw
       start_tile_y = 0, -- y index of the upper left map tile to draw
-      map_offset_x = 16, -- use these values (in pixels) to offset the coordinates of entities and player
-      map_offset_y = 16,
-      player_pos_x = ((7*8) + 16),
-      player_pos_y = ((9*8) + 16),
+      player_pos_x = ((7*8) + 0),
+      player_pos_y = ((9*8) + 0),
       -- Map tile width / height is the total number of tiles to draw
       map_tile_width = 17,
       map_tile_height = 13,
@@ -115,5 +105,5 @@ function get_levels()
 end
 
 function ent_at(ent_type, tile_x, tile_y)
-  return {type=ent_type, pos_x=(tile_x*8)+16, pos_y=(tile_y*8)+16}
+  return {type=ent_type, pos_x=(tile_x*8)+0, pos_y=(tile_y*8)+0}
 end

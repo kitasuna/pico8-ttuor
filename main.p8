@@ -165,34 +165,6 @@ game_update = function()
     end
 
 
-    --printh("x,y: "..player.pos_x..","..player.pos_y)
-
-    -- if gravity.mass > level.critical_mass then
-    if false then
-      level_index += 1
-      if level_index > count(levels) then
-        __update = victory_update
-        __draw = victory_draw
-      else
-        gravity.reset()
-        level = levels[level_index]
-        init_level(level)
-        __update = countdown_update
-        __draw = countdown_draw
-        add(timers, {
-          ttl = COUNTDOWN_TIMEOUT,
-          f = function() end,
-          cleanup = function()
-            __update = game_update
-            __draw = game_draw
-          end
-        })
-        return
-      end
-
-      return
-    end
-
     for k,e in pairs(ent_man.ents) do
       -- Update pos first
       e.update(level)
@@ -223,23 +195,24 @@ function _init()
   -- Set up event queue
   qm = qico()
   -- Add some topics
-  qm.at("BUTTON")
-  qm.at("FUEL_COLLISION")
-  qm.at("ENTITY_GRAV_COLLISION")
-  qm.at("PROJ_PLAYER_COLLISION")
-  qm.at("BEAM_BOX_COLLISION")
-  qm.at("BEAM_PLAYER_COLLISION")
-  qm.at("BEAM_ITEM_COLLISION")
-  qm.at("PLAYER_DEATH")
-  qm.at("PROJ_EXPIRATION")
-  qm.at("GBEAM_REMOVED")
-  qm.at("ENTITY_REACHES_TARGET")
-  qm.at("ENTITY_REACHES_TARGET")
-  qm.at("PLAYER_ROTATION")
-  qm.at("PLAYER_ITEM_COLLISION")
-  qm.at("LEVEL_INIT")
-  qm.at("PLAYER_GOAL")
-
+  qm.ats({
+    "BUTTON",
+    "FUEL_COLLISION",
+    "ENTITY_GRAV_COLLISION",
+    "PROJ_PLAYER_COLLISION",
+    "BEAM_BOX_COLLISION",
+    "BEAM_PLAYER_COLLISION",
+    "BEAM_ITEM_COLLISION",
+    "PLAYER_DEATH",
+    "PROJ_EXPIRATION",
+    "GBEAM_REMOVED",
+    "ENTITY_REACHES_TARGET",
+    "ENTITY_REACHES_TARGET",
+    "PLAYER_ROTATION",
+    "PLAYER_ITEM_COLLISION",
+    "LEVEL_INIT",
+    "PLAYER_GOAL",
+  })
   gm = {}
   gm.handle_player_death = function(name, payload)
     init_level(payload.level)
@@ -302,7 +275,7 @@ function _init()
   -- Load levels
   levels = get_levels()
 
-  level_index = 2
+  level_index = 3
 
   -- Set up timers table for later...
   timers = {}
@@ -332,8 +305,7 @@ function init_level(l)
   player.pos_x = l.player_pos_x
   player.pos_y = l.player_pos_y
 
-  printh("x,y:"..l.map_offset_x..","..l.map_offset_y)
-  qm.ae("LEVEL_INIT", { map_offset_x=l.map_offset_x, map_offset_y=l.map_offset_y})
+  qm.ae("LEVEL_INIT", {})
   timers = {}
 end
 

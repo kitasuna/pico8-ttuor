@@ -21,8 +21,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   player.frame_step = 0
   player.facing = DIRECTION_DOWN
   player.can_travel = (1 << FLAG_FLOOR)
-  player.map_offset_x = 0
-  player.map_offset_y = 0
 
   player.frames_walking = {
     { anim={7, 8, 7, 9}, flip=false },
@@ -88,8 +86,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
 
   player.handle_level_init = function(name, payload)
     -- TODO: We probably want more happening in here, like position etc
-    player.map_offset_x = payload.map_offset_x
-    player.map_offset_y = payload.map_offset_y - 4 -- cheat a little here
   end
 
   player.handle_button = function(name, payload)
@@ -245,10 +241,10 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
 
     local player_next_x = (player_center_x + player.vel_x) -- + (player.facing != 3 and 5 or 1)
     local player_next_y = player_center_y + player.vel_y -- + (player.facing == 2 and 7 or 0)
-    local curr_map_x = ((player_center_x - player.map_offset_x) \ 8) + level.start_tile_x
-    local next_map_x = ((player_next_x - player.map_offset_x) \ 8) + level.start_tile_x
-    local curr_map_y = ((player_center_y - player.map_offset_y) \ 8) + level.start_tile_y
-    local next_map_y = ((player_next_y - player.map_offset_y) \ 8) + level.start_tile_y
+    local curr_map_x = (player_center_x \ 8) + level.start_tile_x
+    local next_map_x = (player_next_x \ 8) + level.start_tile_x
+    local curr_map_y = (player_center_y \ 8) + level.start_tile_y
+    local next_map_y = (player_next_y \ 8) + level.start_tile_y
     local can_move_x = true
     local can_move_y = true
 
@@ -304,8 +300,6 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
       can_move_y = false
     end
 
-    -- local curr_map_x = (get_center_x(player) - player.map_offset_x) \ 8
-    -- local curr_map_y = (get_center_y(player) - player.map_offset_y) \ 8
     if fget(mget(curr_map_x, curr_map_y), FLAG_STAIRS) then
       -- printh("STAIRS!"..frame_counter)
       qm.ae("PLAYER_GOAL", {})

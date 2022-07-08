@@ -144,11 +144,16 @@ end
 function new_gbeam(payload)
   -- local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 2, 2, false, false)
   local tmp = {}
-  tmp.head = { pos = { x=payload.pos.x, y=payload.pos.y } }
-  tmp.tail = { pos = { x=payload.pos.x, y=payload.pos.y } }
+  tmp.head_pos_x = payload.pos.x
+  tmp.head_pos_y = payload.pos.y
+  tmp.tail_pos_x = payload.pos.y
+  tmp.tail_pos_y = payload.pos.y
   tmp.direction = payload.direction
   -- Set to max extent, can always pull this in later
-  tmp.tail = { pos = move_in_direction(payload.direction, payload.pos, 30) }
+  local new_tail = move_in_direction(payload.direction, payload.pos, 30)
+  -- tmp.tail = { pos = move_in_direction(payload.direction, payload.pos, 30) }
+  tmp.tail_pos_x = new_tail.x
+  tmp.tail_pos_y = new_tail.y
   tmp.state = "HELD"
 
   -- Move in direction until we hit:
@@ -156,19 +161,19 @@ function new_gbeam(payload)
   -- 2) a bad tile
   -- 3) our max extent
   -- TODO: Add collision with map tiles
-  local iter_pos = { x=flr(tmp.head.pos.x), y=flr(tmp.head.pos.y) }
+  local iter_pos = { x=flr(tmp.head_pos_x), y=flr(tmp.head_pos_y) }
   local collision_found = false
-  while (iter_pos.x != flr(tmp.tail.pos.x) or iter_pos.y != flr(tmp.tail.pos.y)) and not collision_found do
+  while (iter_pos.x != flr(tmp.tail_pos_x) or iter_pos.y != flr(tmp.tail_pos_y)) and not collision_found do
     iter_pos = move_in_direction(payload.direction, iter_pos, 1)
     -- make sprite at this position
     local tmp_sprite = new_sprite(0, iter_pos.x, iter_pos.y, 4, 4)
     for k, ent in pairs(ent_man.ents) do
       if ent.type != ENT_BEAM then
         if collides(tmp_sprite, ent) then
-          tmp.tail.pos.x = iter_pos.x
-          tmp.tail.pos.y = iter_pos.y
+          tmp.tail_pos_x = iter_pos.x
+          tmp.tail_pos_y = iter_pos.y
           collision_found = true
-          do_gravity(ent, tmp.head.pos.x, tmp.head.pos.y, payload.direction)
+          do_gravity(ent, tmp.head_pos_x, tmp.head_pos_y, payload.direction)
           break
         end
       end
@@ -179,10 +184,17 @@ function new_gbeam(payload)
   end
 
   tmp.draw = function()
-    -- spr(tmp.frames[tmp.frame_index], tmp.pos_x, tmp.pos_y, 1.0, 1.0, tmp.flip_x, tmp.flip_y)
     if tmp.state == "HELD" then
-      -- circ(tmp.pos_x+4, tmp.pos_y+4, 22 - tmp.frame_index, CLR_PRP)
-      line(tmp.head.pos.x, tmp.head.pos.y, tmp.tail.pos.x, tmp.tail.pos.y, CLR_GRN)
+      local colors = sort_from({ CLR_PNK, CLR_WHT, CLR_PRP }, (frame_counter % 3) + 1)
+      if tmp.direction == DIRECTION_UP or tmp.direction == DIRECTION_DOWN then
+        line(tmp.head_pos_x - 1, tmp.head_pos_y, tmp.tail_pos_x - 1, tmp.tail_pos_y, colors[1])
+        line(tmp.head_pos_x, tmp.head_pos_y, tmp.tail_pos_x, tmp.tail_pos_y, colors[2])
+        line(tmp.head_pos_x + 1, tmp.head_pos_y, tmp.tail_pos_x + 1, tmp.tail_pos_y, colors[3])
+      else
+        line(tmp.head_pos_x, tmp.head_pos_y - 1, tmp.tail_pos_x, tmp.tail_pos_y - 1, colors[1])
+        line(tmp.head_pos_x, tmp.head_pos_y, tmp.tail_pos_x, tmp.tail_pos_y, colors[2])
+        line(tmp.head_pos_x, tmp.head_pos_y + 1 , tmp.tail_pos_x, tmp.tail_pos_y + 1, colors[3])
+      end
     end
   end
 
@@ -190,6 +202,20 @@ function new_gbeam(payload)
 
 end
 
+function sort_from(arr, start_idx)
+  local new_arr = {}
+  local new_idx = 1
+  local curr_idx = start_idx
+  while count(new_arr) < count(arr) do
+    new_arr[new_idx] = arr[curr_idx]
+    new_idx += 1
+    curr_idx += 1
+    if curr_idx > count(arr) then
+      curr_idx = 1
+    end
+  end
+  return new_arr
+end
 function new_projectile(coords, direction)
   local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 6, 6, false, false)
   tmp.mass = 1

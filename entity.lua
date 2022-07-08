@@ -1,8 +1,6 @@
 function new_entity_manager()
   local ent_man = {
     ents = {},
-    map_offset_x = 0,
-    map_offset_y = 0,
   }
 
   ent_man.add_item = function(coords)
@@ -35,8 +33,6 @@ function new_entity_manager()
   end
 
   ent_man.handle_level_init = function(name, payload)
-    ent_man.map_offset_x = payload.map_offset_x
-    ent_man.map_offset_y = payload.map_offset_y
   end
 
   -- String -> { box: Box, beam: Beam }
@@ -218,13 +214,12 @@ function beam_update(beam)
         beam.blocked_by = nil
       end
     end
-
     local collision = false
-    local curr_map_x = ((beam.pos_x - ent_man.map_offset_x) \ 8) + level.start_tile_x
-    local curr_map_y = ((beam.pos_y - ent_man.map_offset_y) \ 8) + level.start_tile_y
+    local curr_map_x = (beam.pos_x \ 8) + level.start_tile_x
+    local curr_map_y = (beam.pos_y \ 8) + level.start_tile_y
     local beam_max_x = beam.pos_x
     while collision == false do
-      local next_map_x = (((beam_max_x + 1) - ent_man.map_offset_x) \ 8) + level.start_tile_x
+      local next_map_x = ((beam_max_x + 1) \ 8) + level.start_tile_x
       local flag = fget(mget(next_map_x, curr_map_y))
       if (fget(mget(next_map_x, curr_map_y)) & beam.can_travel) == 0 then
         collision = true
@@ -249,7 +244,6 @@ function beam_draw(beam)
       line(beam.pos_x, y_offset + 1, x_max, y_offset + 1)
       line(beam.pos_x, y_offset + 2, x_max, y_offset + 2)
       line(beam.pos_x, y_offset + 3, x_max, y_offset + 3)
-      -- spr(50 + (frame_counter % 3), x_max, y_offset - 2)
     end
   end
 end
@@ -271,10 +265,10 @@ function ent_update(tmp)
     local ent_center_y = get_center_y(tmp)
     local ent_next_x = (ent_center_x + tmp.vel_x)--  + (tmp.vel_x > 0 and 7 or 0)
     local ent_next_y = (ent_center_y + tmp.vel_y)--  + (tmp.vel_y > 0 and 7 or 0)
-    local curr_map_x = ((ent_center_x - ent_man.map_offset_x) \ 8) + level.start_tile_x
-    local next_map_x = ((ent_next_x - ent_man.map_offset_x) \ 8) + level.start_tile_x
-    local curr_map_y = ((ent_center_y - ent_man.map_offset_y) \ 8) + level.start_tile_y
-    local next_map_y = ((ent_next_y - ent_man.map_offset_y) \ 8) + level.start_tile_y
+    local curr_map_x = (ent_center_x \ 8) + level.start_tile_x
+    local next_map_x = (ent_next_x \ 8) + level.start_tile_x
+    local curr_map_y = (ent_center_y \ 8) + level.start_tile_y
+    local next_map_y = (ent_next_y \ 8) + level.start_tile_y
 
     local next_map_tile_x = mget(next_map_x, curr_map_y)
     if fget(next_map_tile_x) & tmp.can_travel == 0 then
