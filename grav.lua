@@ -96,7 +96,6 @@ function new_gravity_manager()
   end
 
   gm.handle_entity_reaches_target = function(payload)
-    -- ej add handling here...
     gm.state = "DISABLED"
     gm.gbeam = nil 
   end
@@ -219,10 +218,12 @@ end
 function new_projectile(coords, direction)
   local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 6, 6, false, false)
   tmp.mass = 1
-  tmp.frames = {37, 38, 39, 40, 41, 42, 39, 40}
+  tmp.bgcoloridx = 1
+  tmp.incoloridx = 2
+  tmp.colors = { CLR_PNK, CLR_WHT, CLR_PRP }
   tmp.frame_index = 1
   tmp.frame_half_step = 1
-  tmp.frame_step = 4
+  tmp.frame_step = 3
   tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
   tmp.ttl = 180
   local launch_velocity = 1.2
@@ -244,9 +245,13 @@ function new_projectile(coords, direction)
     tmp.frame_half_step += 1
     if tmp.frame_half_step > tmp.frame_step then
       tmp.frame_half_step = 1
-      tmp.frame_index += 1
-      if tmp.frame_index > count(tmp.frames) then
-        tmp.frame_index = 1
+      tmp.bgcoloridx += 1
+      tmp.incoloridx += 1
+      if tmp.bgcoloridx > count(tmp.colors) then
+        tmp.bgcoloridx = 1
+      end
+      if tmp.incoloridx > count(tmp.colors) then
+        tmp.incoloridx = 1
       end
     end
 
@@ -257,7 +262,8 @@ function new_projectile(coords, direction)
   end
 
   tmp.draw = function()
-    spr(tmp.frames[tmp.frame_index], tmp.pos_x, tmp.pos_y, 1.0, 1.0, tmp.flip_x, tmp.flip_y)
+    circfill(tmp.pos_x+4, tmp.pos_y+4, 3, tmp.colors[tmp.bgcoloridx])
+    circfill(tmp.pos_x+4, tmp.pos_y+4, tmp.frame_half_step, tmp.colors[tmp.incoloridx])
   end
 
   return tmp

@@ -311,11 +311,8 @@ end
 
 function _update60()
   -- Kinda hacky; but if we're in "game mode" do this stuff
+  -- currently unused
   if __update == game_update then
-    if false then -- TODO: Add game over condition here
-      __update = over_update
-      __draw = over_draw
-    end
   end
 
   __update()

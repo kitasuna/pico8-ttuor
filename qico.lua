@@ -27,7 +27,6 @@ function qico()
           iv(v.payload)
         end
       end
-      -- q[k] = nil
     end
     q = {}
   end
