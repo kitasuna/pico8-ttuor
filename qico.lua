@@ -24,7 +24,7 @@ function qico()
     for k,v in pairs(q) do
       if t[v.name] != nil then
         for ik,iv in pairs(t[v.name]) do
-          iv(v.name, v.payload)
+          iv(v.payload)
         end
       end
       -- q[k] = nil

@@ -53,17 +53,17 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
     player.pos_y = l.player_pos_y
   end
 
-  player.handle_proj_player_collision = function(name, payload)
+  player.handle_proj_player_collision = function(payload)
     if player.state == PLAYER_STATE_FLOATING then
       sc_sliding(player)
     end
   end
 
-  player.handle_player_item_collision = function(name, payload)
+  player.handle_player_item_collision = function(payload)
       player.score += 1
   end
 
-  player.handle_beam_player_collision = function(name, payload)
+  player.handle_beam_player_collision = function(payload)
       player.deaths += 1
       player.can_move_x = false
       player.can_move_y = false
@@ -74,21 +74,21 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
       player.frame_offset = 0
   end
 
-  player.handle_proj_expiration = function(name, payload)
+  player.handle_proj_expiration = function(payload)
     if player.state == PLAYER_STATE_FLOATING then
       sc_sliding(player) 
     end
   end
 
-  player.handle_entity_reaches_target = function(name, payload)
+  player.handle_entity_reaches_target = function(payload)
     player.state = PLAYER_STATE_HOLDING
   end
 
-  player.handle_level_init = function(name, payload)
+  player.handle_level_init = function(payload)
     -- TODO: We probably want more happening in here, like position etc
   end
 
-  player.handle_button = function(name, payload)
+  player.handle_button = function(payload)
     -- If they're sliding, they can't do much
     if player.state == PLAYER_STATE_SLIDING then
       return

@@ -21,7 +21,7 @@ function new_gravity_manager()
   end
 
   -- String -> { entity: Entity, grav: Gravity }
-  gm.handle_ent_grav_collision = function(name, payload)
+  gm.handle_ent_grav_collision = function(payload)
     for k, g in pairs(gm.gravities) do
       if g == payload.grav then
         -- g.grow()
@@ -30,11 +30,11 @@ function new_gravity_manager()
   end
 
   -- String -> { projectile: Projectile }
-  gm.handle_proj_player_collision = function(name, payload)
+  gm.handle_proj_player_collision = function(payload)
     del(gm.projectiles, payload.projectile) 
   end
 
-  gm.handle_player_death = function(name, payload)
+  gm.handle_player_death = function(payload)
     for k, g in pairs(gm.gravities) do
       del(gm.gravities, g) 
     end
@@ -44,7 +44,7 @@ function new_gravity_manager()
   end
 
   -- String -> { pos_x: Int, pos_y: Int, direction: Int, input_mask: Int }
-  gm.handle_button = function(name, payload)
+  gm.handle_button = function(payload)
     if gm.state == "DISABLED" and (payload.input_mask & (1 << BTN_O)) == 0 then
       gm.state = "ENABLED"
       return
@@ -95,7 +95,7 @@ function new_gravity_manager()
     end
   end
 
-  gm.handle_entity_reaches_target = function(name, payload)
+  gm.handle_entity_reaches_target = function(payload)
     -- ej add handling here...
     gm.state = "DISABLED"
     gm.gbeam = nil 

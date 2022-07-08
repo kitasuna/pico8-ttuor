@@ -214,11 +214,11 @@ function _init()
     "PLAYER_GOAL",
   })
   gm = {}
-  gm.handle_player_death = function(name, payload)
+  gm.handle_player_death = function(payload)
     init_level(payload.level)
   end
 
-  gm.handle_player_goal = function(name, payload)
+  gm.handle_player_goal = function(payload)
     level_index += 1 
     if level_index > count(levels) then
       __update = victory_update

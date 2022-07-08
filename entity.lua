@@ -22,26 +22,26 @@ function new_entity_manager()
     ent_man.ents = {}
   end
 
-  ent_man.handle_player_item_collision = function(name, payload)
+  ent_man.handle_player_item_collision = function(payload)
       del(ent_man.ents, payload.entity)
   end
 
-  ent_man.handle_ent_grav_collision = function(name, payload)
+  ent_man.handle_ent_grav_collision = function(payload)
     if fget(payload.entity.num, FLAG_ABSORBED_BY_GRAV) == true then
       del(ent_man.ents, payload.entity)
     end
   end
 
-  ent_man.handle_level_init = function(name, payload)
+  ent_man.handle_level_init = function(payload)
   end
 
   -- String -> { box: Box, beam: Beam }
-  ent_man.handle_beam_box_collision = function(name, payload)
+  ent_man.handle_beam_box_collision = function(payload)
     payload.beam.blocked_by = payload.box
   end
 
   -- String -> { item: Item, beam: Beam }
-  ent_man.handle_beam_item_collision = function(name, payload)
+  ent_man.handle_beam_item_collision = function(payload)
     payload.item.state = ENT_STATE_BROKEN
     payload.item.feels_grav = false
     payload.item.vel_x = 0
@@ -55,7 +55,7 @@ function new_entity_manager()
     })
   end
 
-  ent_man.handle_gbeam_removed = function(name, payload)
+  ent_man.handle_gbeam_removed = function(payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.tgt_x != nil or ent.tgt_y != nil then
         ent.vel_x = 0
@@ -66,7 +66,7 @@ function new_entity_manager()
     end
   end
 
-  ent_man.handle_button = function(name, payload)
+  ent_man.handle_button = function(payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.state == ENT_STATE_HELD then
         if (payload.input_mask & (1 << BTN_O)) == 0 then
@@ -78,7 +78,7 @@ function new_entity_manager()
   end
 
   -- String -> { rotation: Rotation, pos_x: Int, pos_y Int }
-  ent_man.handle_player_rotation = function(name, payload)
+  ent_man.handle_player_rotation = function(payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.state == ENT_STATE_HELD then
         -- Get coords relative to event coords (payload.pos_x/pos_y)
