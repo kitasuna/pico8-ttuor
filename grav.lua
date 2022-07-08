@@ -1,32 +1,13 @@
 function new_gravity_manager()
   local gm = {
-    gravities = {},
     projectiles = {},
     gbeam = nil,
     state = "ENABLED",
   }
 
   gm.reset = function()
-    gm.gravities = {}
-  end
-
-  -- Used to check for obstacle / gravity collision
-  gm.check_collision = function(obs)
-    for k, g in pairs(gm.gravities) do
-      if collides(obs, g) then
-        return true
-      end
-    end
-    return false
-  end
-
-  -- String -> { entity: Entity, grav: Gravity }
-  gm.handle_ent_grav_collision = function(payload)
-    for k, g in pairs(gm.gravities) do
-      if g == payload.grav then
-        -- g.grow()
-      end
-    end
+    gm.projectiles = {}
+    gm.gbeam = nil
   end
 
   -- String -> { projectile: Projectile }
@@ -35,9 +16,6 @@ function new_gravity_manager()
   end
 
   gm.handle_player_death = function(payload)
-    for k, g in pairs(gm.gravities) do
-      del(gm.gravities, g) 
-    end
     for k, g in pairs(gm.projectiles) do
       del(gm.projectiles, g) 
     end
@@ -101,13 +79,6 @@ function new_gravity_manager()
   end
 
   gm.update = function(level)
-    for k, g in pairs(gm.gravities) do
-      g.update()
-      if g.state == "DEAD" then
-        del(gm.gravities, g)
-      end
-    end
-
     if gm.gbeam != nil then
       gm.gbeam.update()
     end

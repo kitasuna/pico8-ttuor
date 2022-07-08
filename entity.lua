@@ -26,12 +26,6 @@ function new_entity_manager()
       del(ent_man.ents, payload.entity)
   end
 
-  ent_man.handle_ent_grav_collision = function(payload)
-    if fget(payload.entity.num, FLAG_ABSORBED_BY_GRAV) == true then
-      del(ent_man.ents, payload.entity)
-    end
-  end
-
   ent_man.handle_level_init = function(payload)
   end
 
