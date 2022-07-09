@@ -181,6 +181,7 @@ end
 
 function _init()
   cls()
+  printh("!!!!init")
 
   -- Set up event queue
   qm = qico()

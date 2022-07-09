@@ -1,14 +1,14 @@
-function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
+function new_player(sprite_num, pos_x, pos_y)
   local player = new_sprite(
   sprite_num,
   pos_x,
   pos_y,
-  size_x,
-  size_y
+  6,
+  6
   )
 
   local velocity_max = 1.0
-  local slide_step_down = 0.035
+  local slide_step_down = 0.05
 
   player.state = PLAYER_STATE_GROUNDED
   player.deaths = 0
@@ -156,6 +156,8 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
 
         player.vel_x = grav_result.vel.x
         player.vel_y = grav_result.vel.y
+        printh("float vel x: " ..player.vel_x)
+        printh("float vel y: " ..player.vel_y)
 
         return
     end
@@ -236,14 +238,24 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
   end
 
   player.update = function(ent_man, level)
-    local player_center_x = get_center_x(player)
-    local player_center_y = get_center_y(player)
 
-    local player_next_x = (player_center_x + player.vel_x) -- + (player.facing != 3 and 5 or 1)
-    local player_next_y = player_center_y + player.vel_y -- + (player.facing == 2 and 7 or 0)
-    local curr_map_x = (player_center_x \ 8) + level.start_tile_x
+    local approx_vel_x = player.vel_x
+    if approx_vel_x < 0 then
+      approx_vel_x = flr(approx_vel_x)
+    elseif approx_vel_x > 0 then
+      approx_vel_x = ceil(approx_vel_x)
+    end
+    local approx_vel_y = player.vel_y
+    if approx_vel_y < 0 then
+      approx_vel_y = flr(approx_vel_y)
+    elseif approx_vel_y > 0 then
+      approx_vel_y = ceil(approx_vel_y)
+    end
+    local player_next_x = get_center_x(player) + approx_vel_x -- + (player.facing != 3 and 5 or 1)
+    local player_next_y = get_center_y(player) + approx_vel_y -- + (player.facing == 2 and 7 or 0)
+    local curr_map_x = (get_center_x(player) \ 8) + level.start_tile_x
     local next_map_x = (player_next_x \ 8) + level.start_tile_x
-    local curr_map_y = (player_center_y \ 8) + level.start_tile_y
+    local curr_map_y = (get_center_y(player) \ 8) + level.start_tile_y
     local next_map_y = (player_next_y \ 8) + level.start_tile_y
     local can_move_x = true
     local can_move_y = true
@@ -292,6 +304,7 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
     end
 
     if fget(mget(curr_map_x, next_map_y)) & player.can_travel == 0 then
+      printh("pny: "..player_next_y..":"..player.vel_y..":"..frame_counter)
       can_move_y = false
     end
 
@@ -301,33 +314,31 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
     end
 
     if fget(mget(curr_map_x, curr_map_y), FLAG_STAIRS) then
-      -- printh("STAIRS!"..frame_counter)
       qm.ae("PLAYER_GOAL", {})
     end
 
     -- Make a hypothetical player sprite at the next location after update and check for collision
     local player_at_next = new_sprite(
       0, -- sprite num, doesn't matter
-      player.pos_x+player.vel_x,
-      player.pos_y+player.vel_y,
-      player.size_x,
-      player.size_y
+      player_next_x,
+      player_next_y,
+      player.size_x - 1, -- cheat with smaller player size for ents
+      player.size_y - 1
     )
     for k, ent in pairs(ent_man.ents) do
       if fget(ent.num, FLAG_COLLIDES_PLAYER) == true then
-        if collides(player_at_next, ent) then 
+      local cheat_ent = new_sprite(
+        0, -- sprite num, doesn't matter
+        ent.pos_x,
+        ent.pos_y,
+        ent.size_x - 1, -- cheat with smaller size for ents
+        ent.size_y - 1
+      )
+        if collides(player_at_next, cheat_ent) then 
           can_move_x = false
           can_move_y = false
         end
       end
-    end
-
-    if can_move_x == true then
-      player.pos_x += player.vel_x
-    end
-
-    if can_move_y == true then
-      player.pos_y += player.vel_y
     end
 
     -- the slide, deceleration and stopping
@@ -344,10 +355,10 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
         player.vel_y += slide_step_down
       end
 
-      if (player.vel_x <= slide_step_down and player.vel_x >= -slide_step_down) then
+      if (player.vel_x <= slide_step_down and player.vel_x >= -slide_step_down) or can_move_x == false then
         player.vel_x = 0
       end
-      if (player.vel_y <= slide_step_down and player.vel_y >= -slide_step_down) then
+      if (player.vel_y <= slide_step_down and player.vel_y >= -slide_step_down) or can_move_y == false then
         player.vel_y = 0
       end
 
@@ -355,6 +366,15 @@ function new_player(sprite_num, pos_x, pos_y, size_x, size_y)
         player.state = PLAYER_STATE_GROUNDED
       end
     end
+
+    if can_move_x == true then
+      player.pos_x += player.vel_x
+    end
+
+    if can_move_y == true then
+      player.pos_y += player.vel_y
+    end
+
   end
 
   return player

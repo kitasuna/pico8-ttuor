@@ -253,8 +253,14 @@ end
 
 function calc_cheat_grav(coords_p, coords_g, mass_p, mass_g)
   local ginfo = ldistance(coords_p.x, coords_p.y, coords_g.x, coords_g.y)
-  local new_vel_x = ginfo.dxc * 1.0
-  local new_vel_y = ginfo.dyc * 1.0
+  local new_vel_x = ginfo.dxc * 1.3
+  local new_vel_y = ginfo.dyc * 1.3
+  if (new_vel_x > 0 and new_vel_x < 0.1) or (new_vel_x < 0 and new_vel_x > -0.1) then
+    new_vel_x = 0
+  end
+  if (new_vel_y > 0 and new_vel_y < 0.1) or (new_vel_y < 0 and new_vel_y > -0.1) then
+    new_vel_y = 0
+  end
   if ginfo.d < 0.5 then
     return { gdistance = 0, vel = { x = 0, y = 0 } }
   end
