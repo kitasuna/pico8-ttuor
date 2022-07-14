@@ -77,9 +77,9 @@ game_draw = function()
     grav_man.gbeam.draw()
   end
 
-  foreach(grav_man.projectiles, function(grav)
-    grav.draw()
-  end)
+  if grav_man.wormhole != nil then
+    grav_man.wormhole.draw()
+  end
 
   -- camera()
   -- print("ps: "..player.state, player.pos_x - 64, player.pos_y - 56, 14)
@@ -122,15 +122,13 @@ game_update = function()
         pos_x = get_center_x(player),
         pos_y = get_center_y(player),
         input_mask = input_mask,
-        projectile = (count(grav_man.projectiles) > 0) and grav_man.projectiles[1] or nil
+        projectile = grav_man.wormhole
       })
     end
 
     grav_man.update(level)
-    for k, g in pairs(grav_man.projectiles) do
-      if collides(g, player) then
-        qm.ae("PROJ_PLAYER_COLLISION", { projectile = g })
-      end
+    if grav_man.wormhole != nil and collides(grav_man.wormhole, player) then
+      qm.ae("PROJ_PLAYER_COLLISION", { projectile = g })
     end
 
 
@@ -202,6 +200,7 @@ function _init()
     "PLAYER_ITEM_COLLISION",
     "LEVEL_INIT",
     "PLAYER_GOAL",
+    "PLAYER_CANCEL_FLOAT",
   })
   gm = {}
   gm.handle_player_death = function(payload)
@@ -248,6 +247,7 @@ function _init()
   qm.as("PROJ_PLAYER_COLLISION", grav_man.handle_proj_player_collision)
   qm.as("PLAYER_DEATH", grav_man.handle_player_death)
   qm.as("ENTITY_REACHES_TARGET", grav_man.handle_entity_reaches_target)
+  qm.as("PLAYER_CANCEL_FLOAT", grav_man.handle_player_cancel_float)
 
   -- Add sprite
   player = new_player(1, 64, 64, 6, 6)
@@ -263,7 +263,7 @@ function _init()
   -- Load levels
   levels = get_levels()
 
-  level_index = 2
+  level_index = 4
 
   -- Set up timers table for later...
   timers = {}
@@ -278,6 +278,7 @@ end
 function init_level(l)
   player.reset(l)
   ent_man.reset()
+  grav_man.reset()
   for k, e in pairs(l.ents) do
     if e.type==ENT_ITEM then
       ent_man.add_item(e)
@@ -467,7 +468,7 @@ d22d22d0d22d22d0d22d22d0d22d22d00000000072e111277211e1277211e1eee2111e2707e1117e
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 03030303030303030303030303030303000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __gff__
-0001010101010101010101010101010101010100000000002042020004040404040404040000000000000010000000000000000000000000000000000000000002000000000000000000000000000000020202020200000000000000000000000002000000000000000000000000000002020202020200000000000000000000
+0001010101010101010101010101010101010100000000002242020004040404040404040000000000000010000000000000000000000000000000000000000002000000000000000000000000000000020202020200000000000000000000000002000000000000000000000000000002020202020200000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
 555555555555005555555555551a1a1a1a1a0000000000000000000000000000000000000000000000000000000000000000000000000000000000454343434343461818181818434343460000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000

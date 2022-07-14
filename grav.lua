@@ -1,24 +1,23 @@
 function new_gravity_manager()
   local gm = {
-    projectiles = {},
+    wormhole = nil,
     gbeam = nil,
     state = "ENABLED",
   }
 
   gm.reset = function()
-    gm.projectiles = {}
+    gm.wormhole = nil
     gm.gbeam = nil
   end
 
   -- String -> { projectile: Projectile }
   gm.handle_proj_player_collision = function(payload)
-    del(gm.projectiles, payload.projectile) 
+    gm.wormhole = nil
   end
 
   gm.handle_player_death = function(payload)
-    for k, g in pairs(gm.projectiles) do
-      del(gm.projectiles, g) 
-    end
+    gm.wormhole = nil
+    gm.gbeam = nil
   end
 
   -- String -> { pos_x: Int, pos_y: Int, direction: Int, input_mask: Int }
@@ -35,12 +34,16 @@ function new_gravity_manager()
       local pos_y = payload.pos_y
       if payload.direction == DIRECTION_UP then
         pos_y -= 6
+        pos_x -= 1
       elseif payload.direction == DIRECTION_DOWN then
         pos_y += 6
+        pos_x += 2
       elseif payload.direction == DIRECTION_RIGHT then
         pos_x += 6
+        pos_y += 1
       elseif payload.direction == DIRECTION_LEFT then
-        pos_x -= 6
+        pos_x -= 8
+        pos_y += 1
       end
       local tmp = new_gbeam({pos= {x=pos_x, y=pos_y}, direction=payload.direction})
 
@@ -52,7 +55,7 @@ function new_gravity_manager()
       qm.ae("GBEAM_REMOVED", {})
     end
         
-    if (payload.input_mask & (1 << BTN_X)) > 0 and count(gm.projectiles) == 0 then
+    if (payload.input_mask & (1 << BTN_X)) > 0 and gm.wormhole == nil then
       local pos_x = payload.pos_x
       local pos_y = payload.pos_y
       if payload.direction == 0 then
@@ -68,8 +71,7 @@ function new_gravity_manager()
         pos_x = payload.pos_x - 10
         pos_y = payload.pos_y - 3
       end
-      local tmp = new_projectile({pos_x=pos_x, pos_y=pos_y}, payload.direction)
-      add(gm.projectiles, tmp)
+      gm.wormhole = new_projectile({pos_x=pos_x, pos_y=pos_y}, payload.direction)
     end
   end
 
@@ -78,16 +80,21 @@ function new_gravity_manager()
     gm.gbeam = nil 
   end
 
+  gm.handle_player_cancel_float = function(payload)
+    if gm.wormhole != nil then
+      gm.wormhole = nil
+    end
+  end
+
   gm.update = function(level)
     if gm.gbeam != nil then
       gm.gbeam.update()
     end
 
-    for k, p in pairs(gm.projectiles) do
-      p.update(level)
-
-      if p.ttl < 0 then
-        del(gm.projectiles, p)
+    if gm.wormhole != nil then
+      gm.wormhole.update(level)
+      if gm.wormhole.ttl < 0 then
+        gm.wormhole = nil
         qm.ae("PROJ_EXPIRATION", {})
       end
     end
@@ -160,10 +167,14 @@ function new_gbeam(payload)
         line(tmp.head_pos_x - 1, tmp.head_pos_y, tmp.tail_pos_x - 1, tmp.tail_pos_y, colors[1])
         line(tmp.head_pos_x, tmp.head_pos_y, tmp.tail_pos_x, tmp.tail_pos_y, colors[2])
         line(tmp.head_pos_x + 1, tmp.head_pos_y, tmp.tail_pos_x + 1, tmp.tail_pos_y, colors[3])
+        circfill(tmp.head_pos_x, tmp.head_pos_y, 3, colors[1])
+        circfill(tmp.head_pos_x, tmp.head_pos_y, frame_counter % 3, colors[2])
       else
         line(tmp.head_pos_x, tmp.head_pos_y - 1, tmp.tail_pos_x, tmp.tail_pos_y - 1, colors[1])
         line(tmp.head_pos_x, tmp.head_pos_y, tmp.tail_pos_x, tmp.tail_pos_y, colors[2])
         line(tmp.head_pos_x, tmp.head_pos_y + 1 , tmp.tail_pos_x, tmp.tail_pos_y + 1, colors[3])
+        circfill(tmp.head_pos_x + 2, tmp.head_pos_y, 3, colors[1])
+        circfill(tmp.head_pos_x + 2, tmp.head_pos_y, frame_counter % 3, colors[2])
       end
     end
   end

@@ -105,7 +105,9 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- If they're floating and the press IS a float toggle, ground them and return
+    -- also fire off a sliding event here
     if player.state == PLAYER_STATE_FLOATING and (payload.input_mask & (1 << BTN_X) > 0) then
+        qm.ae("PLAYER_CANCEL_FLOAT", {})
         sc_sliding(player)
         return
     end
@@ -156,8 +158,6 @@ function new_player(sprite_num, pos_x, pos_y)
 
         player.vel_x = grav_result.vel.x
         player.vel_y = grav_result.vel.y
-        printh("float vel x: " ..player.vel_x)
-        printh("float vel y: " ..player.vel_y)
 
         return
     end
@@ -230,7 +230,7 @@ function new_player(sprite_num, pos_x, pos_y)
     elseif player.state == PLAYER_STATE_SLIDING then
       spr(12 + player.facing, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
     elseif player.state == PLAYER_STATE_DEAD_FALLING then
-      sspr(88, 0, 8, 8, player.pos_x + (player.frame_offset * 2), player.pos_y + (player.frame_offset * 2), 8 \ (player.frame_offset + 1), 8 \ (player.frame_offset + 1))
+      sspr(88, 0, 8, 8, get_center_x(player), get_center_y(player), 8 \ (player.frame_offset + 1), 8 \ (player.frame_offset + 1))
     elseif player.state == PLAYER_STATE_DEAD_ZAPPED then
       local frames = player.frames_zapped
       spr(frames[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, false, false)
@@ -269,8 +269,8 @@ function new_player(sprite_num, pos_x, pos_y)
         end
       else
         qm.ae("PLAYER_DEATH", {level = level})
-        return
       end
+      return
     end
 
     if player.state == PLAYER_STATE_DEAD_ZAPPED then
@@ -291,8 +291,8 @@ function new_player(sprite_num, pos_x, pos_y)
       player.deaths += 1
       player.can_move_x = false
       player.can_move_y = false
-      player.vel_x = 0
-      player.vel_y = 0
+      player.pos_x += player.vel_x
+      player.pos_y += player.vel_y
       player.state = PLAYER_STATE_DEAD_FALLING
       player.frame_step = 0
       player.frame_offset = 0
@@ -304,7 +304,6 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     if fget(mget(curr_map_x, next_map_y)) & player.can_travel == 0 then
-      printh("pny: "..player_next_y..":"..player.vel_y..":"..frame_counter)
       can_move_y = false
     end
 
