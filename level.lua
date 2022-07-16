@@ -3,16 +3,14 @@ function get_levels()
     {
       label="01",
       start_tile_x = 0, -- x index of the upper-left map tile to draw
-      start_tile_y = 0, -- y index of the upper left map tile to draw
+      start_tile_y = 1, -- y index of the upper left map tile to draw
       player_pos_x = ((1*8) + 0),
       player_pos_y = ((3*8) + 0),
       map_tile_width = 16,
       map_tile_height = 14,
       ents = {
-        {type=ENT_BOX, pos_x= (8*8)+0, pos_y = (5*8)+0},
-        {type=ENT_BOX, pos_x= (12*8)+0, pos_y = (10*8)+0},
-        {type=ENT_ITEM, pos_x= (14*8)+0, pos_y = (10*8)+0},
-        {type=ENT_BEAM, pos_x = (11*8)+0, pos_y = (8*8)+0},
+        {type=ENT_BOX, pos_x= (8*8), pos_y = (5*8)},
+        {type=ENT_BOX, pos_x= (12*8), pos_y = (10*8)},
       }
     },
     {
@@ -29,11 +27,11 @@ function get_levels()
         -- given the expression:
         -- (TILE_NUMBER*8) + MAP_OFFSET
         -- update TILE_NUMBER to be the starting tile for the entity
-        {type=ENT_ITEM, pos_x= (5*8)+0, pos_y = (5*8)+0},
-        {type=ENT_BOX, pos_x= (4*8)+0, pos_y = (5*8)+0},
-        {type=ENT_BOX, pos_x= (6*8)+0, pos_y = (5*8)+0},
-        {type=ENT_BOX, pos_x= (5*8)+0, pos_y = (4*8)+0},
-        {type=ENT_BOX, pos_x= (5*8)+0, pos_y = (6*8)+0},
+        {type=ENT_ITEM, pos_x= (5*8), pos_y = (5*8)},
+        {type=ENT_BOX, pos_x= (4*8), pos_y = (5*8)},
+        {type=ENT_BOX, pos_x= (6*8), pos_y = (5*8)},
+        {type=ENT_BOX, pos_x= (5*8), pos_y = (4*8)},
+        {type=ENT_BOX, pos_x= (5*8), pos_y = (6*8)},
       }
     },
     {
