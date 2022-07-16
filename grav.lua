@@ -42,7 +42,7 @@ function new_gravity_manager()
         pos_x += 6
         pos_y += 1
       elseif payload.direction == DIRECTION_LEFT then
-        pos_x -= 8
+        pos_x -= 6
         pos_y += 1
       end
       local tmp = new_gbeam({pos= {x=pos_x, y=pos_y}, direction=payload.direction})

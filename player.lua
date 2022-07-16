@@ -7,7 +7,9 @@ function new_player(sprite_num, pos_x, pos_y)
   6
   )
 
-  local velocity_max = 1.0
+  local velocity_max = 0.8
+  local walk_init_vel = 0.1
+  local walk_step_up = 0.04
   local slide_step_down = 0.05
 
   player.state = PLAYER_STATE_GROUNDED
@@ -15,7 +17,6 @@ function new_player(sprite_num, pos_x, pos_y)
   player.score = 0
   player.vel_x = 0
   player.vel_y = 0
-  player.invincible = false
   player.frame_base = 1
   player.frame_offset = 0
   player.frame_step = 0
@@ -89,6 +90,7 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.handle_button = function(payload)
+    local mask = payload.input_mask
     -- If they're sliding, they can't do much
     if player.state == PLAYER_STATE_SLIDING then
       return
@@ -100,38 +102,35 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- If they're floating and the press isn't a float toggle, return
-    if player.state == PLAYER_STATE_FLOATING and (payload.input_mask & (1 << BTN_X) == 0) then
+    if player.state == PLAYER_STATE_FLOATING and not is_pressed_x(mask) then
       return
-    end
-
-    -- If they're floating and the press IS a float toggle, ground them and return
-    -- also fire off a sliding event here
-    if player.state == PLAYER_STATE_FLOATING and (payload.input_mask & (1 << BTN_X) > 0) then
-        qm.ae("PLAYER_CANCEL_FLOAT", {})
-        sc_sliding(player)
-        return
+    elseif player.state == PLAYER_STATE_FLOATING then
+      qm.ae("PLAYER_CANCEL_FLOAT", {})
+      sc_sliding(player)
+      return
     end
 
     -- If they're holding, all they can do is change the facing or release holding
     if player.state == PLAYER_STATE_HOLDING then
-      if payload.input_mask & (1 << BTN_O) == 0 then
+      -- TODO do we need this?
+      if not is_pressed_o(mask) then
         player.state = PLAYER_STATE_GROUNDED 
         return
       end
 
-      if payload.input_mask & (1 << BTN_U) > 0 then
+      if is_pressed_u(mask) then
         player.facing = DIRECTION_UP
       end
 
-      if payload.input_mask & (1 << BTN_D) > 0 then
+      if is_pressed_d(mask) then
         player.facing = DIRECTION_DOWN
       end
 
-      if payload.input_mask & (1 << BTN_L) > 0 then
+      if is_pressed_l(mask) then
         player.facing = DIRECTION_LEFT
       end
 
-      if payload.input_mask & (1 << BTN_R) > 0 then
+      if is_pressed_r(mask) then
         player.facing = DIRECTION_RIGHT
       end
 
@@ -152,7 +151,7 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- If they're grounded, there's a projectile, and the press is a float toggle, make them float!
-    if (payload.input_mask & (1 << BTN_X) > 0) and (payload.projectile != nil) and (player.state == PLAYER_STATE_GROUNDED) then
+    if is_pressed_x(mask) and (payload.projectile != nil) and (player.state == PLAYER_STATE_GROUNDED) then
         player.state = PLAYER_STATE_FLOATING
         player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
         local grav_result = calc_cheat_grav(
@@ -169,7 +168,7 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- Try returning if grav button is being held down
-    if payload.input_mask & (1 << BTN_O) > 0 then
+    if is_pressed_o(mask) then
       player.vel_x = 0
       player.vel_y = 0
       return
@@ -177,30 +176,46 @@ function new_player(sprite_num, pos_x, pos_y)
 
 
     -- Up
-    if payload.input_mask & (1 << BTN_U) > 0 then
+    if is_pressed_u(mask) then
+      if player.vel_y >= 0 then
+        player.vel_y = -walk_init_vel
+      elseif player.vel_y > -velocity_max then
+        player.vel_y -= walk_step_up
+      end
       player.facing = DIRECTION_UP
-      player.vel_y = -velocity_max
     -- Down
-    elseif payload.input_mask & (1 << BTN_D) > 0 then
+    elseif is_pressed_d(mask) then
+      if player.vel_y <= 0 then
+        player.vel_y = walk_init_vel
+      elseif player.vel_y < velocity_max then
+        player.vel_y += walk_step_up
+      end
       player.facing = DIRECTION_DOWN
-      player.vel_y = velocity_max
     end
 
-    if payload.input_mask & (1 << BTN_U) == 0 and
-      payload.input_mask & (1 << BTN_D) == 0 then
+    if not is_pressed_u(mask) and
+      not is_pressed_d(mask) then
       player.vel_y = 0
     end
 
-    if payload.input_mask & (1 << BTN_L) > 0 then
+    if is_pressed_l(mask) then
+      if player.vel_x >= 0 then
+        player.vel_x = -walk_init_vel
+      elseif player.vel_x > -velocity_max then
+        player.vel_x -= walk_step_up
+      end
       player.facing = DIRECTION_LEFT
-      player.vel_x = -velocity_max
-    elseif payload.input_mask & (1 << BTN_R) > 0 then
+    elseif is_pressed_r(mask) then
+      if player.vel_x <= 0 then
+        player.vel_x = walk_init_vel
+      elseif player.vel_x < velocity_max then
+        player.vel_x += walk_step_up
+      end
       player.facing = DIRECTION_RIGHT
-      player.vel_x = velocity_max
     end
 
-    if payload.input_mask & (1 << BTN_L) == 0 and
-      payload.input_mask & (1 << BTN_R) == 0 then
+    if not is_pressed_l(mask) and
+      not is_pressed_r(mask) then
       player.vel_x = 0
     end
 
@@ -341,8 +356,8 @@ function new_player(sprite_num, pos_x, pos_y)
       if fget(ent.num, FLAG_COLLIDES_PLAYER) == true then
       local cheat_ent = new_sprite(
         0, -- sprite num, doesn't matter
-        ent.pos_x,
-        ent.pos_y,
+        ent.pos_x + 1,
+        ent.pos_y + 1,
         ent.size_x, 
         ent.size_y
       )
@@ -403,4 +418,28 @@ end
 
 function get_center_y(sprite)
     return flr(sprite.pos_y + (sprite.size_y \ 2))
+end
+
+function is_pressed_l(mask)
+  return (mask & (1 << BTN_L)) > 0
+end
+
+function is_pressed_r(mask)
+  return (mask & (1 << BTN_R)) > 0
+end
+
+function is_pressed_u(mask)
+  return (mask & (1 << BTN_U)) > 0
+end
+
+function is_pressed_d(mask)
+  return (mask & (1 << BTN_D)) > 0
+end
+
+function is_pressed_x(mask)
+  return (mask & (1 << BTN_X)) > 0
+end
+
+function is_pressed_o(mask)
+  return (mask & (1 << BTN_O)) > 0
 end
