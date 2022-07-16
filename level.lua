@@ -9,8 +9,15 @@ function get_levels()
       map_tile_width = 16,
       map_tile_height = 14,
       ents = {
-        {type=ENT_BOX, pos_x= (8*8), pos_y = (5*8)},
-        {type=ENT_BOX, pos_x= (12*8), pos_y = (10*8)},
+        {type=ENT_BOX, pos_x= (2*8), pos_y = (3*8)},
+        {type=ENT_BOX, pos_x= (4*8), pos_y = (3*8)},
+        {type=ENT_BOX, pos_x= (6*8), pos_y = (3*8)},
+        {type=ENT_BOX, pos_x= (2*8), pos_y = (5*8)},
+        {type=ENT_BOX, pos_x= (4*8), pos_y = (5*8)},
+        {type=ENT_BOX, pos_x= (6*8), pos_y = (5*8)},
+        {type=ENT_BOX, pos_x= (2*8), pos_y = (7*8)},
+        {type=ENT_BOX, pos_x= (4*8), pos_y = (7*8)},
+        {type=ENT_BOX, pos_x= (6*8), pos_y = (7*8)},
       }
     },
     {
