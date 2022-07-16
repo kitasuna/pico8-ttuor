@@ -119,29 +119,35 @@ function new_player(sprite_num, pos_x, pos_y)
         return
       end
 
-      local new_facing = player.facing
       if payload.input_mask & (1 << BTN_U) > 0 then
-        new_facing = DIRECTION_UP
+        player.facing = DIRECTION_UP
       end
 
       if payload.input_mask & (1 << BTN_D) > 0 then
-        new_facing = DIRECTION_DOWN
+        player.facing = DIRECTION_DOWN
       end
 
       if payload.input_mask & (1 << BTN_L) > 0 then
-        new_facing = DIRECTION_LEFT
+        player.facing = DIRECTION_LEFT
       end
 
       if payload.input_mask & (1 << BTN_R) > 0 then
-        new_facing = DIRECTION_RIGHT
+        player.facing = DIRECTION_RIGHT
       end
 
-      local rotation = resolve_rotation(player.facing, new_facing)
-      if rotation != "ROTATION_0" then
-        -- event
-        qm.ae("PLAYER_ROTATION", {rotation=rotation, pos_x=get_center_x(player), pos_y=get_center_y(player)})
+      local new_x = player.pos_x
+      local new_y = player.pos_y
+      if player.facing == DIRECTION_UP then
+        new_y -= 8
+      elseif player.facing == DIRECTION_DOWN then
+        new_y +=8
+      elseif player.facing == DIRECTION_LEFT then
+        new_x -= 8
+      elseif player.facing == DIRECTION_RIGHT then
+        new_x += 8
       end
-      player.facing = new_facing
+      qm.ae("PLAYER_ROTATION", {pos_x=new_x, pos_y=new_y})
+      -- end
       return
     end
 
@@ -238,6 +244,12 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.update = function(ent_man, level)
+    local center_x = get_center_x(player)
+    local center_y = get_center_y(player)
+    if player.state == PLAYER_STATE_HOLDING then
+      qm.ae("PLAYER_HOLDS", {x=player.pos_x,y=player.pos_y})
+      return
+    end
 
     local approx_vel_x = player.vel_x
     if approx_vel_x < 0 then
@@ -251,14 +263,15 @@ function new_player(sprite_num, pos_x, pos_y)
     elseif approx_vel_y > 0 then
       approx_vel_y = ceil(approx_vel_y)
     end
-    local player_next_x = get_center_x(player) + approx_vel_x -- + (player.facing != 3 and 5 or 1)
-    local player_next_y = get_center_y(player) + approx_vel_y -- + (player.facing == 2 and 7 or 0)
-    local curr_map_x = (get_center_x(player) \ 8) + level.start_tile_x
+    local player_next_x = center_x + approx_vel_x -- + (player.facing != 3 and 5 or 1)
+    local player_next_y = center_y + approx_vel_y -- + (player.facing == 2 and 7 or 0)
+    local curr_map_x = (center_x \ 8) + level.start_tile_x
     local next_map_x = (player_next_x \ 8) + level.start_tile_x
-    local curr_map_y = (get_center_y(player) \ 8) + level.start_tile_y
+    local curr_map_y = (center_y \ 8) + level.start_tile_y
     local next_map_y = (player_next_y \ 8) + level.start_tile_y
     local can_move_x = true
     local can_move_y = true
+
 
     if player.state == PLAYER_STATE_DEAD_FALLING then
       if player.frame_offset < 3 then
@@ -330,8 +343,8 @@ function new_player(sprite_num, pos_x, pos_y)
         0, -- sprite num, doesn't matter
         ent.pos_x,
         ent.pos_y,
-        ent.size_x - 1, -- cheat with smaller size for ents
-        ent.size_y - 1
+        ent.size_x, 
+        ent.size_y
       )
         if collides(player_at_next, cheat_ent) then 
           can_move_x = false
@@ -382,38 +395,6 @@ end
 function sc_sliding(player)
     player.state = PLAYER_STATE_SLIDING
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
-end
-
--- Given two facings, decide how much rotation we just did
-function resolve_rotation(start_facing, end_facing)
-  if start_facing == end_facing then
-    return "ROTATION_0"
-  elseif start_facing == DIRECTION_UP and end_facing == DIRECTION_DOWN then
-    return "ROTATION_180_DOWN"
-  elseif start_facing == DIRECTION_UP and end_facing == DIRECTION_LEFT then
-    return "ROTATION_90_LEFT"
-  elseif start_facing == DIRECTION_UP and end_facing == DIRECTION_RIGHT then
-    return "ROTATION_90_RIGHT"
-  elseif start_facing == DIRECTION_DOWN and end_facing == DIRECTION_UP then
-    return "ROTATION_180_UP"
-  elseif start_facing == DIRECTION_DOWN and end_facing == DIRECTION_RIGHT then
-    return "ROTATION_90_LEFT"
-  elseif start_facing == DIRECTION_DOWN and end_facing == DIRECTION_LEFT then
-    return "ROTATION_90_RIGHT"
-  elseif start_facing == DIRECTION_LEFT and end_facing == DIRECTION_RIGHT then
-    return "ROTATION_180_RIGHT"
-  elseif start_facing == DIRECTION_LEFT and end_facing == DIRECTION_DOWN then
-    return "ROTATION_90_LEFT"
-  elseif start_facing == DIRECTION_LEFT and end_facing == DIRECTION_UP then
-    return "ROTATION_90_RIGHT"
-  elseif start_facing == DIRECTION_RIGHT and end_facing == DIRECTION_UP then
-    return "ROTATION_90_LEFT"
-  elseif start_facing == DIRECTION_RIGHT and end_facing == DIRECTION_DOWN then
-    return "ROTATION_90_RIGHT"
-  elseif start_facing == DIRECTION_RIGHT and end_facing == DIRECTION_LEFT then
-    return "ROTATION_180_LEFT"
-  end
-  return "ROTATION_UNKNOWN"
 end
 
 function get_center_x(sprite)

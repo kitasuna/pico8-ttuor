@@ -66,7 +66,19 @@ function new_entity_manager()
         if (payload.input_mask & (1 << BTN_O)) == 0 then
           -- unhand that item!
           ent.state = ENT_STATE_NORMAL
+          ent.pos_x = ent.future_x
+          ent.pos_y = ent.future_y
         end
+      end
+    end
+  end
+
+  ent_man.handle_player_holds = function(payload)
+    for k, ent in pairs(ent_man.ents) do
+      if ent.state == ENT_STATE_HELD then
+        ent.pos_x = payload.x
+        ent.pos_y = payload.y
+        break
       end
     end
   end
@@ -75,32 +87,9 @@ function new_entity_manager()
   ent_man.handle_player_rotation = function(payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.state == ENT_STATE_HELD then
-        -- Get coords relative to event coords (payload.pos_x/pos_y)
-        local rot_type = payload.rotation
-        local rel_x = flr(get_center_x(ent) - payload.pos_x)
-        -- y coords are flipped since we're basically working in 4th quadrant
-        -- in our base coord system
-        local rel_y = flr(get_center_y(ent) - payload.pos_y)
-        if rot_type == "ROTATION_90_LEFT" then
-          ent.pos_x = payload.pos_x - (-rel_y) - (ent.size_x \ 2)
-          ent.pos_y = payload.pos_y - rel_x - (ent.size_y \ 2)
-        elseif rot_type == "ROTATION_90_RIGHT" then
-          ent.pos_x = payload.pos_x + (-rel_y) - (ent.size_x \ 2)
-          ent.pos_y = payload.pos_y + rel_x - (ent.size_y \ 2)
-        elseif rot_type == "ROTATION_180_RIGHT" then
-          ent.pos_x = payload.pos_x - rel_x - (ent.size_x \ 2)
-          ent.pos_y = ent.pos_y
-        elseif rot_type == "ROTATION_180_LEFT" then
-          ent.pos_x = payload.pos_x - rel_x - (ent.size_x \2)-- - ent.size_x
-          ent.pos_y = ent.pos_y
-        elseif rot_type == "ROTATION_180_UP" then
-          ent.pos_x = ent.pos_x
-          ent.pos_y = payload.pos_y - rel_y - (ent.size_y \ 2)
-        elseif rot_type == "ROTATION_180_DOWN" then
-          ent.pos_x = ent.pos_x
-          ent.pos_y = payload.pos_y - rel_y - (ent.size_y \ 2)
-        end
-
+        ent.future_x = payload.pos_x
+        ent.future_y = payload.pos_y
+        printh("Rot to: "..payload.pos_x..":"..payload.pos_y)
         -- we only need to do this for one ent, so return
         return
       end
@@ -174,9 +163,17 @@ function new_box(coords)
   tmp.frame_half_step = 0
   tmp.frame_offset = 1
   tmp.feels_grav = true
+  tmp.future_x = 0
+  tmp.future_y = 0
 
   tmp.update = ent_update(tmp)
-  tmp.draw = ent_draw(tmp)
+  tmp.draw = function()
+    if tmp.state == ENT_STATE_HELD then
+      spr(44, tmp.pos_x, tmp.pos_y-2)  
+      return
+    end
+    ent_draw(tmp)()
+  end
   return tmp
 end
 
@@ -267,18 +264,6 @@ function ent_update(tmp)
     local next_map_tile_x = mget(next_map_x, curr_map_y)
     if fget(next_map_tile_x) & tmp.can_travel == 0 then
       tmp.vel_x = 0
-      if tmp.vel_y != 0 then
-        tmp.vel_y = tmp.vel_y / 3
-        add(timers, {
-          ttl = 40,
-          f = function() end,
-          cleanup = function()
-            tmp.vel_y = 0
-            tmp.tgt_x = nil
-            tmp.tgt_y = nil
-          end
-        })
-        end
     else
       tmp.pos_x += tmp.vel_x
     end
@@ -286,18 +271,6 @@ function ent_update(tmp)
     local next_map_tile_y = mget(curr_map_x, next_map_y)
     if fget(next_map_tile_y) & tmp.can_travel == 0 then
       tmp.vel_y = 0
-      if tmp.vel_x != 0 then
-        tmp.vel_x = tmp.vel_x / 3
-        add(timers, {
-          ttl = 40,
-          f = function() end,
-          cleanup = function()
-            tmp.vel_x = 0
-            tmp.tgt_x = nil
-            tmp.tgt_y = nil
-          end
-        })
-      end
     else
       tmp.pos_y += tmp.vel_y
     end
@@ -312,7 +285,7 @@ function ent_update(tmp)
         tmp.tgt_x = nil
         tmp.tgt_y = nil
         tmp.state = ENT_STATE_HELD
-        qm.ae("ENTITY_REACHES_TARGET", {})
+        qm.ae("ENTITY_REACHES_TARGET", {ent=tmp})
       end
     end
   end
