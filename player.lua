@@ -242,7 +242,7 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.draw = function()
-    if player.state == PLAYER_STATE_GROUNDED or player.state == PLAYER_STATE_HOLDING then
+    if player.state == PLAYER_STATE_GROUNDED then
       -- spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
       local frames = player.frames_walking[player.facing + 1]
       spr(frames.anim[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, frames.flip, false)
@@ -255,6 +255,12 @@ function new_player(sprite_num, pos_x, pos_y)
     elseif player.state == PLAYER_STATE_DEAD_ZAPPED then
       local frames = player.frames_zapped
       spr(frames[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, false, false)
+    elseif player.state == PLAYER_STATE_HOLDING then
+      local flip = false
+      if player.facing == DIRECTION_LEFT then
+        flip = true
+      end
+      spr(19+player.facing,player.pos_x, player.pos_y, 1.0, 1.0, flip, false)
     end
   end
 

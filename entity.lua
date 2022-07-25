@@ -89,7 +89,6 @@ function new_entity_manager()
       if ent.state == ENT_STATE_HELD then
         ent.future_x = payload.pos_x
         ent.future_y = payload.pos_y
-        printh("Rot to: "..payload.pos_x..":"..payload.pos_y)
         -- we only need to do this for one ent, so return
         return
       end
@@ -169,7 +168,7 @@ function new_box(coords)
   tmp.update = ent_update(tmp)
   tmp.draw = function()
     if tmp.state == ENT_STATE_HELD then
-      spr(44, tmp.pos_x, tmp.pos_y-2)  
+      spr(44, tmp.pos_x, tmp.pos_y-5)  
       return
     end
     ent_draw(tmp)()
