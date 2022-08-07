@@ -99,7 +99,6 @@ function get_levels()
         ent_at(ENT_ITEM, 13, 4),
         ent_at(ENT_BEAM, 12, 7),
         ent_at(ENT_BOX, 13, 1),
-        ent_at(ENT_BEAM, 1, 6),
         ent_at(ENT_BEAM, 1, 1),
         ent_at(ENT_BEAM, 1, 8),
         ent_at(ENT_BOX, 1, 9),

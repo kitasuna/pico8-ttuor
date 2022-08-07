@@ -284,6 +284,8 @@ function ent_update(tmp)
         tmp.tgt_x = nil
         tmp.tgt_y = nil
         tmp.state = ENT_STATE_HELD
+        tmp.future_x = tmp.pos_x
+        tmp.future_y = tmp.pos_y
         qm.ae("ENTITY_REACHES_TARGET", {ent=tmp})
       end
     end

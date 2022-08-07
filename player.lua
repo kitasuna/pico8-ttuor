@@ -150,6 +150,17 @@ function new_player(sprite_num, pos_x, pos_y)
       return
     end
 
+
+    -- if they're holding the beam, change state
+    if is_pressed_o(mask) then
+      player.state = PLAYER_STATE_FIRING
+      player.vel_x = 0
+      player.vel_y = 0
+      return
+    else 
+      player.state = PLAYER_STATE_GROUNDED
+    end
+
     -- If they're grounded, there's a projectile, and the press is a float toggle, make them float!
     if is_pressed_x(mask) and (payload.projectile != nil) and (player.state == PLAYER_STATE_GROUNDED) then
         player.state = PLAYER_STATE_FLOATING
@@ -246,6 +257,8 @@ function new_player(sprite_num, pos_x, pos_y)
       -- spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
       local frames = player.frames_walking[player.facing + 1]
       spr(frames.anim[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, frames.flip, false)
+    elseif player.state == PLAYER_STATE_FIRING then
+      spr(23 + player.facing, player.pos_x, player.pos_y)
     elseif player.state == PLAYER_STATE_FLOATING then
       spr(10, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
     elseif player.state == PLAYER_STATE_SLIDING then
