@@ -169,6 +169,17 @@ function new_box(coords)
   tmp.draw = function()
     if tmp.state == ENT_STATE_HELD then
       spr(44, tmp.pos_x, tmp.pos_y-5)  
+      palt(10, true)
+      if frame_counter % 10 < 5 then
+        palt(0, false)
+        pal(7, 0)
+        pal(0, 7)
+        spr(45, tmp.future_x, tmp.future_y)
+        pal()
+      else
+        spr(45, tmp.future_x, tmp.future_y)
+      end
+      palt()
       return
     end
     ent_draw(tmp)()

@@ -15,6 +15,11 @@ function new_gravity_manager()
     gm.wormhole = nil
   end
 
+  gm.handle_proj_box_collision = function(payload)
+    gm.wormhole.vel_x = 0
+    gm.wormhole.vel_y = 0
+  end
+
   gm.handle_player_death = function(payload)
     gm.wormhole = nil
     gm.gbeam = nil
@@ -199,7 +204,6 @@ function sort_from(arr, start_idx)
 end
 function new_projectile(coords, direction)
   local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 6, 6, false, false)
-  tmp.mass = 1
   tmp.bgcoloridx = 1
   tmp.incoloridx = 2
   tmp.colors = { CLR_PNK, CLR_WHT, CLR_PRP }
