@@ -13,6 +13,7 @@ function new_gravity_manager()
   -- String -> { projectile: Projectile }
   gm.handle_proj_player_collision = function(payload)
     gm.wormhole = nil
+    gm.state = "ENABLED"
   end
 
   gm.handle_proj_box_collision = function(payload)
@@ -25,16 +26,34 @@ function new_gravity_manager()
     gm.gbeam = nil
   end
 
+  gm.handle_entity_released = function(payload)
+    gm.state = "ENABLED"
+  end
+
+  gm.handle_entity_reaches_target = function(payload)
+    gm.state = "DISABLED"
+    gm.gbeam = nil 
+  end
+
+  gm.handle_player_init_float = function(payload)
+    gm.state = "DISABLED"
+  end
+
+  gm.handle_player_cancel_float = function(payload)
+    if gm.wormhole != nil then
+      gm.wormhole = nil
+    end
+    gm.state = "ENABLED"
+  end
+
   -- String -> { pos_x: Int, pos_y: Int, direction: Int, input_mask: Int }
   gm.handle_button = function(payload)
-    if gm.state == "DISABLED" and (payload.input_mask & (1 << BTN_O)) == 0 then
-      gm.state = "ENABLED"
-      return
-    elseif gm.state == "DISABLED" then
+    if gm.state == "DISABLED" then
       return
     end
 
-    if (payload.input_mask & (1 << BTN_O)) > 0 and gm.gbeam == nil then
+    local mask = payload.input_mask
+    if is_pressed_o(mask) and gm.gbeam == nil then
       local pos_x = payload.pos_x
       local pos_y = payload.pos_y
       if payload.direction == DIRECTION_UP then
@@ -53,14 +72,14 @@ function new_gravity_manager()
       local tmp = new_gbeam({pos= {x=pos_x, y=pos_y}, direction=payload.direction})
 
       gm.gbeam = tmp
-    elseif (payload.input_mask & (1 << BTN_O)) == 0 and gm.gbeam != nil then
+    elseif not is_pressed_o(mask) and gm.gbeam != nil then
       -- Remove gbeam
       gm.gbeam = nil 
       -- Add event to stop affected items
       qm.ae("GBEAM_REMOVED", {})
     end
         
-    if (payload.input_mask & (1 << BTN_X)) > 0 and gm.wormhole == nil then
+    if is_pressed_x(mask) and gm.wormhole == nil then
       local pos_x = payload.pos_x
       local pos_y = payload.pos_y
       if payload.direction == 0 then
@@ -80,16 +99,6 @@ function new_gravity_manager()
     end
   end
 
-  gm.handle_entity_reaches_target = function(payload)
-    gm.state = "DISABLED"
-    gm.gbeam = nil 
-  end
-
-  gm.handle_player_cancel_float = function(payload)
-    if gm.wormhole != nil then
-      gm.wormhole = nil
-    end
-  end
 
   gm.update = function(level)
     if gm.gbeam != nil then

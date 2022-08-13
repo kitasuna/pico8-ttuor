@@ -126,6 +126,10 @@ game_update = function()
     if player.is_dead() == false then
       qm.ae("BUTTON", {
         direction = player.facing,
+        -- TODO: will need to refactor this later
+        -- gives grav_man too much info about the player
+        -- consider chaining the events so the player adds a separate event to the grav_man or s/t
+        player_state = player.state,
         pos_x = get_center_x(player),
         pos_y = get_center_y(player),
         input_mask = input_mask,
@@ -208,10 +212,12 @@ function _init()
     "PROJ_EXPIRATION",
     "GBEAM_REMOVED",
     "ENTITY_REACHES_TARGET",
+    "ENTITY_RELEASED",
     "PLAYER_ROTATION",
     "PLAYER_ITEM_COLLISION",
     "LEVEL_INIT",
     "PLAYER_GOAL",
+    "PLAYER_INIT_FLOAT",
     "PLAYER_CANCEL_FLOAT",
     "PLAYER_HOLDS",
   })
@@ -261,6 +267,8 @@ function _init()
   qm.as("PROJ_PLAYER_COLLISION", grav_man.handle_proj_player_collision)
   qm.as("PLAYER_DEATH", grav_man.handle_player_death)
   qm.as("ENTITY_REACHES_TARGET", grav_man.handle_entity_reaches_target)
+  qm.as("ENTITY_RELEASED", grav_man.handle_entity_released)
+  qm.as("PLAYER_INIT_FLOAT", grav_man.handle_player_init_float)
   qm.as("PLAYER_CANCEL_FLOAT", grav_man.handle_player_cancel_float)
   qm.as("PROJ_BOX_COLLISION", grav_man.handle_proj_box_collision)
 

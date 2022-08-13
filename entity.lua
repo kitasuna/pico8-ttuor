@@ -63,11 +63,12 @@ function new_entity_manager()
   ent_man.handle_button = function(payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.state == ENT_STATE_HELD then
-        if (payload.input_mask & (1 << BTN_O)) == 0 then
+        if not is_pressed_o(payload.input_mask) then
           -- unhand that item!
           ent.state = ENT_STATE_NORMAL
           ent.pos_x = ent.future_x
           ent.pos_y = ent.future_y
+          qm.ae("ENTITY_RELEASED", {})
         end
       end
     end

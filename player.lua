@@ -175,6 +175,7 @@ function new_player(sprite_num, pos_x, pos_y)
         player.vel_x = grav_result.vel.x
         player.vel_y = grav_result.vel.y
 
+        qm.ae("PLAYER_INIT_FLOAT", {})
         return
     end
 
