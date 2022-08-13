@@ -3,13 +3,74 @@ function new_entity_manager()
     ents = {},
   }
 
-  ent_man.add_item = function(coords)
-    local tmp = new_item(coords)
+  -- {pos_x: Int, pos_y: Int, item_index: Int}
+  ent_man.add_item = function(item)
+    local tmp = new_item(item)
+    add(ent_man.ents, tmp)
+  end
+
+  ent_man.add_glove = function(coords)
+    local tmp = new_sprite(39, coords.pos_x, coords.pos_y, 8, 6)
+
+    tmp.vel_x = 0
+    tmp.vel_y = 0
+    tmp.type = ENT_GLOVE
+    tmp.can_travel = 1 << FLAG_FLOOR
+    tmp.state = nil
+
+    tmp.update = ent_update(tmp)
+    tmp.draw = ent_draw(tmp)
+    add(ent_man.ents, tmp)
+  end
+
+  ent_man.add_wh = function(coords)
+    local tmp = new_sprite(40, coords.pos_x, coords.pos_y, 8, 6)
+
+    tmp.vel_x = 0
+    tmp.vel_y = 0
+    tmp.type = ENT_WH
+    tmp.can_travel = 1 << FLAG_FLOOR
+    tmp.state = nil
+
+    tmp.update = ent_update(tmp)
+    tmp.draw = ent_draw(tmp)
     add(ent_man.ents, tmp)
   end
 
   ent_man.add_box = function(coords)
-    local tmp = new_box(coords)
+    local tmp = new_sprite(43, coords.pos_x, coords.pos_y, 8, 8)
+
+    tmp.vel_x = 0
+    tmp.vel_y = 0
+    tmp.type = ENT_BOX
+    tmp.can_travel = 1 << FLAG_FLOOR
+    tmp.state = ENT_STATE_NORMAL
+    tmp.frames = { NORMAL={frames={43},len=10}, HELD={frames={43},len=10} }
+    tmp.frame_half_step = 0
+    tmp.frame_offset = 1
+    tmp.feels_grav = true
+    tmp.future_x = 0
+    tmp.future_y = 0
+
+    tmp.update = ent_update(tmp)
+    tmp.draw = function()
+      if tmp.state == ENT_STATE_HELD then
+        spr(44, tmp.pos_x, tmp.pos_y-5)  
+        palt(10, true)
+        if frame_counter % 10 < 5 then
+          palt(0, false)
+          pal(7, 0)
+          pal(0, 7)
+          spr(45, tmp.future_x, tmp.future_y)
+          pal()
+        else
+          spr(45, tmp.future_x, tmp.future_y)
+        end
+        palt()
+        return
+      end
+      ent_draw(tmp)()
+    end
     add(ent_man.ents, tmp)
   end
 
@@ -24,9 +85,6 @@ function new_entity_manager()
 
   ent_man.handle_player_item_collision = function(payload)
       del(ent_man.ents, payload.entity)
-  end
-
-  ent_man.handle_level_init = function(payload)
   end
 
   -- String -> { box: Box, beam: Beam }
@@ -133,58 +191,23 @@ function do_gravity(ent, pos_x, pos_y, direction)
   return ent
 end
 
-function new_item(coords)
-  local tmp = new_sprite(32, coords.pos_x, coords.pos_y, 8, 6)
+-- {pos_x: Int, pos_y: Int, item_index: Int}
+function new_item(item)
+  local tmp = new_sprite(27+item.item_index, item.pos_x, item.pos_y, 8, 6)
 
   tmp.vel_x = 0
   tmp.vel_y = 0
+  tmp.item_index = item.item_index 
   tmp.type = ENT_ITEM
   tmp.can_travel = 1 << FLAG_FLOOR
   tmp.state = ENT_STATE_NORMAL
-  tmp.frames = { NORMAL={frames={28}, len=20}, BROKEN={frames={29}, len=20}, HELD={frames={28}, len=10} }
+  tmp.frames = { NORMAL={frames={27+item.item_index}, len=20}, BROKEN={frames={32+item.item_index}, len=20}, HELD={frames={28}, len=10} }
   tmp.frame_half_step = 0
   tmp.frame_offset = 1
   tmp.feels_grav = true
 
   tmp.update = ent_update(tmp)
   tmp.draw = ent_draw(tmp)
-  return tmp
-end
-
-function new_box(coords)
-  local tmp = new_sprite(43, coords.pos_x, coords.pos_y, 8, 8)
-
-  tmp.vel_x = 0
-  tmp.vel_y = 0
-  tmp.type = ENT_BOX
-  tmp.can_travel = 1 << FLAG_FLOOR
-  tmp.state = ENT_STATE_NORMAL
-  tmp.frames = { NORMAL={frames={43},len=10}, HELD={frames={43},len=10} }
-  tmp.frame_half_step = 0
-  tmp.frame_offset = 1
-  tmp.feels_grav = true
-  tmp.future_x = 0
-  tmp.future_y = 0
-
-  tmp.update = ent_update(tmp)
-  tmp.draw = function()
-    if tmp.state == ENT_STATE_HELD then
-      spr(44, tmp.pos_x, tmp.pos_y-5)  
-      palt(10, true)
-      if frame_counter % 10 < 5 then
-        palt(0, false)
-        pal(7, 0)
-        pal(0, 7)
-        spr(45, tmp.future_x, tmp.future_y)
-        pal()
-      else
-        spr(45, tmp.future_x, tmp.future_y)
-      end
-      palt()
-      return
-    end
-    ent_draw(tmp)()
-  end
   return tmp
 end
 
@@ -265,8 +288,8 @@ function ent_update(tmp)
   return function(level)
     local ent_center_x = get_center_x(tmp)
     local ent_center_y = get_center_y(tmp)
-    local ent_next_x = (ent_center_x + tmp.vel_x)--  + (tmp.vel_x > 0 and 7 or 0)
-    local ent_next_y = (ent_center_y + tmp.vel_y)--  + (tmp.vel_y > 0 and 7 or 0)
+    local ent_next_x = (ent_center_x + tmp.vel_x)
+    local ent_next_y = (ent_center_y + tmp.vel_y)
     local curr_map_x = (ent_center_x \ 8) + level.start_tile_x
     local next_map_x = (ent_next_x \ 8) + level.start_tile_x
     local curr_map_y = (ent_center_y \ 8) + level.start_tile_y
@@ -295,7 +318,9 @@ function ent_update(tmp)
         tmp.vel_y = 0
         tmp.tgt_x = nil
         tmp.tgt_y = nil
-        tmp.state = ENT_STATE_HELD
+        if tmp.type == ENT_BOX then
+          tmp.state = ENT_STATE_HELD
+        end
         tmp.future_x = tmp.pos_x
         tmp.future_y = tmp.pos_y
         qm.ae("ENTITY_REACHES_TARGET", {ent=tmp})
