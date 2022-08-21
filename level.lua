@@ -18,6 +18,20 @@ function get_levels()
     },
   ]]
   return {
+    --[[
+    {
+      label="00",
+      start_tile_x = 29,
+      start_tile_y = 16,
+      player_pos_x = 2,
+      player_pos_y = 1,
+      map_tile_width = 9,
+      map_tile_height = 6,
+      ents = {
+        ent_at(ENT_BEAM, 1, 3),
+      }
+    },
+    ]]
     {
       label="01",
       start_tile_x = 0,
@@ -47,7 +61,7 @@ function get_levels()
       map_tile_height = 28,
       ents = {
         merge(ent_at(ENT_ITEM, 4, 1), {item_index=2}),
-        merge(ent_at(ENT_BOX, 3, 1)),
+        ent_at(ENT_BOX, 3, 1),
         ent_at(ENT_BEAM, 1, 2),
         ent_at(ENT_BEAM, 1, 3),
         ent_at(ENT_BOX, 3, 14),
@@ -56,9 +70,10 @@ function get_levels()
         ent_at(ENT_BOX, 6, 15),
         ent_at(ENT_BOX, 7, 14),
         ent_at(ENT_BEAM, 2, 18),
-        ent_at(ENT_BOX, 6, 18),
+        ent_at(ENT_BOX, 4, 18),
+        ent_at(ENT_BEAM, 2, 21),
+        ent_at(ENT_BOX, 6, 21),
         ent_at(ENT_BEAM, 2, 24),
-        -- ent_at(ENT_BOX, 7, 24),
         ent_at(ENT_BOX, 6, 26),
       }
     },

@@ -24,17 +24,17 @@ function new_player(sprite_num, pos_x, pos_y)
   player.gbeam = nil
   player.wormhole = nil
   player.inventory = {
-    glove = 0,
+    glove = 2,
     wormhole = 0,
     -- items = {0,0,0,0,0},
     items = {0,0,0,0},
   }
 
   player.frames_walking = {
-    { anim={7, 8, 7, 9}, flip=false },
-    { anim={4, 5, 4, 6}, flip=false },
-    { anim={1, 2, 1, 3}, flip=false },
-    { anim={4, 5, 4, 6}, flip=true }
+    { anim={7, 8, 7, 9}, },
+    { anim={4, 5, 4, 6}, },
+    { anim={1, 2, 1, 3}, },
+    { anim={4, 5, 4, 6}, }
   }
 
   player.frames_zapped = { 16, 17, 18, 16, 17, 18, 16, 17, 18 }
@@ -57,8 +57,8 @@ function new_player(sprite_num, pos_x, pos_y)
     player.state = PLAYER_STATE_GROUNDED
     player.vel_x = 0
     player.vel_y = 0
-    player.pos_x = l.player_pos_x
-    player.pos_y = l.player_pos_y
+    player.pos_x = l.player_pos_x * 8
+    player.pos_y = l.player_pos_y * 8
     player.gbeam = nil
     player.wormhole = nil
   end
@@ -192,14 +192,14 @@ function new_player(sprite_num, pos_x, pos_y)
         local gbeam_pos_y = player.pos_y
         if player.facing == DIRECTION_UP then
           gbeam_pos_y -= 2
-          gbeam_pos_x += 2
-        elseif payload.direction == DIRECTION_DOWN then
+          gbeam_pos_x += 3
+        elseif player.facing == DIRECTION_DOWN then
           gbeam_pos_y += 8
-          gbeam_pos_x += 6
-        elseif payload.direction == DIRECTION_RIGHT then
+          gbeam_pos_x += 4
+        elseif player.facing == DIRECTION_RIGHT then
           gbeam_pos_x += 8
           gbeam_pos_y += 4
-        elseif payload.direction == DIRECTION_LEFT then
+        elseif player.facing == DIRECTION_LEFT then
           gbeam_pos_x -= 4
           gbeam_pos_y += 4
         end
@@ -217,11 +217,11 @@ function new_player(sprite_num, pos_x, pos_y)
     if is_pressed_x(mask) and player.wormhole == nil and player.inventory.wormhole != 0 then
       local wh_pos_x = player.pos_x
       local wh_pos_y = player.pos_y
-      if payload.direction == DIRECTION_UP then
+      if player.facing == DIRECTION_UP then
         wh_pos_y -= 8
-      elseif payload.direction == DIRECTION_DOWN then
+      elseif player.facing == DIRECTION_DOWN then
         wh_pos_y += 8
-      elseif payload.direction == DIRECTION_RIGHT then
+      elseif player.facing == DIRECTION_RIGHT then
         wh_pos_x += 8
       else -- DIRECTION_LEFT
         wh_pos_x -= 8
@@ -311,26 +311,28 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.draw = function()
+    local flip = false
+    if player.facing == DIRECTION_LEFT then
+      -- Only used for some states
+      flip = true
+    end
     if player.state == PLAYER_STATE_GROUNDED then
       -- spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
       local frames = player.frames_walking[player.facing + 1]
-      spr(frames.anim[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, frames.flip, false)
+      spr(frames.anim[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, flip)
     elseif player.state == PLAYER_STATE_FIRING then
       spr(23 + player.facing, player.pos_x, player.pos_y)
     elseif player.state == PLAYER_STATE_FLOATING then
-      spr(10, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
+      spr(10, player.pos_x, player.pos_y)
     elseif player.state == PLAYER_STATE_SLIDING then
-      spr(12 + player.facing, player.pos_x, player.pos_y, 1.0, 1.0, false, false)
+      spr(12 + player.facing, player.pos_x, player.pos_y)
     elseif player.state == PLAYER_STATE_DEAD_FALLING then
-      sspr(88, 0, 8, 8, get_center_x(player), get_center_y(player), 8 \ (player.frame_offset + 1), 8 \ (player.frame_offset + 1))
+      local offset = player.frame_offset + 1
+      sspr(88, 0, 8, 8, player.pos_x + offset, player.pos_y + offset, 8 \ offset, 8 \ offset)
     elseif player.state == PLAYER_STATE_DEAD_ZAPPED then
       local frames = player.frames_zapped
-      spr(frames[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, false, false)
+      spr(frames[player.frame_offset + 1],player.pos_x, player.pos_y)
     elseif player.state == PLAYER_STATE_HOLDING then
-      local flip = false
-      if player.facing == DIRECTION_LEFT then
-        flip = true
-      end
       spr(19+player.facing,player.pos_x, player.pos_y, 1.0, 1.0, flip, false)
     end
   end
@@ -344,8 +346,6 @@ function new_player(sprite_num, pos_x, pos_y)
       end
     end
 
-    local center_x = get_center_x(player)
-    local center_y = get_center_y(player)
     if player.state == PLAYER_STATE_HOLDING then
       qm.ae("PLAYER_HOLDS", {x=player.pos_x,y=player.pos_y})
       return
@@ -363,6 +363,9 @@ function new_player(sprite_num, pos_x, pos_y)
     elseif approx_vel_y > 0 then
       approx_vel_y = ceil(approx_vel_y)
     end
+
+    local center_x = get_center_x(player)
+    local center_y = get_center_y(player)
     local player_next_x = center_x + approx_vel_x -- + (player.facing != 3 and 5 or 1)
     local player_next_y = center_y + approx_vel_y -- + (player.facing == 2 and 7 or 0)
     local curr_map_x = (center_x \ 8) + level.start_tile_x
@@ -406,8 +409,10 @@ function new_player(sprite_num, pos_x, pos_y)
       player.deaths += 1
       player.can_move_x = false
       player.can_move_y = false
-      player.pos_x += player.vel_x
-      player.pos_y += player.vel_y
+      -- player.pos_x += player.vel_x
+      -- player.pos_y += player.vel_y
+      player.pos_x = (curr_map_x - level.start_tile_x) * 8
+      player.pos_y = (curr_map_y - level.start_tile_y) * 8
       player.state = PLAYER_STATE_DEAD_FALLING
       player.frame_step = 0
       player.frame_offset = 0
@@ -435,8 +440,8 @@ function new_player(sprite_num, pos_x, pos_y)
     -- Make a hypothetical player sprite at the next location after update and check for collision
     local player_at_next = new_sprite(
       0, -- sprite num, doesn't matter
-      player_next_x,
-      player_next_y,
+      player.pos_x + player.vel_x,
+      player.pos_y + player.vel_y,
       player.size_x - 1, -- cheat with smaller player size for ents
       player.size_y - 1
     )
@@ -444,8 +449,8 @@ function new_player(sprite_num, pos_x, pos_y)
       if fget(ent.num, FLAG_COLLIDES_PLAYER) == true then
       local cheat_ent = new_sprite(
         0, -- sprite num, doesn't matter
-        ent.pos_x + 1,
-        ent.pos_y + 1,
+        ent.pos_x,
+        ent.pos_y,
         ent.size_x, 
         ent.size_y
       )
@@ -521,7 +526,7 @@ function new_gbeam(payload)
   while (iter_pos.x != flr(tmp.tail_pos_x) or iter_pos.y != flr(tmp.tail_pos_y)) and not collision_found do
     iter_pos = move_in_direction(payload.direction, iter_pos, 1)
     -- make sprite at this position
-    local tmp_sprite = new_sprite(0, iter_pos.x, iter_pos.y, 4, 4)
+    local tmp_sprite = new_sprite(0, iter_pos.x, iter_pos.y, 6, 6)
     for k, ent in pairs(ent_man.ents) do
       if ent.type != ENT_BEAM then
         if collides(tmp_sprite, ent) then
@@ -620,11 +625,11 @@ function sc_sliding(player)
 end
 
 function get_center_x(sprite)
-    return flr(sprite.pos_x + (sprite.size_x \ 2))
+    return sprite.pos_x + (sprite.size_x \ 2) + ((8 - sprite.size_x) \ 2)
 end
 
 function get_center_y(sprite)
-    return flr(sprite.pos_y + (sprite.size_y \ 2))
+    return sprite.pos_y + (sprite.size_y \ 2) + ((8 - sprite.size_y) \2 )
 end
 
 function is_pressed_l(mask)

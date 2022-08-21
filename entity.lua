@@ -75,7 +75,15 @@ function new_entity_manager()
   end
 
   ent_man.add_beam = function(coords)
-    local tmp = new_beam(coords)
+    local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 6)
+    tmp.vel_x = 0
+    tmp.vel_y = 0
+    tmp.type = ENT_BEAM
+    tmp.blocked_by = nil
+    tmp.can_travel = 1 << FLAG_FLOOR -- maybe need to add gaps here later
+
+    tmp.update = beam_update(tmp)
+    tmp.draw = beam_draw(tmp)
     add(ent_man.ents, tmp)
   end
 
@@ -211,20 +219,6 @@ function new_item(item)
   return tmp
 end
 
-function new_beam(coords)
-  -- Start size at 8x8
-  local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 6)
-  tmp.vel_x = 0
-  tmp.vel_y = 0
-  tmp.type = ENT_BEAM
-  tmp.blocked_by = nil
-  tmp.can_travel = 1 << FLAG_FLOOR -- maybe need to add gaps here later
-
-  tmp.update = beam_update(tmp)
-  tmp.draw = beam_draw(tmp)
-  return tmp
-end
-
 function beam_update(beam)
   return function()
     -- Check for horizonal, increasing case
@@ -266,9 +260,9 @@ function beam_draw(beam)
     local x_max = beam.pos_x + beam.size_x - 1
     for i=1,beam.size_x do
       line(beam.pos_x, y_offset, x_max, y_offset, CLR_BLU)
-      line(beam.pos_x, y_offset + 1, x_max, y_offset + 1)
-      line(beam.pos_x, y_offset + 2, x_max, y_offset + 2)
-      line(beam.pos_x, y_offset + 3, x_max, y_offset + 3)
+      for j=1,3 do
+        line(beam.pos_x, y_offset + j, x_max, y_offset + j)
+      end
     end
   end
 end
