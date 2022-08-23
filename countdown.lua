@@ -12,7 +12,8 @@ end
 
 countdown_draw = function()
   game_draw()
-  rectfill(32-32, 36-32, 98-32, 64-32, CLR_PRP)
-  print("level "..level_index, 49-32, 48-32, CLR_DGN)
-  print("level "..level_index, 50-32, 47-32, CLR_GRN)
+  camera()
+  rectfill(42, 56, 86, 72, CLR_PRP)
+  print("level "..level_index, 50, 62, CLR_DGN)
+  print("level "..level_index, 51, 61, CLR_GRN)
 end

@@ -26,19 +26,6 @@ __lua__
 function __draw() end
 function __update() end
 
-
-over_draw = function()
-  cls()
-  camera()
-  print("GAME OVER", 0, 0, CLR_YLW)
-end
-
-over_update = function()
-  if btnp(BTN_X) or btnp(BTN_O) then
-    _init()
-  end
-end
-
 victory_draw = function()
   cls()
   camera()
@@ -46,9 +33,14 @@ victory_draw = function()
   print("victory", 51, 64, CLR_PCH)
   inventory_draw(47,74)
   timer_draw(55,82)
+
+  print("press x + o to restart", 24, 96, CLR_WHT)
 end
 
 victory_update = function()
+  if btnp(BTN_X) and btnp(BTN_O) then
+    _init()
+  end
 end
 
 function inventory_draw(x, y)

@@ -80,8 +80,8 @@ function get_levels()
     --[[
     {
       label="03",
-      start_tile_x = 32, -- x index of the upper-left map tile to draw
-      start_tile_y = 0, -- y index of the upper left map tile to draw
+      start_tile_x = 32,
+      start_tile_y = 0,
       player_pos_x = 10,
       player_pos_y = 6,
       map_tile_width = 13,
@@ -98,8 +98,8 @@ function get_levels()
     ]]
     {
       label="03",
-      start_tile_x = 41, -- x index of the upper-left map tile to draw
-      start_tile_y = 0, -- y index of the upper left map tile to draw
+      start_tile_x = 41,
+      start_tile_y = 0,
       player_pos_x = 3,
       player_pos_y = 2,
       map_tile_width = 15,
@@ -113,8 +113,8 @@ function get_levels()
     },
     {
       label="04",
-      start_tile_x = 59, -- x index of the upper-left map tile to draw
-      start_tile_y = 0, -- y index of the upper left map tile to draw
+      start_tile_x = 59,
+      start_tile_y = 0,
       player_pos_x = 7,
       player_pos_y = 9,
       map_tile_width = 17,

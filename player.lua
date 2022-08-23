@@ -24,7 +24,7 @@ function new_player(sprite_num, pos_x, pos_y)
   player.gbeam = nil
   player.wormhole = nil
   player.inventory = {
-    glove = 2,
+    glove = 0,
     wormhole = 0,
     -- items = {0,0,0,0,0},
     items = {0,0,0,0},
@@ -502,15 +502,15 @@ end
 
 -- { pos :: Coords, direction :: Int }
 function new_gbeam(payload)
-  -- local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 2, 2, false, false)
+  local direction = payload.direction -- unpacking
   local tmp = {}
   tmp.head_pos_x = payload.pos.x
   tmp.head_pos_y = payload.pos.y
-  tmp.tail_pos_x = payload.pos.y
+  tmp.tail_pos_x = payload.pos.x
   tmp.tail_pos_y = payload.pos.y
-  tmp.direction = payload.direction
+  tmp.direction = direction
   -- Set to max extent, can always pull this in later
-  local new_tail = move_in_direction(payload.direction, payload.pos, 30)
+  local new_tail = move_in_direction(direction, payload.pos, 30)
   -- tmp.tail = { pos = move_in_direction(payload.direction, payload.pos, 30) }
   tmp.tail_pos_x = new_tail.x
   tmp.tail_pos_y = new_tail.y
@@ -524,16 +524,21 @@ function new_gbeam(payload)
   local iter_pos = { x=flr(tmp.head_pos_x), y=flr(tmp.head_pos_y) }
   local collision_found = false
   while (iter_pos.x != flr(tmp.tail_pos_x) or iter_pos.y != flr(tmp.tail_pos_y)) and not collision_found do
-    iter_pos = move_in_direction(payload.direction, iter_pos, 1)
+    iter_pos = move_in_direction(direction, iter_pos, 1)
     -- make sprite at this position
-    local tmp_sprite = new_sprite(0, iter_pos.x, iter_pos.y, 6, 6)
+    local tmp_sprite = {}
+    if direction == DIRECTION_UP or direction == DIRECTION_DOWN then
+      tmp_sprite = new_sprite(0, iter_pos.x - 2, iter_pos.y, 3, 3)
+      else
+      tmp_sprite = new_sprite(0, iter_pos.x, iter_pos.y - 2, 3, 3)
+    end
     for k, ent in pairs(ent_man.ents) do
       if ent.type != ENT_BEAM then
         if collides(tmp_sprite, ent) then
           tmp.tail_pos_x = iter_pos.x
           tmp.tail_pos_y = iter_pos.y
           collision_found = true
-          do_gravity(ent, tmp.head_pos_x, tmp.head_pos_y, payload.direction)
+          do_gravity(ent, tmp.head_pos_x, tmp.head_pos_y, direction)
           break
         end
       end
@@ -546,7 +551,7 @@ function new_gbeam(payload)
   tmp.draw = function()
     if tmp.state == "HELD" then
       local colors = sort_from({ CLR_PNK, CLR_WHT, CLR_PRP }, (frame_counter % 3) + 1)
-      if tmp.direction == DIRECTION_UP or tmp.direction == DIRECTION_DOWN then
+      if direction == DIRECTION_UP or direction == DIRECTION_DOWN then
         line(tmp.head_pos_x - 1, tmp.head_pos_y, tmp.tail_pos_x - 1, tmp.tail_pos_y, colors[1])
         line(tmp.head_pos_x, tmp.head_pos_y, tmp.tail_pos_x, tmp.tail_pos_y, colors[2])
         line(tmp.head_pos_x + 1, tmp.head_pos_y, tmp.tail_pos_x + 1, tmp.tail_pos_y, colors[3])
