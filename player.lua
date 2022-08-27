@@ -24,8 +24,8 @@ function new_player(sprite_num, pos_x, pos_y)
   player.gbeam = nil
   player.wormhole = nil
   player.inventory = {
-    glove = 0,
-    wormhole = 0,
+    glove = 2,
+    wormhole = 2,
     -- items = {0,0,0,0,0},
     items = {0,0,0,0},
   }
@@ -113,10 +113,13 @@ function new_player(sprite_num, pos_x, pos_y)
       qm.ae("PLAYER_ITEM_COLLISION", { entity=payload.ent })
     end
     player.gbeam = nil
+    qm.ae("GBEAM_REMOVED", {})
   end
 
   player.handle_level_init = function(payload)
-    -- TODO: We probably want more happening in here, like position etc
+    player.vel_x = 0
+    player.vel_y = 0
+    player.facing = DIRECTION_DOWN
   end
 
   player.handle_button = function(payload)
@@ -203,7 +206,8 @@ function new_player(sprite_num, pos_x, pos_y)
           gbeam_pos_x -= 4
           gbeam_pos_y += 4
         end
-        player.gbeam = new_gbeam({pos= {x=gbeam_pos_x, y=gbeam_pos_y}, direction=player.facing})
+        player.gbeam = new_gbeam(gbeam_pos_x, gbeam_pos_y, player.facing)
+        qm.ae("GBEAM_ADDED", {})
       end
       return
     elseif not is_pressed_o(mask) and player.gbeam != nil then
@@ -344,6 +348,10 @@ function new_player(sprite_num, pos_x, pos_y)
         player.wormhole = nil
         qm.ae("PROJ_EXPIRATION", {})
       end
+    end
+
+    if player.gbeam != nil then
+      player.gbeam.update()
     end
 
     if player.state == PLAYER_STATE_HOLDING then
@@ -501,19 +509,18 @@ function new_player(sprite_num, pos_x, pos_y)
 end
 
 -- { pos :: Coords, direction :: Int }
-function new_gbeam(payload)
-  local direction = payload.direction -- unpacking
+function new_gbeam(pos_x, pos_y, direction)
   local tmp = {}
-  tmp.head_pos_x = payload.pos.x
-  tmp.head_pos_y = payload.pos.y
-  tmp.tail_pos_x = payload.pos.x
-  tmp.tail_pos_y = payload.pos.y
+  tmp.head_pos_x, tmp.tail_pos_x = pos_x
+  tmp.head_pos_y, tmp.tail_pos_y = pos_y
+
+  tmp.blocked_by = nil -- if it intercepts an entity, it will be set here
+
   tmp.direction = direction
+
   -- Set to max extent, can always pull this in later
-  local new_tail = move_in_direction(direction, payload.pos, 30)
-  -- tmp.tail = { pos = move_in_direction(payload.direction, payload.pos, 30) }
-  tmp.tail_pos_x = new_tail.x
-  tmp.tail_pos_y = new_tail.y
+  tmp.tail_pos_x, tmp.tail_pos_y = move_in_direction(direction, pos_x, pos_y, 30)
+
   tmp.state = "HELD"
 
   -- Move in direction until we hit:
@@ -521,24 +528,26 @@ function new_gbeam(payload)
   -- 2) a bad tile
   -- 3) our max extent
   -- TODO: Add collision with map tiles
-  local iter_pos = { x=flr(tmp.head_pos_x), y=flr(tmp.head_pos_y) }
+  local iter_pos_x = flr(tmp.head_pos_x)
+  local iter_pos_y = flr(tmp.head_pos_y)
   local collision_found = false
-  while (iter_pos.x != flr(tmp.tail_pos_x) or iter_pos.y != flr(tmp.tail_pos_y)) and not collision_found do
-    iter_pos = move_in_direction(direction, iter_pos, 1)
+  while (iter_pos_x != flr(tmp.tail_pos_x) or iter_pos_y != flr(tmp.tail_pos_y)) and not collision_found do
+    iter_pos_x, iter_pos_y = move_in_direction(direction, iter_pos_x, iter_pos_y, 1)
     -- make sprite at this position
     local tmp_sprite = {}
     if direction == DIRECTION_UP or direction == DIRECTION_DOWN then
-      tmp_sprite = new_sprite(0, iter_pos.x - 2, iter_pos.y, 3, 3)
+      tmp_sprite = new_sprite(0, iter_pos_x - 2, iter_pos_y, 3, 3)
       else
-      tmp_sprite = new_sprite(0, iter_pos.x, iter_pos.y - 2, 3, 3)
+      tmp_sprite = new_sprite(0, iter_pos_x, iter_pos_y - 2, 3, 3)
     end
     for k, ent in pairs(ent_man.ents) do
       if ent.type != ENT_BEAM then
         if collides(tmp_sprite, ent) then
-          tmp.tail_pos_x = iter_pos.x
-          tmp.tail_pos_y = iter_pos.y
+          tmp.tail_pos_x = iter_pos_x
+          tmp.tail_pos_y = iter_pos_y
           collision_found = true
           do_gravity(ent, tmp.head_pos_x, tmp.head_pos_y, direction)
+          tmp.blocked_by = ent
           break
         end
       end
@@ -546,11 +555,23 @@ function new_gbeam(payload)
   end
 
   tmp.update = function()
+    if tmp.blocked_by != nil then
+      if tmp.direction == DIRECTION_UP or tmp.direction == DIRECTION_DOWN then
+        tmp.tail_pos_y = get_center_y(tmp.blocked_by)
+      else
+        tmp.tail_pos_x = get_center_x(tmp.blocked_by)
+      end
+    end
   end
 
   tmp.draw = function()
     if tmp.state == "HELD" then
-      local colors = sort_from({ CLR_PNK, CLR_WHT, CLR_PRP }, (frame_counter % 3) + 1)
+      local colors = {}
+      if tmp.blocked_by != nil then
+        colors = sort_from({ CLR_BLU, CLR_BLK, CLR_IND }, (frame_counter % 3) + 1)
+      else
+        colors = sort_from({ CLR_PNK, CLR_WHT, CLR_PRP }, (frame_counter % 3) + 1)
+      end
       if direction == DIRECTION_UP or direction == DIRECTION_DOWN then
         line(tmp.head_pos_x - 1, tmp.head_pos_y, tmp.tail_pos_x - 1, tmp.tail_pos_y, colors[1])
         line(tmp.head_pos_x, tmp.head_pos_y, tmp.tail_pos_x, tmp.tail_pos_y, colors[2])
