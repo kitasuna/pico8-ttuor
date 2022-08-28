@@ -8,12 +8,15 @@ function new_player(sprite_num, pos_x, pos_y)
   )
 
   local velocity_max = 0.8
-  local walk_init_vel = 0.1
+  local slide_velocity = 1.3
+  local walk_init_vel = 0.2
   local walk_step_up = 0.04
   local slide_step_down = 0.05
 
   player.state = PLAYER_STATE_GROUNDED
   player.deaths = 0
+  player.slide_vel_x = 0
+  player.slide_vel_y = 0
   player.vel_x = 0
   player.vel_y = 0
   player.frame_base = 1
@@ -55,8 +58,11 @@ function new_player(sprite_num, pos_x, pos_y)
     player.facing = DIRECTION_DOWN
     player.can_travel = 1 << FLAG_FLOOR
     player.state = PLAYER_STATE_GROUNDED
+    qm.ae("PLAYER_STATE_GROUNDED")
     player.vel_x = 0
     player.vel_y = 0
+    player.slide_vel_x = 0
+    player.slide_vel_y = 0
     player.pos_x = l.player_pos_x * 8
     player.pos_y = l.player_pos_y * 8
     player.gbeam = nil
@@ -124,13 +130,27 @@ function new_player(sprite_num, pos_x, pos_y)
 
   player.handle_button = function(payload)
     local mask = payload.input_mask
+    -- local 
     -- If they're sliding, they can't do much
     if player.state == PLAYER_STATE_SLIDING then
+      if is_pressed_u(mask) then
+        player.slide_vel_y -= 0.03
+        player.facing = DIRECTION_UP
+      elseif is_pressed_d(mask) then
+        player.slide_vel_y += 0.03
+        player.facing = DIRECTION_DOWN
+      elseif is_pressed_l(mask) then
+        player.slide_vel_x -= 0.03
+        player.facing = DIRECTION_LEFT
+      elseif is_pressed_r(mask) then
+        player.slide_vel_x += 0.03
+        player.facing = DIRECTION_RIGHT
+      end
       return
     end
 
     -- If they're dying, disable input
-    if player.state == PLAYER_STATE_DEAD_FALLING or player.state == PLAYER_STATE_DEAD_ZAPPED then
+    if player.is_dead() then
       return
     end
 
@@ -150,6 +170,7 @@ function new_player(sprite_num, pos_x, pos_y)
       -- TODO do we need this?
       if not is_pressed_o(mask) then
         player.state = PLAYER_STATE_GROUNDED 
+        qm.ae("PLAYER_STATE_GROUNDED")
         return
       end
 
@@ -359,13 +380,13 @@ function new_player(sprite_num, pos_x, pos_y)
       return
     end
 
-    local approx_vel_x = player.vel_x
+    local approx_vel_x = player.vel_x + player.slide_vel_x
     if approx_vel_x < 0 then
       approx_vel_x = flr(approx_vel_x)
     elseif approx_vel_x > 0 then
       approx_vel_x = ceil(approx_vel_x)
     end
-    local approx_vel_y = player.vel_y
+    local approx_vel_y = player.vel_y + player.slide_vel_y
     if approx_vel_y < 0 then
       approx_vel_y = flr(approx_vel_y)
     elseif approx_vel_y > 0 then
@@ -448,8 +469,8 @@ function new_player(sprite_num, pos_x, pos_y)
     -- Make a hypothetical player sprite at the next location after update and check for collision
     local player_at_next = new_sprite(
       0, -- sprite num, doesn't matter
-      player.pos_x + player.vel_x,
-      player.pos_y + player.vel_y,
+      player.pos_x + player.vel_x + player.slide_vel_x,
+      player.pos_y + player.vel_y + player.slide_vel_y,
       player.size_x - 1, -- cheat with smaller player size for ents
       player.size_y - 1
     )
@@ -492,15 +513,18 @@ function new_player(sprite_num, pos_x, pos_y)
 
       if player.vel_x == 0 and player.vel_y == 0 and player.state == PLAYER_STATE_SLIDING then
         player.state = PLAYER_STATE_GROUNDED
+        player.slide_vel_x = 0
+        player.slide_vel_y = 0
+        qm.ae("PLAYER_STATE_GROUNDED")
       end
     end
 
     if can_move_x == true then
-      player.pos_x += player.vel_x
+      player.pos_x += player.vel_x + player.slide_vel_x
     end
 
     if can_move_y == true then
-      player.pos_y += player.vel_y
+      player.pos_y += player.vel_y + player.slide_vel_y
     end
 
   end
@@ -566,22 +590,17 @@ function new_gbeam(pos_x, pos_y, direction)
 
   tmp.draw = function()
     if tmp.state == "HELD" then
-      local colors = {}
-      if tmp.blocked_by != nil then
-        colors = sort_from({ CLR_BLU, CLR_BLK, CLR_IND }, (frame_counter % 3) + 1)
-      else
-        colors = sort_from({ CLR_PNK, CLR_WHT, CLR_PRP }, (frame_counter % 3) + 1)
-      end
+      local colors = sort_from({ CLR_PNK, CLR_WHT, CLR_PRP }, (frame_counter % 3) + 1)
       if direction == DIRECTION_UP or direction == DIRECTION_DOWN then
-        line(tmp.head_pos_x - 1, tmp.head_pos_y, tmp.tail_pos_x - 1, tmp.tail_pos_y, colors[1])
-        line(tmp.head_pos_x, tmp.head_pos_y, tmp.tail_pos_x, tmp.tail_pos_y, colors[2])
-        line(tmp.head_pos_x + 1, tmp.head_pos_y, tmp.tail_pos_x + 1, tmp.tail_pos_y, colors[3])
+        for i=-1,1 do
+          line(tmp.head_pos_x - i, tmp.head_pos_y, tmp.tail_pos_x - i, tmp.tail_pos_y, colors[i+2])
+        end
         circfill(tmp.head_pos_x, tmp.head_pos_y, 3, colors[1])
         circfill(tmp.head_pos_x, tmp.head_pos_y, frame_counter % 3, colors[2])
       else
-        line(tmp.head_pos_x, tmp.head_pos_y - 1, tmp.tail_pos_x, tmp.tail_pos_y - 1, colors[1])
-        line(tmp.head_pos_x, tmp.head_pos_y, tmp.tail_pos_x, tmp.tail_pos_y, colors[2])
-        line(tmp.head_pos_x, tmp.head_pos_y + 1 , tmp.tail_pos_x, tmp.tail_pos_y + 1, colors[3])
+        for i=-1,1 do
+          line(tmp.head_pos_x, tmp.head_pos_y - i, tmp.tail_pos_x, tmp.tail_pos_y - i, colors[i+2])
+        end
         circfill(tmp.head_pos_x + 2, tmp.head_pos_y, 3, colors[1])
         circfill(tmp.head_pos_x + 2, tmp.head_pos_y, frame_counter % 3, colors[2])
       end
@@ -601,7 +620,7 @@ function new_wormhole(coords, direction)
   tmp.frame_half_step = 1
   tmp.frame_step = 3
   tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
-  tmp.ttl = 180
+  tmp.ttl = 900
   local launch_velocity = 1.2
   if direction == DIRECTION_UP then
     tmp.vel_x = 0
@@ -648,6 +667,7 @@ end
 function sc_sliding(player)
     player.state = PLAYER_STATE_SLIDING
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
+    qm.ae("PLAYER_STATE_SLIDING")
 end
 
 function get_center_x(sprite)
@@ -705,3 +725,32 @@ end
 function unstage_inventory(inventory)
   modify_inventory(inventory, 0)
 end
+
+function ldistance(x0, y0, x1, y1)
+  local dist_x = x0 - x1
+  local dist_y = y0 - y1
+  local dist_x2 = dist_x * dist_x
+  local dist_y2 = dist_y * dist_y
+  local gdistance = sqrt(dist_x2 + dist_y2)
+  local dist_x_component = -(dist_x / gdistance)
+  local dist_y_component = -(dist_y / gdistance)
+  return {d=gdistance, dxc=dist_x_component, dyc=dist_y_component}
+end
+
+function calc_cheat_grav(coords_p, coords_g, mass_p, mass_g)
+  local float_velocity = 1.5
+  local ginfo = ldistance(coords_p.x, coords_p.y, coords_g.x, coords_g.y)
+  local new_vel_x = ginfo.dxc * float_velocity
+  local new_vel_y = ginfo.dyc * float_velocity
+  if (new_vel_x > 0 and new_vel_x < 0.1) or (new_vel_x < 0 and new_vel_x > -0.1) then
+    new_vel_x = 0
+  end
+  if (new_vel_y > 0 and new_vel_y < 0.1) or (new_vel_y < 0 and new_vel_y > -0.1) then
+    new_vel_y = 0
+  end
+  if ginfo.d < 0.5 then
+    return { gdistance = 0, vel = { x = 0, y = 0 } }
+  end
+  return { gdistance = ginfo.d, vel = { x = new_vel_x, y = new_vel_y } }
+end
+
