@@ -14,3 +14,6 @@ end
 sound_man.handle_player_state_grounded = function()
 sfx(1, -2)
 end
+sound_man.handle_player_dead = function()
+sfx(1, -2)
+end

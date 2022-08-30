@@ -101,7 +101,10 @@ function new_player(sprite_num, pos_x, pos_y)
       player.can_move_y = false
       player.vel_x = 0
       player.vel_y = 0
+      player.slide_vel_x = 0
+      player.slide_vel_y = 0
       player.state = PLAYER_STATE_DEAD_ZAPPED
+      qm.ae("PLAYER_DEAD")
       player.frame_step = 0
       player.frame_offset = 0
   end
