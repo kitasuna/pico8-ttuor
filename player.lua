@@ -70,8 +70,10 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.handle_proj_box_collision = function()
-    player.wormhole.vel_x = 0
-    player.wormhole.vel_y = 0
+    if player.wormhole != nil then
+      player.wormhole.vel_x = 0
+      player.wormhole.vel_y = 0
+    end
   end
 
   player.handle_proj_player_collision = function()
@@ -104,7 +106,7 @@ function new_player(sprite_num, pos_x, pos_y)
       player.slide_vel_x = 0
       player.slide_vel_y = 0
       player.state = PLAYER_STATE_DEAD_ZAPPED
-      qm.ae("PLAYER_DEAD")
+      qm.ae("PLAYER_STATE_ZAPPED")
       player.frame_step = 0
       player.frame_offset = 0
   end
@@ -448,6 +450,7 @@ function new_player(sprite_num, pos_x, pos_y)
       player.state = PLAYER_STATE_DEAD_FALLING
       player.frame_step = 0
       player.frame_offset = 0
+      qm.ae("PLAYER_STATE_FALLING")
       return
     end
 
