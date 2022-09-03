@@ -184,7 +184,7 @@ game_update = function()
           qm.ae("BEAM_BOX_COLLISION", { box=ent, beam=ent_inner })
         end
 
-        if ent_inner.type == ENT_BEAM and ent.type == ENT_ITEM and collides(ent, ent_inner) then
+        if ent_inner.type == ENT_BEAM and ent.type == ENT_ITEM and ent.state != ENT_STATE_BROKEN and collides(ent, ent_inner) then
           qm.ae("BEAM_ITEM_COLLISION", { item=ent, beam=ent_inner })
         end
       end
@@ -236,9 +236,10 @@ function _init()
     "BEAM_PLAYER_COLLISION",
     "BEAM_ITEM_COLLISION",
     "PLAYER_DEATH",
-    "PROJ_EXPIRATION",
     "GBEAM_ADDED",
     "GBEAM_REMOVED",
+    "WORMHOLE_ADDED",
+    "WORMHOLE_REMOVED",
     "ENTITY_REACHES_TARGET",
     "ENTITY_RELEASED",
     "PLAYER_ROTATION",
@@ -302,7 +303,8 @@ function _init()
   qm.as("BEAM_PLAYER_COLLISION", player.handle_beam_player_collision)
   qm.as("PROJ_PLAYER_COLLISION", player.handle_proj_player_collision)
   qm.as("PROJ_BOX_COLLISION", player.handle_proj_box_collision)
-  qm.as("PROJ_EXPIRATION", player.handle_proj_expiration)
+  qm.as("WORMHOLE_REMOVED", player.handle_wormhole_removed)
+  -- ^^ might not need this since logic is internal
   qm.as("ENTITY_REACHES_TARGET", player.handle_entity_reaches_target)
   qm.as("PLAYER_ITEM_COLLISION", player.handle_player_item_collision)
   qm.as("PLAYER_GLOVE_COLLISION", player.handle_player_glove_collision)
@@ -317,6 +319,10 @@ function _init()
   qm.as("PLAYER_STATE_ZAPPED", sound_man.handle_player_state_zapped)
   qm.as("PLAYER_STATE_FALLING", sound_man.handle_player_state_falling)
   qm.as("PLAYER_DEATH", sound_man.handle_player_death)
+  qm.as("PLAYER_ITEM_COLLISION", sound_man.handle_player_item_collision)
+  qm.as("BEAM_ITEM_COLLISION", sound_man.handle_beam_item_collision)
+  qm.as("WORMHOLE_ADDED", sound_man.handle_wormhole_added)
+  qm.as("WORMHOLE_REMOVED", sound_man.handle_wormhole_removed)
   -- Load levels
   levels = get_levels()
 
@@ -337,37 +343,6 @@ function _init()
 
   __draw = title_draw
   __update = title_update
-end
-
-function init_level(l)
-  player.reset(l)
-  ent_man.reset()
-  camera_x = -64 + player.pos_x
-  camera_y = -64 + player.pos_y
-  local i=1
-  while i<#l.boxes do
-    ent_man.add_box(ent_at(ENT_BOX,sub(l.boxes,i,i+1),sub(l.boxes,i+2,i+3)))
-    i += 5 -- 5 because we want to skip over the separator
-  end
-  local i=1
-  while i<#l.beams do
-    ent_man.add_beam(ent_at(ENT_BEAM,sub(l.beams,i,i+1),sub(l.beams,i+2,i+3)))
-    i += 5 -- 5 because we want to skip over the separator
-  end
-  for k, e in pairs(l.ents) do
-    if e.type==ENT_ITEM then
-      ent_man.add_item(e)
-    elseif e.type==ENT_GLOVE then
-      ent_man.add_glove(e)
-    elseif e.type==ENT_WH then
-      ent_man.add_wh(e)
-    else
-      printh("unknown type")
-    end
-  end
-
-  qm.ae("LEVEL_INIT", {})
-  timers = {}
 end
 
 function _update60()
@@ -633,3 +608,7 @@ __sfx__
 000100032b0102f01030010370001e4001f400204002f400324003440018400124002e40000400004000040000400004000040000400004000040000400004000040000400004000040000400004000040000400
 000300070c4100c4100d420104301343015430164103240031400304002f4002e4002d4002b4002940027400254002340021400204001e4001c4001a4001840016400144001340011400104000f4000f4000f400
 0001000b292403223037220322202c220252101e210252202a2302f2403124028200202001a2001e2002820031200332003620038200382001a2001d20020200232002620027200272002620024200202001e200
+000300001b74021740267402b7402f74034700257502b7502f7503175034750257002f77031770347703777039770007000070000700007000070000700007000070000700007000070000700007000070000700
+00040000325402f6402c5402c640285402764023530216301f5301c6301b52018620156100e6100c610026000a600006000960002100096000010000100001000b6000010000100001000c600001000010000100
+0002000035870338703287031860308602f8602e8602d8602c8602a8602985028850278502685025850248502385021840208401f8401d8301c8301b8301a8301983018830008000080000800008000080000800
+000100002b7002f70030700377001e7001f700207002f700327003470018700127002e70000700007000070000700007000070000700007000070000700007000070000700007000070000700007000070000700

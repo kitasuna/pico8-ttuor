@@ -110,3 +110,34 @@ end
 function ent_at(ent_type, tile_x, tile_y)
   return {type=ent_type, pos_x=tile_x*8, pos_y=tile_y*8}
 end
+
+function init_level(l)
+  player.reset(l)
+  ent_man.reset()
+  camera_x = -64 + player.pos_x
+  camera_y = -64 + player.pos_y
+  local i=1
+  while i<#l.boxes do
+    ent_man.add_box(ent_at(ENT_BOX,sub(l.boxes,i,i+1),sub(l.boxes,i+2,i+3)))
+    i += 5 -- 5 because we want to skip over the separator
+  end
+  local i=1
+  while i<#l.beams do
+    ent_man.add_beam(ent_at(ENT_BEAM,sub(l.beams,i,i+1),sub(l.beams,i+2,i+3)))
+    i += 5 -- 5 because we want to skip over the separator
+  end
+  for k, e in pairs(l.ents) do
+    if e.type==ENT_ITEM then
+      ent_man.add_item(e)
+    elseif e.type==ENT_GLOVE then
+      ent_man.add_glove(e)
+    elseif e.type==ENT_WH then
+      ent_man.add_wh(e)
+    else
+      printh("unknown type")
+    end
+  end
+
+  qm.ae("LEVEL_INIT", {})
+  timers = {}
+end

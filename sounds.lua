@@ -24,3 +24,15 @@ end
 sound_man.handle_player_death = function()
   sfx(3, -2)
 end
+sound_man.handle_player_item_collision = function()
+  sfx(4)
+end
+sound_man.handle_beam_item_collision = function()
+  sfx(5)
+end
+sound_man.handle_wormhole_added = function()
+  sfx(6)
+end
+sound_man.handle_wormhole_removed = function()
+  sfx(6,-2)
+end

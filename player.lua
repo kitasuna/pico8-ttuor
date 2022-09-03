@@ -66,7 +66,11 @@ function new_player(sprite_num, pos_x, pos_y)
     player.pos_x = l.player_pos_x * 8
     player.pos_y = l.player_pos_y * 8
     player.gbeam = nil
+  end
+
+  player.remove_wormhole = function()
     player.wormhole = nil
+    qm.ae("WORMHOLE_REMOVED")
   end
 
   player.handle_proj_box_collision = function()
@@ -80,7 +84,7 @@ function new_player(sprite_num, pos_x, pos_y)
     if player.state == PLAYER_STATE_FLOATING then
       sc_sliding(player)
     end
-    player.wormhole = nil
+    player.remove_wormhole()
   end
 
   player.handle_player_item_collision = function(payload)
@@ -111,7 +115,7 @@ function new_player(sprite_num, pos_x, pos_y)
       player.frame_offset = 0
   end
 
-  player.handle_proj_expiration = function(payload)
+  player.handle_wormhole_removed = function(payload)
     if player.state == PLAYER_STATE_FLOATING then
       sc_sliding(player) 
     end
@@ -164,7 +168,7 @@ function new_player(sprite_num, pos_x, pos_y)
       return
     elseif player.state == PLAYER_STATE_FLOATING then
       if player.wormhole != nil then
-        player.wormhole = nil
+        player.remove_wormhole()
       end
       sc_sliding(player)
       return
@@ -256,7 +260,8 @@ function new_player(sprite_num, pos_x, pos_y)
       else -- DIRECTION_LEFT
         wh_pos_x -= 8
       end
-      player.wormhole = new_wormhole({pos_x=wh_pos_x, pos_y=wh_pos_y}, player.facing)
+      player.wormhole = new_wormhole(wh_pos_x, wh_pos_y, player.facing)
+      qm.ae("WORMHOLE_ADDED")
     -- If they're grounded, there's a projectile, and the press is a float toggle, make them float!
     elseif is_pressed_x(mask) and player.wormhole != nil and player.state == PLAYER_STATE_GROUNDED then
         player.state = PLAYER_STATE_FLOATING
@@ -371,8 +376,7 @@ function new_player(sprite_num, pos_x, pos_y)
     if player.wormhole != nil then
       player.wormhole.update(level)
       if player.wormhole.ttl < 0 then
-        player.wormhole = nil
-        qm.ae("PROJ_EXPIRATION", {})
+        player.remove_wormhole()
       end
     end
 
@@ -617,8 +621,8 @@ function new_gbeam(pos_x, pos_y, direction)
 
 end
 
-function new_wormhole(coords, direction)
-  local tmp = new_sprite(48, coords.pos_x, coords.pos_y, 6, 6, false, false)
+function new_wormhole(pos_x, pos_y, direction)
+  local tmp = new_sprite(48, pos_x, pos_y, 6, 6, false, false)
   tmp.bgcoloridx = 1
   tmp.incoloridx = 2
   tmp.colors = { CLR_PNK, CLR_WHT, CLR_PRP }
@@ -626,8 +630,9 @@ function new_wormhole(coords, direction)
   tmp.frame_half_step = 1
   tmp.frame_step = 3
   tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
-  tmp.ttl = 900
-  local launch_velocity = 1.2
+  tmp.ttl = 300
+  local launch_velocity = 2
+  local max_velocity = 4
   if direction == DIRECTION_UP then
     tmp.vel_x = 0
     tmp.vel_y = -launch_velocity
@@ -654,6 +659,13 @@ function new_wormhole(coords, direction)
       if tmp.incoloridx > count(tmp.colors) then
         tmp.incoloridx = 1
       end
+    end
+
+    if tmp.vel_x < max_velocity then
+      tmp.vel_x *= 1.1
+    end
+    if tmp.vel_y < max_velocity then
+      tmp.vel_y *= 1.1
     end
 
     tmp.ttl -= 1
