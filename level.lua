@@ -40,14 +40,10 @@ function get_levels()
       player_pos_y = 4,
       map_tile_width = 15,
       map_tile_height = 12,
+      boxes = "0601:0702:0801:0608:0708:0808",
+      beams = "",
       ents = {
-        ent_at(ENT_BOX, 6, 1),
-        ent_at(ENT_BOX, 7, 2),
-        ent_at(ENT_BOX, 8, 1),
         ent_at(ENT_GLOVE, 12, 4),
-        ent_at(ENT_BOX, 6, 8),
-        ent_at(ENT_BOX, 7, 8),
-        ent_at(ENT_BOX, 8, 8),
         merge(ent_at(ENT_ITEM, 7, 10), {item_index=1}),
       }
     },
@@ -59,22 +55,10 @@ function get_levels()
       player_pos_y = 11,
       map_tile_width = 11,
       map_tile_height = 28,
+      boxes = "0301:0314:0415:0515:0615:0714:0418:0621:0626",
+      beams = "0102:0103:0218:0221:0224",
       ents = {
         merge(ent_at(ENT_ITEM, 4, 1), {item_index=2}),
-        ent_at(ENT_BOX, 3, 1),
-        ent_at(ENT_BEAM, 1, 2),
-        ent_at(ENT_BEAM, 1, 3),
-        ent_at(ENT_BOX, 3, 14),
-        ent_at(ENT_BOX, 4, 15),
-        ent_at(ENT_BOX, 5, 15),
-        ent_at(ENT_BOX, 6, 15),
-        ent_at(ENT_BOX, 7, 14),
-        ent_at(ENT_BEAM, 2, 18),
-        ent_at(ENT_BOX, 4, 18),
-        ent_at(ENT_BEAM, 2, 21),
-        ent_at(ENT_BOX, 6, 21),
-        ent_at(ENT_BEAM, 2, 24),
-        ent_at(ENT_BOX, 6, 26),
       }
     },
     {
@@ -85,11 +69,11 @@ function get_levels()
       player_pos_y = 1,
       map_tile_width = 15,
       map_tile_height = 13,
+      boxes = "1204",
+      beams = "0805",
       ents = {
         merge(ent_at(ENT_ITEM, 2, 8), {item_index=3}),
         ent_at(ENT_WH, 3, 4),
-        ent_at(ENT_BOX, 12, 4),
-        ent_at(ENT_BEAM, 8, 5),
       }
     },
     {
@@ -100,13 +84,10 @@ function get_levels()
       player_pos_y = 9,
       map_tile_width = 17,
       map_tile_height = 13,
+      boxes = "1301:0109",
+      beams = "1207:0101:0108",
       ents = {
         merge(ent_at(ENT_ITEM, 13, 4), {item_index=4}),
-        ent_at(ENT_BEAM, 12, 7),
-        ent_at(ENT_BOX, 13, 1),
-        ent_at(ENT_BEAM, 1, 1),
-        ent_at(ENT_BEAM, 1, 8),
-        ent_at(ENT_BOX, 1, 9),
       }
     },
     --[[
@@ -118,17 +99,9 @@ function get_levels()
       player_pos_y = 3*8,
       map_tile_width = 16,
       map_tile_height = 14,
-      ents = {
-        ent_at(ENT_BOX, 2, 3),
-        ent_at(ENT_BOX, 4, 3),
-        ent_at(ENT_BOX, 6, 3),
-        ent_at(ENT_BOX, 2, 5),
-        ent_at(ENT_BOX, 4, 5),
-        ent_at(ENT_BOX, 6, 5),
-        ent_at(ENT_BOX, 2, 7),
-        ent_at(ENT_BOX, 4, 7),
-        ent_at(ENT_BOX, 6, 7),
-      }
+      boxes = "0203:0403:0603:0205:0405:0605:0207:0407:0607"
+      beams = ""
+      ents = {}
     },
     ]]
   }

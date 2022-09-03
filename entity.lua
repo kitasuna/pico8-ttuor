@@ -40,8 +40,7 @@ function new_entity_manager()
   ent_man.add_box = function(coords)
     local tmp = new_sprite(43, coords.pos_x, coords.pos_y, 8, 8)
 
-    tmp.vel_x = 0
-    tmp.vel_y = 0
+    tmp.vel_x,tmp.vel_y = 0,0
     tmp.type = ENT_BOX
     tmp.can_travel = 1 << FLAG_FLOOR
     tmp.state = ENT_STATE_NORMAL
@@ -49,8 +48,7 @@ function new_entity_manager()
     tmp.frame_half_step = 0
     tmp.frame_offset = 1
     tmp.feels_grav = true
-    tmp.future_x = 0
-    tmp.future_y = 0
+    tmp.future_x,tmp.future_y = 0,0
 
     tmp.update = ent_update(tmp)
     tmp.draw = function()
@@ -76,8 +74,7 @@ function new_entity_manager()
 
   ent_man.add_beam = function(coords)
     local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 6)
-    tmp.vel_x = 0
-    tmp.vel_y = 0
+    tmp.vel_x,tmp.vel_y = 0,0
     tmp.type = ENT_BEAM
     tmp.blocked_by = nil
     tmp.can_travel = 1 << FLAG_FLOOR -- maybe need to add gaps here later
@@ -117,8 +114,7 @@ function new_entity_manager()
   ent_man.handle_beam_item_collision = function(payload)
     payload.item.state = ENT_STATE_BROKEN
     payload.item.feels_grav = false
-    payload.item.vel_x = 0
-    payload.item.vel_y = 0
+    payload.item.vel_x,payload.item.vel_y = 0,0
     add(timers, {
       ttl = 120,
       f = function() end,
@@ -131,10 +127,8 @@ function new_entity_manager()
   ent_man.handle_gbeam_removed = function(payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.tgt_x != nil or ent.tgt_y != nil then
-        ent.vel_x = 0
-        ent.vel_y = 0
-        ent.tgt_x = nil
-        ent.tgt_y = nil
+        ent.vel_x,ent.vel_y = 0,0
+        ent.tgt_x,ent.tgt_y = nil,nil
       end
     end
   end
@@ -145,8 +139,7 @@ function new_entity_manager()
         if not is_pressed_o(payload.input_mask) then
           -- unhand that item!
           ent.state = ENT_STATE_NORMAL
-          ent.pos_x = ent.future_x
-          ent.pos_y = ent.future_y
+          ent.pos_x,ent.pos_y = ent.future_x,ent.future_y
           qm.ae("ENTITY_RELEASED", {})
         end
       end
@@ -156,8 +149,7 @@ function new_entity_manager()
   ent_man.handle_player_holds = function(payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.state == ENT_STATE_HELD then
-        ent.pos_x = payload.x
-        ent.pos_y = payload.y
+        ent.pos_x,ent.pos_y = payload.x,payload.y
         break
       end
     end
@@ -167,8 +159,8 @@ function new_entity_manager()
   ent_man.handle_player_rotation = function(payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.state == ENT_STATE_HELD then
-        ent.future_x = payload.pos_x
-        ent.future_y = payload.pos_y
+        ent.future_x,ent.future_y = payload.pos_x,payload.pos_y
+        --ent.future_y = payload.pos_y
         -- we only need to do this for one ent, so return
         return
       end
@@ -240,7 +232,7 @@ function beam_update(beam)
       -- Update blocked_by if necessary
       beam.size_x = 128
       if collides(beam.blocked_by, beam) then
-        beam.size_x = beam.blocked_by.pos_x - beam.pos_x + 1
+        beam.size_x = beam.blocked_by.pos_x - beam.pos_x
         return
       else
         beam.blocked_by = nil
