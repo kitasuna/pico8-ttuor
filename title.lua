@@ -1,6 +1,6 @@
 title_draw = function()
   cls()
-  print("TTUOR", 56, 64, CLR_PNK)
+  spr(196,16,32,12,4)
   -- print("THIS YOU", 24, 24, CLR_GRN)
   -- print("PRESS (X) FOR GRAVITY", 25, 48, CLR_IND)
   -- print("GET THESE", 24, 36, CLR_PRP)

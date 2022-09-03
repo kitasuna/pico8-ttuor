@@ -83,11 +83,11 @@ function get_levels()
       player_pos_x = 8,
       player_pos_y = 9,
       map_tile_width = 17,
-      map_tile_height = 13,
-      boxes = "1301:0109",
-      beams = "1207:0101:0108",
+      map_tile_height = 14,
+      boxes = "1303:0109",
+      beams = "1208:0101:0108",
       ents = {
-        merge(ent_at(ENT_ITEM, 13, 4), {item_index=4}),
+        merge(ent_at(ENT_ITEM, 13, 5), {item_index=4}),
       }
     },
     --[[

@@ -132,8 +132,9 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.handle_level_init = function(payload)
-    player.vel_x = 0
-    player.vel_y = 0
+    player.vel_x,vel_y = 0,0
+    player.slide_vel_x,player.slide_vel_y = 0,0
+    player.wormhole,player.gbeam = nil
     player.facing = DIRECTION_DOWN
   end
 
