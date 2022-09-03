@@ -158,24 +158,29 @@ game_update = function()
         qm.ae("PROJ_BOX_COLLISION")
       end
 
-      if ent.type == ENT_ITEM and collides(ent, player) then
-        qm.ae("PLAYER_ITEM_COLLISION", { entity=ent })
+      local player_collides = collides(ent, player)
+      if player_collides and not player.is_dead() then
+
+        if ent.type == ENT_ITEM then
+          qm.ae("PLAYER_ITEM_COLLISION", { entity=ent })
+        end
+
+        if ent.type == ENT_GLOVE then
+          qm.ae("PLAYER_GLOVE_COLLISION", { entity=ent })
+        end
+
+        if ent.type == ENT_WH then
+          qm.ae("PLAYER_WH_COLLISION", { entity=ent })
+        end
+
+        if ent.type == ENT_BEAM then
+          qm.ae("BEAM_PLAYER_COLLISION", { entity=ent })
+        end
       end
 
-      if ent.type == ENT_GLOVE and collides(ent, player) then
-        qm.ae("PLAYER_GLOVE_COLLISION", { entity=ent })
-      end
-
-      if ent.type == ENT_WH and collides(ent, player) then
-        qm.ae("PLAYER_WH_COLLISION", { entity=ent })
-      end
-
-      if ent.type == ENT_BEAM and player.state != PLAYER_STATE_DEAD_ZAPPED and collides(ent, player) then
-        qm.ae("BEAM_PLAYER_COLLISION", { entity=ent })
-      end
 
       for j, ent_inner in pairs(ent_man.ents) do
-        if ent_inner.type == ENT_BEAM and ent.type == ENT_BOX and collides(ent, ent_inner) then
+        if ent_inner.type == ENT_BEAM and ent.type == ENT_BOX and ent.state != ENT_STATE_HELD and collides(ent, ent_inner) then
           qm.ae("BEAM_BOX_COLLISION", { box=ent, beam=ent_inner })
         end
 
@@ -284,6 +289,7 @@ function _init()
   qm.as("BUTTON", ent_man.handle_button)
   qm.as("PLAYER_ROTATION", ent_man.handle_player_rotation)
   qm.as("PLAYER_ITEM_COLLISION", ent_man.handle_player_item_collision)
+  qm.as("ENTITY_REACHES_TARGET", ent_man.handle_entity_reaches_target)
   qm.as("PLAYER_GLOVE_COLLISION", ent_man.handle_player_item_collision) 
   qm.as("PLAYER_WH_COLLISION", ent_man.handle_player_item_collision) 
   -- ^^ this is intentional, only need to delete the glove/wh from the table

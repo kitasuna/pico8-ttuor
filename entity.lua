@@ -91,6 +91,19 @@ function new_entity_manager()
     ent_man.ents = {}
   end
 
+  ent_man.handle_entity_reaches_target = function(payload)
+    -- unblock any blocked beams
+    if payload.ent.type != ENT_BOX then
+      return
+    end
+    for k, ent in pairs(ent_man.ents) do
+      if ent.type == ENT_BEAM and ent.blocked_by == payload.ent then
+        ent.blocked_by = nil
+        return
+      end
+    end
+  end
+
   ent_man.handle_player_item_collision = function(payload)
       del(ent_man.ents, payload.entity)
   end
@@ -220,14 +233,14 @@ function new_item(item)
 end
 
 function beam_update(beam)
-  return function()
+  return function(level)
     -- Check for horizonal, increasing case
     -- Maybe add a "facing" prop to this later
     if beam.blocked_by != nil then
       -- Update blocked_by if necessary
       beam.size_x = 128
-      if collides(beam.blocked_by, beam) == true then
-        beam.size_x = beam.blocked_by.pos_x - beam.pos_x
+      if collides(beam.blocked_by, beam) then
+        beam.size_x = beam.blocked_by.pos_x - beam.pos_x + 1
         return
       else
         beam.blocked_by = nil
