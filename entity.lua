@@ -3,6 +3,29 @@ function new_entity_manager()
     ents = {},
   }
 
+  ent_man.collision = function()
+    for k, ent in pairs(ent_man.ents) do
+      for j, ent_inner in pairs(ent_man.ents) do
+        if ent_inner.type == ENT_BEAM and ent.type == ENT_BOX and ent.state != ENT_STATE_HELD and collides(ent, ent_inner) then
+          ent_inner.blocked_by = ent
+        end
+
+        if ent_inner.type == ENT_BEAM and ent.type == ENT_ITEM and ent.state != ENT_STATE_BROKEN and collides(ent, ent_inner) then
+          ent.state = ENT_STATE_BROKEN
+          ent.feels_grav = false
+          ent.vel_x,ent.vel_y = 0,0
+          add(timers, {
+            ttl = 120,
+            f = function() end,
+            cleanup = function()
+              del(ent_man.ents, ent)
+            end
+          })
+          qm.ae("beam_item_collision")
+        end
+      end
+    end
+  end
   -- {pos_x: Int, pos_y: Int, item_index: Int}
   ent_man.add_item = function(item)
     local tmp = new_item(item)
@@ -53,7 +76,7 @@ function new_entity_manager()
     tmp.update = ent_update(tmp)
     tmp.draw = function()
       if tmp.state == ENT_STATE_HELD then
-        spr(44, tmp.pos_x, tmp.pos_y-5)  
+        spr(44, tmp.pos_x - 4, tmp.pos_y - 8)  
         palt(10, true)
         if frame_counter % 10 < 5 then
           palt(0, false)
@@ -105,25 +128,6 @@ function new_entity_manager()
       del(ent_man.ents, payload.entity)
   end
 
-  -- String -> { box: Box, beam: Beam }
-  ent_man.handle_beam_box_collision = function(payload)
-    payload.beam.blocked_by = payload.box
-  end
-
-  -- String -> { item: Item, beam: Beam }
-  ent_man.handle_beam_item_collision = function(payload)
-    payload.item.state = ENT_STATE_BROKEN
-    payload.item.feels_grav = false
-    payload.item.vel_x,payload.item.vel_y = 0,0
-    add(timers, {
-      ttl = 120,
-      f = function() end,
-      cleanup = function()
-        del(ent_man.ents, payload.item)
-      end
-    })
-  end
-
   ent_man.handle_gbeam_removed = function(payload)
     for k, ent in pairs(ent_man.ents) do
       if ent.tgt_x != nil or ent.tgt_y != nil then
@@ -140,17 +144,7 @@ function new_entity_manager()
           -- unhand that item!
           ent.state = ENT_STATE_NORMAL
           ent.pos_x,ent.pos_y = ent.future_x,ent.future_y
-          qm.ae("ENTITY_RELEASED", {})
         end
-      end
-    end
-  end
-
-  ent_man.handle_player_holds = function(payload)
-    for k, ent in pairs(ent_man.ents) do
-      if ent.state == ENT_STATE_HELD then
-        ent.pos_x,ent.pos_y = payload.x,payload.y
-        break
       end
     end
   end
@@ -178,26 +172,26 @@ function do_gravity(ent, pos_x, pos_y, direction)
       -- vel should be downwards
       ent.vel_x = 0
       ent.vel_y = ent_vel
-      ent.tgt_x = ent.pos_x
+      ent.tgt_x = pos_x
       ent.tgt_y = pos_y
       elseif direction == DIRECTION_DOWN then
       -- vel should be upwards
       ent.vel_x = 0
       ent.vel_y = -ent_vel
-      ent.tgt_x = ent.pos_x
+      ent.tgt_x = pos_x
       ent.tgt_y = pos_y
       elseif direction == DIRECTION_RIGHT then
         --vel should be to the left
       ent.vel_x = -ent_vel
       ent.vel_y = 0
       ent.tgt_x = pos_x
-      ent.tgt_y = ent.pos_y
+      ent.tgt_y = pos_y
       elseif direction == DIRECTION_LEFT then
       --vel should be to the right
       ent.vel_x = ent_vel
       ent.vel_y = 0
       ent.tgt_x = pos_x
-      ent.tgt_y = ent.pos_y
+      ent.tgt_y = pos_y
     end
   end
 
@@ -285,24 +279,19 @@ end
 
 function ent_update(tmp)
   return function(level)
-    local ent_center_x = get_center_x(tmp)
-    local ent_center_y = get_center_y(tmp)
+    local ent_center_x, ent_center_y = get_center(tmp)
     local ent_next_x = (ent_center_x + tmp.vel_x)
     local ent_next_y = (ent_center_y + tmp.vel_y)
-    local curr_map_x = (ent_center_x \ 8) + level.start_tile_x
-    local next_map_x = (ent_next_x \ 8) + level.start_tile_x
-    local curr_map_y = (ent_center_y \ 8) + level.start_tile_y
-    local next_map_y = (ent_next_y \ 8) + level.start_tile_y
+    local curr_map_x, curr_map_y = get_tile_from_pos(ent_center_x, ent_center_y, level)
+    local next_map_x, next_map_y = get_tile_from_pos(ent_next_x, ent_next_y, level)
 
-    local next_map_tile_x = mget(next_map_x, curr_map_y)
-    if fget(next_map_tile_x) & tmp.can_travel == 0 then
+    if fget(mget(next_map_x, curr_map_y)) & tmp.can_travel == 0 then
       tmp.vel_x = 0
     else
       tmp.pos_x += tmp.vel_x
     end
 
-    local next_map_tile_y = mget(curr_map_x, next_map_y)
-    if fget(next_map_tile_y) & tmp.can_travel == 0 then
+    if fget(mget(curr_map_x, next_map_y)) & tmp.can_travel == 0 then
       tmp.vel_y = 0
     else
       tmp.pos_y += tmp.vel_y
@@ -315,14 +304,16 @@ function ent_update(tmp)
         -- Center on the target
         tmp.vel_x = 0
         tmp.vel_y = 0
-        tmp.tgt_x = nil
-        tmp.tgt_y = nil
         if tmp.type == ENT_BOX then
           tmp.state = ENT_STATE_HELD
         end
         tmp.future_x = tmp.pos_x
         tmp.future_y = tmp.pos_y
-        qm.ae("ENTITY_REACHES_TARGET", {ent=tmp})
+        tmp.pos_x = tmp.tgt_x
+        tmp.pos_y = tmp.tgt_y
+        tmp.tgt_x = nil
+        tmp.tgt_y = nil
+        qm.ae("entity_reaches_target", {ent=tmp})
       end
     end
   end

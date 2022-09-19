@@ -138,6 +138,6 @@ function init_level(l)
     end
   end
 
-  qm.ae("LEVEL_INIT", {})
+  qm.ae("level_init")
   timers = {}
 end

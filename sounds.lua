@@ -1,38 +1,42 @@
-sound_man = {}
-sound_man.handle_entity_reaches_target = function()
+sound_man = {
+handle_entity_reaches_target = function()
   sfx(0)
+end,
+handle_player_death = function()
+  sfx(3, -2)
+end,
+handle_beam_item_collision = function()
+  sfx(5)
+end,
+}
+function sfx_wormhole()
+  sfx(6)
 end
-sound_man.handle_gbeam_added = function()
+function xsfx_wormhole()
+  sfx(6,-2)
+end
+function sfx_gbeam()
   sfx(2)
 end
-sound_man.handle_gbeam_removed = function()
+function xsfx_gbeam()
   sfx(2, -2)
 end
-sound_man.handle_player_state_sliding = function()
+function sfx_slide()
   sfx(1)
 end
-sound_man.handle_player_state_grounded = function()
+function xsfx_slide()
   sfx(1, -2)
 end
-sound_man.handle_player_state_zapped = function()
+function sfx_get_item()
+  sfx(4)
+end
+function sfx_zapped()
   sfx(1,-2)
   sfx(3)
 end
-sound_man.handle_player_state_falling = function()
-  sfx(1, -2)
-end
-sound_man.handle_player_death = function()
-  sfx(3, -2)
-end
-sound_man.handle_player_item_collision = function()
-  sfx(4)
-end
-sound_man.handle_beam_item_collision = function()
-  sfx(5)
-end
-sound_man.handle_wormhole_added = function()
-  sfx(6)
-end
-sound_man.handle_wormhole_removed = function()
-  sfx(6,-2)
+function xsfx_all()
+  sfx(-1,1)
+  sfx(-1,2)
+  sfx(-1,3)
+  sfx(-1,4)
 end

@@ -2,22 +2,34 @@ function qico()
   local q = {} -- msg queue, just strings for now
   local t = {} -- topics
 
+  function split_events(events)
+    local tbl = {}
+    local tmp = "" -- for accumulating chars
+    for i=1,#events do
+      if events[i] != "|" then
+        tmp = tmp..events[i]
+      else
+        tbl[tmp] = {}
+        tmp = "" 
+      end
+    end
+    return tbl
+  end
+
+  function add_topics(events)
+    t = split_events(events)
+  end
+
   function add_event(name, payload)
     add(q, { name=name, payload=payload })
   end
 
-  function add_topic(name)
-    t[name] = {}
+  function add_sub(event, fn)
+    add(t[event], fn)
   end
 
-  function add_topics(names)
-    for k,name in pairs(names) do
-      t[name] = {}
-    end
-  end
-
-  function add_subscriber(name, fn)
-    add(t[name], fn)
+  function set_subs(event, fns)
+    t[event] = fns
   end
 
   function process_queue()
@@ -35,7 +47,8 @@ function qico()
     ae = add_event,
     at = add_topic,
     ats = add_topics,
-    as = add_subscriber,
+    add_sub = add_sub,
+    set_subs = set_subs,
     proc = process_queue,
     q = q,
     t = t

@@ -15,7 +15,7 @@ title_update = function()
     if btnp(BTN_X) or btnp(BTN_O) then
       level = levels[level_index]
       init_level(level)
-      music(0)
+      music(2)
       add(timers, {
         ttl = COUNTDOWN_TIMEOUT,
         f = function() end,
