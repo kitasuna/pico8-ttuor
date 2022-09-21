@@ -21,7 +21,7 @@ function new_entity_manager()
               del(ent_man.ents, ent)
             end
           })
-          qm.ae("beam_item_collision")
+          qm.add_event("beam_item_collision")
         end
       end
     end
@@ -313,7 +313,7 @@ function ent_update(tmp)
         tmp.pos_y = tmp.tgt_y
         tmp.tgt_x = nil
         tmp.tgt_y = nil
-        qm.ae("entity_reaches_target", {ent=tmp})
+        qm.add_event("entity_reaches_target", {ent=tmp})
       end
     end
   end

@@ -1,6 +1,6 @@
 function qico()
-  local q = {} -- msg queue, just strings for now
-  local t = {} -- topics
+  local q = {} -- msg queue
+  local t = {} -- topics and subscriptions
 
   function split_events(events)
     local tbl = {}
@@ -44,9 +44,9 @@ function qico()
   end
 
   return {
-    ae = add_event,
-    at = add_topic,
-    ats = add_topics,
+    add_event = add_event,
+    add_topic = add_topic,
+    add_topics = add_topics,
     add_sub = add_sub,
     set_subs = set_subs,
     proc = process_queue,

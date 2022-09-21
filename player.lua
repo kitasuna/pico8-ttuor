@@ -115,10 +115,10 @@ function new_player(sprite_num, pos_x, pos_y)
     if payload.ent.type == ENT_BOX then
       player.state = PLAYER_STATE_HOLDING
     elseif payload.ent.type == ENT_ITEM then
-      qm.ae("PLAYER_ITEM_COLLISION", { entity=payload.ent })
+      qm.add_event("PLAYER_ITEM_COLLISION", { entity=payload.ent })
     end
     player.gbeam.disable()
-    qm.ae("gbeam_removed")
+    qm.add_event("gbeam_removed")
     xsfx_gbeam()
   end
 
@@ -203,7 +203,7 @@ function new_player(sprite_num, pos_x, pos_y)
       elseif player.facing == DIRECTION_RIGHT then
         new_x += 8
       end
-      qm.ae("player_rotation", {pos_x=new_x, pos_y=new_y})
+      qm.add_event("player_rotation", {pos_x=new_x, pos_y=new_y})
       -- end
       return
     end
@@ -237,7 +237,7 @@ function new_player(sprite_num, pos_x, pos_y)
       -- Remove gbeam
       player.gbeam.disable()
       -- Add event to stop affected items
-      qm.ae("gbeam_removed")
+      qm.add_event("gbeam_removed")
       xsfx_gbeam()
       player.state = PLAYER_STATE_GROUNDED
     end
@@ -412,7 +412,7 @@ function new_player(sprite_num, pos_x, pos_y)
           player.frame_step = 0
         end
       else
-        qm.ae("player_death", {level = level})
+        qm.add_event("player_death", {level = level})
         unstage_inventory(player.inventory)
       end
       return
@@ -427,7 +427,7 @@ function new_player(sprite_num, pos_x, pos_y)
         end
       else
         unstage_inventory(player.inventory)
-        qm.ae("player_death", {level = level})
+        qm.add_event("player_death", {level = level})
         return
       end
     end
@@ -464,7 +464,7 @@ function new_player(sprite_num, pos_x, pos_y)
     if fget(mget(curr_map_x, curr_map_y), FLAG_STAIRS) then
       commit_inventory(player.inventory)
       xsfx_all()
-      qm.ae("player_goal")
+      qm.add_event("player_goal")
     end
 
     -- Make a hypothetical player sprite at the next location after update and check for collision
