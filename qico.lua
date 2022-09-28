@@ -13,6 +13,10 @@ function qico()
         tmp = "" 
       end
     end
+    -- account for the last element
+    if tmp != "" then
+      tbl[tmp] = {}
+    end
     return tbl
   end
 
@@ -28,11 +32,13 @@ function qico()
     add(t[event], fn)
   end
 
-  function set_subs(event, fns)
-    t[event] = fns
+  function add_subs(event, fns)
+    for i=1,#fns do
+      add(t[event], fns[i])
+    end
   end
 
-  function process_queue()
+  function proc()
     for k,v in pairs(q) do
       if t[v.name] != nil then
         for ik,iv in pairs(t[v.name]) do
@@ -45,11 +51,10 @@ function qico()
 
   return {
     add_event = add_event,
-    add_topic = add_topic,
     add_topics = add_topics,
     add_sub = add_sub,
-    set_subs = set_subs,
-    proc = process_queue,
+    add_subs = add_subs,
+    proc = proc,
     q = q,
     t = t
   }
