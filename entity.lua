@@ -42,7 +42,12 @@ function new_entity_manager()
     tmp.state = nil
 
     tmp.update = ent_update(tmp)
-    tmp.draw = ent_draw(tmp)
+    tmp.draw = function()
+      palt(0, false)
+      palt(15, true)
+      ent_draw(tmp)()
+      pal()
+    end
     add(ent_man.ents, tmp)
   end
 
@@ -56,7 +61,12 @@ function new_entity_manager()
     tmp.state = nil
 
     tmp.update = ent_update(tmp)
-    tmp.draw = ent_draw(tmp)
+    tmp.draw = function()
+      palt(0, false)
+      palt(15, true)
+      ent_draw(tmp)()
+      pal()
+    end
     add(ent_man.ents, tmp)
   end
 
@@ -200,7 +210,7 @@ end
 
 -- {pos_x: Int, pos_y: Int, item_index: Int}
 function new_item(item)
-  local tmp = new_sprite(27+item.item_index, item.pos_x, item.pos_y, 8, 6)
+  local tmp = new_sprite(28, item.pos_x, item.pos_y, 8, 6)
 
   tmp.vel_x = 0
   tmp.vel_y = 0
@@ -208,13 +218,18 @@ function new_item(item)
   tmp.type = ENT_ITEM
   tmp.can_travel = 1 << FLAG_FLOOR
   tmp.state = ENT_STATE_NORMAL
-  tmp.frames = { NORMAL={frames={27+item.item_index}, len=20}, BROKEN={frames={32+item.item_index}, len=20}, HELD={frames={28}, len=10} }
+  tmp.frames = { NORMAL={frames={28}, len=20}, BROKEN={frames={32+item.item_index}, len=20}, HELD={frames={28}, len=10} }
   tmp.frame_half_step = 0
   tmp.frame_offset = 1
   tmp.feels_grav = true
 
   tmp.update = ent_update(tmp)
-  tmp.draw = ent_draw(tmp)
+  tmp.draw = function()
+    palt(0, false)
+    palt(15, true)
+    ent_draw(tmp)()
+    pal()
+  end
   return tmp
 end
 
