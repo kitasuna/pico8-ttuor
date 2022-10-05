@@ -68,11 +68,15 @@ end
 game_draw = function()
   cls()
 
-  local camnewx = -64 + flr(player.pos_x)
-  local camnewy = -64 + flr(player.pos_y)
-  camera(camnewx,camnewy)
-  camera_x = camnewx
-  camera_y = camnewy
+  if player.state != PLAYER_STATE_DEAD_FALLING then
+    local camnewx = -64 + flr(player.pos_x)
+    local camnewy = -64 + flr(player.pos_y)
+    camera(camnewx,camnewy)
+    camera_x = camnewx
+    camera_y = camnewy
+  else
+    camera(camera_x, camera_y)
+  end
   map(level.start_tile_x, level.start_tile_y, level.map_offset_x, level.map_offset_y, level.map_tile_width, level.map_tile_height)
   -- map(level.map_offset_x, level.map_offset_y, 0, 0, 128, 32)
   -- print("ps: "..player.state, player.pos_x-64, player.pos_y-64, CLR_PNK)

@@ -27,7 +27,7 @@ function new_player(sprite_num, pos_x, pos_y)
   player.gbeam = new_gbeam()
   player.wormhole = nil
   player.inventory = {
-    glove = 0,
+    glove = 2,
     wormhole = 2,
     -- items = {0,0,0,0,0},
     items = {0,0,0,0},
