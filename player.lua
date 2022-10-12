@@ -15,10 +15,7 @@ function new_player(sprite_num, pos_x, pos_y)
 
   player.state = PLAYER_STATE_GROUNDED
   player.deaths = 0
-  player.slide_vel_x = 0
-  player.slide_vel_y = 0
-  player.vel_x = 0
-  player.vel_y = 0
+  stop_player(player) -- inits vel values anyway
   player.frame_base = 1
   player.frame_offset = 0
   player.frame_step = 0
@@ -28,8 +25,8 @@ function new_player(sprite_num, pos_x, pos_y)
   player.wormhole = nil
   player.inventory = {
     state = inv_state_normal,
-    glove = 0,
-    wormhole = 0,
+    glove = 2,
+    wormhole = 2,
     items = {0,0,0,0},
   }
 
@@ -40,7 +37,7 @@ function new_player(sprite_num, pos_x, pos_y)
     {4, 5, 4, 6},
   }
 
-  player.frames_zapped = { 16, 17, 18, 16, 17, 18, 16, 17, 18 }
+  player.frames_zapped = { 16, 17, 18 }
 
   -- API, allows other entities to check on player
   player.is_dead = function()
@@ -58,10 +55,7 @@ function new_player(sprite_num, pos_x, pos_y)
     player.facing = DIRECTION_DOWN
     player.can_travel = 1 << FLAG_FLOOR
     player.state = PLAYER_STATE_GROUNDED
-    player.vel_x = 0
-    player.vel_y = 0
-    player.slide_vel_x = 0
-    player.slide_vel_y = 0
+    stop_player(player)
     player.pos_x = l.player_pos_x * 8
     player.pos_y = l.player_pos_y * 8
     player.gbeam.disable()
@@ -119,14 +113,19 @@ function new_player(sprite_num, pos_x, pos_y)
       player.deaths += 1
       player.can_move_x = false
       player.can_move_y = false
-      player.vel_x = 0
-      player.vel_y = 0
-      player.slide_vel_x = 0
-      player.slide_vel_y = 0
+      stop_player(player)
       player.state = PLAYER_STATE_DEAD_ZAPPED
       sfx_zapped()
       player.frame_step = 0
       player.frame_offset = 0
+      add(timers, {
+        ttl = 60,
+        f = function() end,
+        cleanup = function()
+          unstage_inventory(player.inventory)
+          qm.add_event("player_death", {level = level})
+        end
+      })
   end
 
   player.handle_entity_reaches_target = function(payload)
@@ -141,8 +140,7 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.handle_level_init = function()
-    player.vel_x,vel_y = 0,0
-    player.slide_vel_x,player.slide_vel_y = 0,0
+    stop_player(player)
     player.wormhole = nil
     player.gbeam.disable()
     player.facing = DIRECTION_DOWN
@@ -378,8 +376,7 @@ function new_player(sprite_num, pos_x, pos_y)
       local offset = player.frame_offset + 1
       sspr(88, 0, 8, 8, player.pos_x + offset, player.pos_y + offset, 8 \ offset, 8 \ offset)
     elseif player.state == PLAYER_STATE_DEAD_ZAPPED then
-      local frames = player.frames_zapped
-      spr(frames[player.frame_offset + 1],player.pos_x, player.pos_y)
+      spr(player.frames_zapped[player.frame_offset + 1],player.pos_x, player.pos_y)
     elseif player.state == PLAYER_STATE_HOLDING then
       spr(19+player.facing,player.pos_x, player.pos_y, 1.0, 1.0, flip, false)
     end
@@ -438,16 +435,13 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     if player.state == PLAYER_STATE_DEAD_ZAPPED then
-      if player.frame_offset < 9 then
-        player.frame_step += 1
-        if player.frame_step > 5 then
-          player.frame_offset += 1
-          player.frame_step = 0
+      player.frame_step += 1
+      if player.frame_step > 5 then
+        player.frame_offset += 1
+        if player.frame_offset + 1 > #player.frames_zapped then
+          player.frame_offset = 0
         end
-      else
-        unstage_inventory(player.inventory)
-        qm.add_event("player_death", {level = level})
-        return
+        player.frame_step = 0
       end
     end
 
@@ -815,5 +809,10 @@ function calc_cheat_grav(coords_p, coords_g, mass_p, mass_g)
     return { gdistance = 0, vel = { x = 0, y = 0 } }
   end
   return { gdistance = ginfo.d, vel = { x = new_vel_x, y = new_vel_y } }
+end
+
+function stop_player(player)
+  player.vel_x, player.vel_y = 0,0 
+  player.slide_vel_x, player.slide_vel_y = 0,0 
 end
 

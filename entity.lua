@@ -21,6 +21,11 @@ function new_entity_manager()
               del(ent_man.ents, ent)
             end
           })
+          ent.particles.pos_x = ent.pos_x
+          ent.particles.pos_y = ent.pos_y
+          for i=0,80 do
+            ent.particles.add(rnd(1) - 0.5, rnd(1) - 0.5, true, true, 30) 
+          end
           qm.add_event("beam_item_collision")
         end
       end
@@ -78,7 +83,7 @@ function new_entity_manager()
     tmp.can_travel = 1 << FLAG_FLOOR
     tmp.state = ENT_STATE_NORMAL
     tmp.frames = { NORMAL={frames={43},len=10}, HELD={frames={43},len=10} }
-    tmp.frame_half_step = 0
+    tmp.frame_step = 0
     tmp.frame_offset = 1
     tmp.feels_grav = true
     tmp.future_x,tmp.future_y = 0,0
@@ -178,30 +183,24 @@ end
 function do_gravity(ent, pos_x, pos_y, direction)
   if ent.feels_grav == true then
     local ent_vel = 1
+    ent.tgt_x = pos_x
+    ent.tgt_y = pos_y
     if direction == DIRECTION_UP then
       -- vel should be downwards
       ent.vel_x = 0
       ent.vel_y = ent_vel
-      ent.tgt_x = pos_x
-      ent.tgt_y = pos_y
       elseif direction == DIRECTION_DOWN then
       -- vel should be upwards
       ent.vel_x = 0
       ent.vel_y = -ent_vel
-      ent.tgt_x = pos_x
-      ent.tgt_y = pos_y
       elseif direction == DIRECTION_RIGHT then
         --vel should be to the left
       ent.vel_x = -ent_vel
       ent.vel_y = 0
-      ent.tgt_x = pos_x
-      ent.tgt_y = pos_y
       elseif direction == DIRECTION_LEFT then
       --vel should be to the right
       ent.vel_x = ent_vel
       ent.vel_y = 0
-      ent.tgt_x = pos_x
-      ent.tgt_y = pos_y
     end
   end
 
@@ -210,25 +209,45 @@ end
 
 -- {pos_x: Int, pos_y: Int, item_index: Int}
 function new_item(item)
-  local tmp = new_sprite(28, item.pos_x, item.pos_y, 8, 6)
+  local tmp = {
+    vel_x = 0,
+    vel_y = 0,
+    item_index = item.item_index,
+    type = ENT_ITEM,
+    can_travel = 1 << FLAG_FLOOR,
+    state = ENT_STATE_NORMAL,
+    frames = { BROKEN={frames={28+item.item_index} } },
+    frame_step = 0,
+    frame_offset = 1,
+    feels_grav = true,
+    particles = flsrc(item.pos_x, item.pos_y, 0, {CLR_DGN, CLR_GRN})
+  }
+  tmp = merge(tmp, new_sprite(28, item.pos_x, item.pos_y, 8, 8)) 
 
-  tmp.vel_x = 0
-  tmp.vel_y = 0
-  tmp.item_index = item.item_index 
-  tmp.type = ENT_ITEM
-  tmp.can_travel = 1 << FLAG_FLOOR
-  tmp.state = ENT_STATE_NORMAL
-  tmp.frames = { NORMAL={frames={28}, len=20}, BROKEN={frames={32+item.item_index}, len=20}, HELD={frames={28}, len=10} }
-  tmp.frame_half_step = 0
-  tmp.frame_offset = 1
-  tmp.feels_grav = true
 
-  tmp.update = ent_update(tmp)
+  tmp.update = function(level)
+    ent_update(tmp)(level)
+    tmp.particles.update()
+  end
   tmp.draw = function()
-    palt(0, false)
-    palt(15, true)
-    ent_draw(tmp)()
-    pal()
+    if tmp.state == ENT_STATE_NORMAL then
+      palt(0, false)
+      palt(15, true)
+      tmp.frame_step += 1
+      local pos_offsets = {0, 1, 1, 1, 0, -1, -1, -1}
+      if tmp.frame_step > 10 then
+        tmp.frame_offset += 1
+        tmp.frame_step = 0
+        if tmp.frame_offset + 1 > #pos_offsets then
+          tmp.frame_offset = 0
+        end
+      end
+      local y_offset = pos_offsets[tmp.frame_offset + 1]
+      spr(tmp.num, tmp.pos_x, tmp.pos_y + y_offset)  
+      pal()
+    else
+      tmp.particles.draw()
+    end
   end
   return tmp
 end
@@ -253,7 +272,6 @@ function beam_update(beam)
     local beam_max_x = beam.pos_x
     while collision == false do
       local next_map_x = ((beam_max_x + 1) \ 8) + level.start_tile_x
-      local flag = fget(mget(next_map_x, curr_map_y))
       if (fget(mget(next_map_x, curr_map_y)) & beam.can_travel) == 0 then
         collision = true
         break;
@@ -284,7 +302,11 @@ end
 function ent_draw(ent)
   if ent.state != nil then
     return function()
-      spr(ent.frames[ent.state].frames[ent.frame_offset], ent.pos_x, ent.pos_y)  
+      if ent.frames[ent.state] != nil then
+        spr(ent.frames[ent.state].frames[ent.frame_offset], ent.pos_x, ent.pos_y)  
+      else
+        spr(ent.sprite_num, ent.pos_x, ent.pos_y)  
+      end
     end
   end
   return function()
