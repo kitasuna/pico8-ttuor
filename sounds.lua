@@ -31,12 +31,24 @@ function sfx_get_item()
   sfx(4)
 end
 function sfx_zapped()
-  sfx(1,-2)
+  -- stop slide noise
+  xsfx_slide()
   sfx(3)
+end
+function sfx_falling()
+  xsfx_slide()
+  sfx(9)
+end
+function sfx_floating()
+  xsfx_slide()
+  sfx(8)
 end
 function xsfx_all()
   sfx(-1,1)
   sfx(-1,2)
   sfx(-1,3)
   sfx(-1,4)
+end
+function sfx_get_inventory()
+  sfx(7)
 end

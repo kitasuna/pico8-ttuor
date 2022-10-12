@@ -27,6 +27,7 @@ function new_player(sprite_num, pos_x, pos_y)
   player.gbeam = new_gbeam()
   player.wormhole = nil
   player.inventory = {
+    state = inv_state_normal,
     glove = 0,
     wormhole = 0,
     items = {0,0,0,0},
@@ -90,10 +91,28 @@ function new_player(sprite_num, pos_x, pos_y)
 
   player.handle_player_glove_collision = function(payload)
       player.inventory.glove = 1
+      player.inventory.state = inv_state_glove
+      add(timers, {
+        ttl = 60,
+        f = function() end,
+        cleanup = function()
+          player.inventory.state = inv_state_normal
+        end
+      })
+      sfx_get_inventory()
   end
 
   player.handle_player_wh_collision = function(payload)
       player.inventory.wormhole = 1
+      player.inventory.state = inv_state_wormhole
+      add(timers, {
+        ttl = 60,
+        f = function() end,
+        cleanup = function()
+          player.inventory.state = inv_state_normal
+        end
+      })
+      sfx_get_inventory()
   end
 
   player.handle_beam_player_collision = function()
@@ -268,6 +287,7 @@ function new_player(sprite_num, pos_x, pos_y)
 
         player.vel_x = grav_result.vel.x
         player.vel_y = grav_result.vel.y
+        sfx_floating()
 
         return
     end
@@ -444,6 +464,7 @@ function new_player(sprite_num, pos_x, pos_y)
       player.frame_step = 0
       player.frame_offset = 0
       xsfx_slide()
+      sfx_falling()
       return
     end
 
@@ -533,14 +554,14 @@ function new_player(sprite_num, pos_x, pos_y)
 end
 
 -- { pos :: Coords, direction :: Int }
-function new_gbeam(pos_x, pos_y, direction)
-  local tmp = {}
-
-  tmp.blocked_by = nil -- if it intercepts an entity, it will be set here
-
-  tmp.state = "DISABLED"
-
-  tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
+function new_gbeam()
+  local tmp = {
+    size_x = 4,
+    size_y = 4,
+    blocked_by = nil,
+    state = "DISABLED",
+    can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP),
+  }
 
   tmp.update = function()
     if tmp.particles != nil then
@@ -568,7 +589,7 @@ function new_gbeam(pos_x, pos_y, direction)
 
   tmp.draw = function()
     if tmp.state == "ENABLED" then
-      local colors = sort_from({ CLR_PNK, CLR_WHT, CLR_PRP }, (frame_counter % 3) + 1)
+      local colors = sort_from({ CLR_PNK, CLR_BLK, CLR_PRP }, (frame_counter % 3) + 1)
       if tmp.direction == DIRECTION_UP or tmp.direction == DIRECTION_DOWN then
         for i=-1,1 do
           line(tmp.head_pos_x - i, tmp.head_pos_y, tmp.tail_pos_x - i, tmp.tail_pos_y, colors[i+2])
@@ -591,8 +612,10 @@ function new_gbeam(pos_x, pos_y, direction)
 
   tmp.enable = function(pos_x, pos_y, direction)
     tmp.state = "ENABLED"
-    tmp.head_pos_x, tmp.tail_pos_x = flr(pos_x)
-    tmp.head_pos_y, tmp.tail_pos_y = flr(pos_y)
+    tmp.head_pos_x = flr(pos_x)
+    tmp.head_pos_y = flr(pos_y)
+    tmp.pos_x = pos_x
+    tmp.pos_y = pos_y
     tmp.direction = direction
     -- Set to max extent, can always pull this in later
     tmp.tail_pos_x, tmp.tail_pos_y = move_in_direction(direction, pos_x, pos_y, 30)
@@ -613,7 +636,7 @@ function new_gbeam(pos_x, pos_y, direction)
       if fget(mget(next_map_x, next_map_y)) & tmp.can_travel == 0 then
         tmp.tail_pos_x = iter_pos_x
         tmp.tail_pos_y = iter_pos_y
-        tmp.particles = flsrc(tmp.tail_pos_x, tmp.tail_pos_y, 0, {7, 13, 14})
+        tmp.particles = flsrc(tmp.tail_pos_x, tmp.tail_pos_y, 0, {2, 13, 14})
         tmp.particles.direction = direction
         -- TODO: total hack, need to treat maps and sprites differently
         tmp.blocked_by = new_sprite(99, tmp.tail_pos_x, tmp.tail_pos_y, 8, 8)
@@ -623,7 +646,7 @@ function new_gbeam(pos_x, pos_y, direction)
       -- check for sprite collisions
       local tmp_sprite = {}
       if direction == DIRECTION_UP or direction == DIRECTION_DOWN then
-        tmp_sprite = new_sprite(0, iter_pos_x - 2, iter_pos_y, 3, 3)
+        tmp_sprite = new_sprite(0, iter_pos_x - 3, iter_pos_y, 3, 3)
       else
         tmp_sprite = new_sprite(0, iter_pos_x, iter_pos_y - 2, 3, 3)
       end
@@ -636,7 +659,7 @@ function new_gbeam(pos_x, pos_y, direction)
             local player_center_x, player_center_y = get_center(player)
             do_gravity(ent, player_center_x, player_center_y, direction)
             tmp.blocked_by = ent
-            tmp.particles = flsrc(tmp.tail_pos_x, tmp.tail_pos_y, 0, {7, 13, 14})
+            tmp.particles = flsrc(tmp.tail_pos_x, tmp.tail_pos_y, 0, {2, 13, 14})
             tmp.particles.direction = direction
             break
           end
@@ -658,7 +681,7 @@ function new_wormhole(pos_x, pos_y, direction)
   local tmp = new_sprite(48, pos_x, pos_y, 6, 6, false, false)
   tmp.bgcoloridx = 1
   tmp.incoloridx = 2
-  tmp.colors = { CLR_PNK, CLR_WHT, CLR_PRP }
+  tmp.colors = { CLR_PNK, CLR_BLK, CLR_PRP }
   tmp.frame_index = 1
   tmp.frame_half_step = 1
   tmp.frame_step = 3

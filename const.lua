@@ -51,6 +51,10 @@ PLAYER_STATE_HOLDING = "HOLDING"
 PLAYER_STATE_DEAD_FALLING = "DEAD_FALLING"
 PLAYER_STATE_DEAD_ZAPPED = "DEAD_ZAPPED"
 
+inv_state_normal = "normal"
+inv_state_glove = "glove"
+inv_state_wormhole = "wormhole"
+
 ENT_STATE_NORMAL = "NORMAL"
 ENT_STATE_BROKEN = "BROKEN"
 ENT_STATE_HELD = "HELD"

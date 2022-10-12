@@ -33,7 +33,7 @@ function new_entity_manager()
   end
 
   ent_man.add_glove = function(coords)
-    local tmp = new_sprite(39, coords.pos_x, coords.pos_y, 8, 6)
+    local tmp = new_sprite(38, coords.pos_x, coords.pos_y, 8, 6)
 
     tmp.vel_x = 0
     tmp.vel_y = 0
@@ -315,7 +315,7 @@ function ent_update(tmp)
     -- stop if we've reached the target
     if tmp.tgt_x != nil and tmp.tgt_y != nil then
       local ginfo = ldistance(tmp.pos_x + 4, tmp.pos_y + 4, tmp.tgt_x, tmp.tgt_y)
-      if ginfo.d < 5 then
+      if ginfo.d < 8.1 then
         -- Center on the target
         tmp.vel_x = 0
         tmp.vel_y = 0
