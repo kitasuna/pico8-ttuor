@@ -8,10 +8,11 @@ function new_player(sprite_num, pos_x, pos_y)
   )
 
   local velocity_max = 0.8
+  -- after abs(velocity_min), we'll stop the player
+  local velocity_min = 0.10
   local slide_velocity = 1.3
   local walk_init_vel = 0.2
   local walk_step_up = 0.04
-  local slide_step_down = 0.05
 
   player.state = PLAYER_STATE_GROUNDED
   player.deaths = 0
@@ -88,7 +89,6 @@ function new_player(sprite_num, pos_x, pos_y)
       player.inventory.state = inv_state_glove
       add(timers, {
         ttl = 60,
-        f = function() end,
         cleanup = function()
           player.inventory.state = inv_state_normal
         end
@@ -101,7 +101,6 @@ function new_player(sprite_num, pos_x, pos_y)
       player.inventory.state = inv_state_wormhole
       add(timers, {
         ttl = 60,
-        f = function() end,
         cleanup = function()
           player.inventory.state = inv_state_normal
         end
@@ -120,7 +119,6 @@ function new_player(sprite_num, pos_x, pos_y)
       player.frame_offset = 0
       add(timers, {
         ttl = 60,
-        f = function() end,
         cleanup = function()
           unstage_inventory(player.inventory)
           qm.add_event("player_death", {level = level})
@@ -149,21 +147,32 @@ function new_player(sprite_num, pos_x, pos_y)
 
   player.handle_button = function(payload)
     local mask = payload.input_mask
-    -- local 
-    -- If they're sliding, they can't do much
+    -- Change facing for certain states
+    if player.state == PLAYER_STATE_SLIDING or
+       player.state == PLAYER_STATE_HOLDING or
+       player.state == PLAYER_STATE_GROUNDED then
+       if is_pressed_u(mask) then
+         player.facing = DIRECTION_UP
+       elseif is_pressed_d(mask) then
+         player.facing = DIRECTION_DOWN
+       elseif is_pressed_l(mask) then
+         player.facing = DIRECTION_LEFT
+       elseif is_pressed_r(mask) then
+         player.facing = DIRECTION_RIGHT
+       end
+     end
+
+    -- If they're sliding, they can tweak the direction of the slide
     if player.state == PLAYER_STATE_SLIDING then
+      local total_vel = abs(player.vel_x) + abs(player.vel_y)
       if is_pressed_u(mask) then
-        player.slide_vel_y -= 0.03
-        player.facing = DIRECTION_UP
+        player.slide_vel_y = -total_vel / 2
       elseif is_pressed_d(mask) then
-        player.slide_vel_y += 0.03
-        player.facing = DIRECTION_DOWN
+        player.slide_vel_y = total_vel / 2
       elseif is_pressed_l(mask) then
-        player.slide_vel_x -= 0.03
-        player.facing = DIRECTION_LEFT
+        player.slide_vel_x = -total_vel / 2
       elseif is_pressed_r(mask) then
-        player.slide_vel_x += 0.03
-        player.facing = DIRECTION_RIGHT
+        player.slide_vel_x = total_vel / 2 
       end
       return
     end
@@ -180,7 +189,6 @@ function new_player(sprite_num, pos_x, pos_y)
       if player.wormhole != nil then
         player.remove_wormhole()
       end
-      sc_sliding(player)
       return
     end
 
@@ -192,24 +200,9 @@ function new_player(sprite_num, pos_x, pos_y)
         return
       end
 
-      if is_pressed_u(mask) then
-        player.facing = DIRECTION_UP
-      end
-
-      if is_pressed_d(mask) then
-        player.facing = DIRECTION_DOWN
-      end
-
-      if is_pressed_l(mask) then
-        player.facing = DIRECTION_LEFT
-      end
-
-      if is_pressed_r(mask) then
-        player.facing = DIRECTION_RIGHT
-      end
-
       local new_x = player.pos_x
       local new_y = player.pos_y
+
       if player.facing == DIRECTION_UP then
         new_y -= 8
       elseif player.facing == DIRECTION_DOWN then
@@ -277,14 +270,14 @@ function new_player(sprite_num, pos_x, pos_y)
         player.state = PLAYER_STATE_FLOATING
         player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
         local grav_result = calc_cheat_grav(
-        {x=player.pos_x, y=player.pos_y},
-        {x=player.wormhole.pos_x, y=player.wormhole.pos_y},
-        1.0,
-        128.0
+        player.pos_x,
+        player.pos_y,
+        player.wormhole.pos_x,
+        player.wormhole.pos_y
         )
 
-        player.vel_x = grav_result.vel.x
-        player.vel_y = grav_result.vel.y
+        player.vel_x = grav_result.vel_x
+        player.vel_y = grav_result.vel_y
         sfx_floating()
 
         return
@@ -297,7 +290,6 @@ function new_player(sprite_num, pos_x, pos_y)
       elseif player.vel_y > -velocity_max then
         player.vel_y -= walk_step_up
       end
-      player.facing = DIRECTION_UP
     -- Down
     elseif is_pressed_d(mask) then
       if player.vel_y <= 0 then
@@ -305,7 +297,6 @@ function new_player(sprite_num, pos_x, pos_y)
       elseif player.vel_y < velocity_max then
         player.vel_y += walk_step_up
       end
-      player.facing = DIRECTION_DOWN
     end
 
     if not is_pressed_u(mask) and
@@ -319,14 +310,12 @@ function new_player(sprite_num, pos_x, pos_y)
       elseif player.vel_x > -velocity_max then
         player.vel_x -= walk_step_up
       end
-      player.facing = DIRECTION_LEFT
     elseif is_pressed_r(mask) then
       if player.vel_x <= 0 then
         player.vel_x = walk_init_vel
       elseif player.vel_x < velocity_max then
         player.vel_x += walk_step_up
       end
-      player.facing = DIRECTION_RIGHT
     end
 
     if not is_pressed_l(mask) and
@@ -446,7 +435,7 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- if centered over a gap, and not floating, increment deaths (and probably trigger some event?)
-    if fget(mget(curr_map_x, curr_map_y), FLAG_GAP) and (player.state != PLAYER_STATE_FLOATING and player.state != PLAYER_STATE_DEAD_FALLING) then
+    if fget(mget(curr_map_x, curr_map_y), FLAG_GAP) and player.state != PLAYER_STATE_FLOATING and player.state != PLAYER_STATE_DEAD_FALLING then
       player.deaths += 1
       player.can_move_x = false
       player.can_move_y = false
@@ -491,14 +480,7 @@ function new_player(sprite_num, pos_x, pos_y)
     )
     for k, ent in pairs(ent_man.ents) do
       if fget(ent.num, FLAG_COLLIDES_PLAYER) == true then
-      local cheat_ent = new_sprite(
-        0, -- sprite num, doesn't matter
-        ent.pos_x,
-        ent.pos_y,
-        ent.size_x, 
-        ent.size_y
-      )
-        if collides(player_at_next, cheat_ent) then 
+        if collides(player_at_next, ent) then 
           can_move_x = false
           can_move_y = false
         end
@@ -507,22 +489,16 @@ function new_player(sprite_num, pos_x, pos_y)
 
     -- the slide, deceleration and stopping
     if player.state == PLAYER_STATE_SLIDING then
-      if player.vel_x > 0 then
-        player.vel_x -= slide_step_down
-      elseif player.vel_x < 0 then
-        player.vel_x += slide_step_down
-      end
+      player.vel_x *= 0.95
+      player.vel_y *= 0.95
 
-      if player.vel_y > 0 then
-        player.vel_y -= slide_step_down
-      elseif player.vel_y < 0 then
-        player.vel_y += slide_step_down
-      end
+      printh("vxy: "..player.vel_x..","..player.vel_y)
+      printh("svxy: "..player.slide_vel_x..","..player.slide_vel_y)
 
-      if (player.vel_x <= slide_step_down and player.vel_x >= -slide_step_down) or can_move_x == false then
+      if (player.vel_x <= velocity_min and player.vel_x >= -velocity_min) or can_move_x == false then
         player.vel_x = 0
       end
-      if (player.vel_y <= slide_step_down and player.vel_y >= -slide_step_down) or can_move_y == false then
+      if (player.vel_y <= velocity_min and player.vel_y >= -velocity_min) or can_move_y == false then
         player.vel_y = 0
       end
 
@@ -733,6 +709,7 @@ function new_wormhole(pos_x, pos_y, direction)
 end
 
 function sc_sliding(player)
+    printh("!!!!! INIT SLIDE !!!!!!")
     player.state = PLAYER_STATE_SLIDING
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
     sfx_slide()
@@ -794,9 +771,11 @@ function ldistance(x0, y0, x1, y1)
   return {d=gdistance, dxc=dist_x_component, dyc=dist_y_component}
 end
 
-function calc_cheat_grav(coords_p, coords_g, mass_p, mass_g)
+function calc_cheat_grav(px, py, gx, gy)
+
+  local mass_p, mass_g = 1.0, 128
   local float_velocity = 1.5
-  local ginfo = ldistance(coords_p.x, coords_p.y, coords_g.x, coords_g.y)
+  local ginfo = ldistance(px, py, gx, gy)
   local new_vel_x = ginfo.dxc * float_velocity
   local new_vel_y = ginfo.dyc * float_velocity
   if (new_vel_x > 0 and new_vel_x < 0.1) or (new_vel_x < 0 and new_vel_x > -0.1) then
@@ -806,13 +785,12 @@ function calc_cheat_grav(coords_p, coords_g, mass_p, mass_g)
     new_vel_y = 0
   end
   if ginfo.d < 0.5 then
-    return { gdistance = 0, vel = { x = 0, y = 0 } }
+    return { vel_x = 0, vel_y = 0 }
   end
-  return { gdistance = ginfo.d, vel = { x = new_vel_x, y = new_vel_y } }
+  return { vel_x = new_vel_x, vel_y = new_vel_y }
 end
 
 function stop_player(player)
   player.vel_x, player.vel_y = 0,0 
   player.slide_vel_x, player.slide_vel_y = 0,0 
 end
-

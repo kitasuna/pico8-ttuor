@@ -16,7 +16,6 @@ function new_entity_manager()
           ent.vel_x,ent.vel_y = 0,0
           add(timers, {
             ttl = 120,
-            f = function() end,
             cleanup = function()
               del(ent_man.ents, ent)
             end

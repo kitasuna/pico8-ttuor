@@ -2,7 +2,6 @@ countdown_update = function()
     for k,timer in pairs(timers) do
       if timer.ttl > 0 then
         timer.ttl -= 1
-        timer.f()
       else
         timer.cleanup()
         timers[k] = nil

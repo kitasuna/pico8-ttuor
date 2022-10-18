@@ -52,3 +52,6 @@ end
 function sfx_get_inventory()
   sfx(7)
 end
+function sfx_start_game()
+  sfx(11)
+end

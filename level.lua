@@ -139,5 +139,6 @@ function init_level(l)
   end
 
   qm.add_event("level_init")
+  -- reset timers
   timers = {}
 end
