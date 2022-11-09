@@ -18,6 +18,20 @@ function get_levels()
     },
   ]]
   return {
+    --[[
+    {
+      label="00",
+      start_tile_x = 29,
+      start_tile_y = 16,
+      player_pos_x = 2,
+      player_pos_y = 1,
+      map_tile_width = 9,
+      map_tile_height = 6,
+      ents = {
+        ent_at(ENT_BEAM, 1, 3),
+      }
+    },
+    ]]
     {
       label="01",
       start_tile_x = 0,
@@ -26,14 +40,10 @@ function get_levels()
       player_pos_y = 4,
       map_tile_width = 15,
       map_tile_height = 12,
+      boxes = "0601:0702:0801:0608:0708:0808",
+      beams = "",
       ents = {
-        ent_at(ENT_BOX, 6, 1),
-        ent_at(ENT_BOX, 7, 2),
-        ent_at(ENT_BOX, 8, 1),
         ent_at(ENT_GLOVE, 12, 4),
-        ent_at(ENT_BOX, 6, 8),
-        ent_at(ENT_BOX, 7, 8),
-        ent_at(ENT_BOX, 8, 8),
         merge(ent_at(ENT_ITEM, 7, 10), {item_index=1}),
       }
     },
@@ -41,76 +51,43 @@ function get_levels()
       label="02",
       start_tile_x = 15,
       start_tile_y = 0,
-      player_pos_x = 4,
+      player_pos_x = 5,
       player_pos_y = 11,
       map_tile_width = 11,
       map_tile_height = 28,
+      boxes = "0301:0314:0415:0515:0615:0714:0418:0621:0626",
+      beams = "0102:0103:0218:0221:0224",
       ents = {
         merge(ent_at(ENT_ITEM, 4, 1), {item_index=2}),
-        merge(ent_at(ENT_BOX, 3, 1)),
-        ent_at(ENT_BEAM, 1, 2),
-        ent_at(ENT_BEAM, 1, 3),
-        ent_at(ENT_BOX, 3, 14),
-        ent_at(ENT_BOX, 4, 15),
-        ent_at(ENT_BOX, 5, 15),
-        ent_at(ENT_BOX, 6, 15),
-        ent_at(ENT_BOX, 7, 14),
-        ent_at(ENT_BEAM, 2, 18),
-        ent_at(ENT_BOX, 6, 18),
-        ent_at(ENT_BEAM, 2, 24),
-        -- ent_at(ENT_BOX, 7, 24),
-        ent_at(ENT_BOX, 6, 26),
       }
     },
-    --[[
     {
       label="03",
-      start_tile_x = 32, -- x index of the upper-left map tile to draw
-      start_tile_y = 0, -- y index of the upper left map tile to draw
-      player_pos_x = 10,
-      player_pos_y = 6,
-      map_tile_width = 13,
-      map_tile_height = 14,
-      ents = {
-        ent_at(ENT_BOX, 6, 5),
-        ent_at(ENT_BOX, 6, 6),
-        ent_at(ENT_BOX, 6, 7),
-        ent_at(ENT_BEAM, 1, 4),
-        ent_at(ENT_BOX, 2, 2),
-        merge(ent_at(ENT_ITEM, 3, 2), {item_index=2}),
-      }
-    },
-    ]]
-    {
-      label="03",
-      start_tile_x = 41, -- x index of the upper-left map tile to draw
-      start_tile_y = 0, -- y index of the upper left map tile to draw
+      start_tile_x = 41,
+      start_tile_y = 0,
       player_pos_x = 3,
-      player_pos_y = 2,
+      player_pos_y = 1,
       map_tile_width = 15,
       map_tile_height = 13,
+      boxes = "1204",
+      beams = "0805",
       ents = {
         merge(ent_at(ENT_ITEM, 2, 8), {item_index=3}),
         ent_at(ENT_WH, 3, 4),
-        ent_at(ENT_BOX, 12, 4),
-        ent_at(ENT_BEAM, 8, 5),
       }
     },
     {
       label="04",
-      start_tile_x = 59, -- x index of the upper-left map tile to draw
-      start_tile_y = 0, -- y index of the upper left map tile to draw
-      player_pos_x = 7,
+      start_tile_x = 59,
+      start_tile_y = 0,
+      player_pos_x = 8,
       player_pos_y = 9,
       map_tile_width = 17,
-      map_tile_height = 13,
+      map_tile_height = 14,
+      boxes = "1303:0109",
+      beams = "1208:0101:0108",
       ents = {
-        merge(ent_at(ENT_ITEM, 13, 4), {item_index=4}),
-        ent_at(ENT_BEAM, 12, 7),
-        ent_at(ENT_BOX, 13, 1),
-        ent_at(ENT_BEAM, 1, 1),
-        ent_at(ENT_BEAM, 1, 8),
-        ent_at(ENT_BOX, 1, 9),
+        merge(ent_at(ENT_ITEM, 13, 5), {item_index=4}),
       }
     },
     --[[
@@ -122,17 +99,9 @@ function get_levels()
       player_pos_y = 3*8,
       map_tile_width = 16,
       map_tile_height = 14,
-      ents = {
-        ent_at(ENT_BOX, 2, 3),
-        ent_at(ENT_BOX, 4, 3),
-        ent_at(ENT_BOX, 6, 3),
-        ent_at(ENT_BOX, 2, 5),
-        ent_at(ENT_BOX, 4, 5),
-        ent_at(ENT_BOX, 6, 5),
-        ent_at(ENT_BOX, 2, 7),
-        ent_at(ENT_BOX, 4, 7),
-        ent_at(ENT_BOX, 6, 7),
-      }
+      boxes = "0203:0403:0603:0205:0405:0605:0207:0407:0607"
+      beams = ""
+      ents = {}
     },
     ]]
   }
@@ -140,4 +109,37 @@ end
 
 function ent_at(ent_type, tile_x, tile_y)
   return {type=ent_type, pos_x=tile_x*8, pos_y=tile_y*8}
+end
+
+function init_level(l)
+  printh("init_level!")
+  player.reset(l)
+  ent_man.reset()
+  camera_x = -64 + player.pos_x
+  camera_y = -64 + player.pos_y
+  local i=1
+  while i<#l.boxes do
+    ent_man.add_box(ent_at(ENT_BOX,sub(l.boxes,i,i+1),sub(l.boxes,i+2,i+3)))
+    i += 5 -- 5 because we want to skip over the separator
+  end
+  local i=1
+  while i<#l.beams do
+    ent_man.add_beam(ent_at(ENT_BEAM,sub(l.beams,i,i+1),sub(l.beams,i+2,i+3)))
+    i += 5 -- 5 because we want to skip over the separator
+  end
+  for k, e in pairs(l.ents) do
+    if e.type==ENT_ITEM then
+      ent_man.add_item(e)
+    elseif e.type==ENT_GLOVE then
+      ent_man.add_glove(e)
+    elseif e.type==ENT_WH then
+      ent_man.add_wh(e)
+    else
+      printh("unknown type")
+    end
+  end
+
+  qm.add_event("level_init")
+  -- reset timers
+  -- timers = {}
 end
