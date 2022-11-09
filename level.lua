@@ -18,20 +18,20 @@ function get_levels()
     },
   ]]
   return {
-    --[[
+    
     {
       label="00",
-      start_tile_x = 29,
-      start_tile_y = 16,
+      start_tile_x = 27,
+      start_tile_y = 17,
       player_pos_x = 2,
-      player_pos_y = 1,
-      map_tile_width = 9,
-      map_tile_height = 6,
-      ents = {
-        ent_at(ENT_BEAM, 1, 3),
-      }
+      player_pos_y = 9,
+      map_tile_width = 8,
+      map_tile_height = 12,
+      boxes = "0301",
+      beams = "0202",
+      ents = {}
     },
-    ]]
+    
     {
       label="01",
       start_tile_x = 0,

@@ -5,6 +5,9 @@ player_state = PLAYER_STATE_GROUNDED
 player_facing = DIRECTION_DOWN
 player_vel_x = 0
 player_vel_y = 0
+player_slide_vel_x = 0
+player_slide_vel_y = 0
+slide_counter = 0
 
 function new_player(sprite_num, pos_x, pos_y)
   local player = new_sprite(
@@ -167,14 +170,14 @@ function new_player(sprite_num, pos_x, pos_y)
 
     -- If they're sliding, they can tweak the direction of the slide
     if player_state == PLAYER_STATE_SLIDING then
-      if is_pressed_u(mask) then
-        player.slide_vel_y -= 0.03
-      elseif is_pressed_d(mask) then
-        player.slide_vel_y += 0.03
-      elseif is_pressed_l(mask) then
-        player.slide_vel_x -= 0.03
-      elseif is_pressed_r(mask) then
-        player.slide_vel_x += 0.03
+      if is_pressed_u(mask) and player_slide_vel_y > -0.5 then
+        player_slide_vel_y -= 0.03
+      elseif is_pressed_d(mask) and player_slide_vel_y < 0.5 then
+        player_slide_vel_y += 0.03
+      elseif is_pressed_l(mask) and player_slide_vel_x > -0.5 then
+        player_slide_vel_x -= 0.03
+      elseif is_pressed_r(mask) and player_slide_vel_x < 0.5 then
+        player_slide_vel_x += 0.03
       end
       return
     end
@@ -385,13 +388,13 @@ function new_player(sprite_num, pos_x, pos_y)
 
     player.gbeam.update()
 
-    local approx_vel_x = player_vel_x + player.slide_vel_x
+    local approx_vel_x = player_vel_x + player_slide_vel_x
     if approx_vel_x < 0 then
       approx_vel_x = flr(approx_vel_x)
     elseif approx_vel_x > 0 then
       approx_vel_x = ceil(approx_vel_x)
     end
-    local approx_vel_y = player_vel_y + player.slide_vel_y
+    local approx_vel_y = player_vel_y + player_slide_vel_y
     if approx_vel_y < 0 then
       approx_vel_y = flr(approx_vel_y)
     elseif approx_vel_y > 0 then
@@ -428,15 +431,24 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- if centered over a gap, and not floating, fall!
-    if fget(mget(curr_map_x, curr_map_y), FLAG_GAP) and player_state != PLAYER_STATE_FLOATING and player_state != PLAYER_STATE_DEAD_FALLING then
-      player.pos_x = (curr_map_x - level.start_tile_x) * 8
-      player.pos_y = (curr_map_y - level.start_tile_y) * 8
-      player_state = PLAYER_STATE_DEAD_FALLING
-      player_frame_step = 0
-      player_frame_offset = 0
-      xsfx_slide()
-      sfx_falling()
-      return
+    if fget(mget(curr_map_x, curr_map_y), FLAG_GAP) and player_state != PLAYER_STATE_FLOATING then
+      local box_x = (center_x \ 8) * 8
+      local box_y = (center_y \ 8) * 8
+      local gap = new_sprite(99, box_x, box_y, 8, 8)
+        printh("box_x/y: "..box_x..","..box_y)
+      local result, per = fancy_collides(player, gap)
+        printh("per: "..per)
+      if per > 0.4 then
+        printh("Definite fall")
+        player.pos_x = (curr_map_x - level.start_tile_x) * 8
+        player.pos_y = (curr_map_y - level.start_tile_y) * 8
+        player_state = PLAYER_STATE_DEAD_FALLING
+        player_frame_step = 0
+        player_frame_offset = 0
+        xsfx_slide()
+        sfx_falling()
+        return
+      end
     end
 
     if fget(mget(next_map_x, curr_map_y)) & player.can_travel == 0 then
@@ -461,8 +473,8 @@ function new_player(sprite_num, pos_x, pos_y)
     -- Make a hypothetical player sprite at the next location after update and check for collision
     local player_at_next = new_sprite(
       0, -- sprite num, doesn't matter
-      player.pos_x + player_vel_x + player.slide_vel_x,
-      player.pos_y + player_vel_y + player.slide_vel_y,
+      player.pos_x + player_vel_x + player_slide_vel_x,
+      player.pos_y + player_vel_y + player_slide_vel_y,
       player.size_x - 1, -- cheat with smaller player size for ents
       player.size_y - 1
     )
@@ -477,39 +489,40 @@ function new_player(sprite_num, pos_x, pos_y)
 
     -- the slide, deceleration and stopping
     if player_state == PLAYER_STATE_SLIDING then
-      if player_vel_x > 0 then
-        player_vel_x -= slide_step_down
-      elseif player_vel_x < 0 then
-        player_vel_x += slide_step_down
+      global_slide_counter += 1
+      if global_slide_counter == 20 then
+        player_vel_x *= 0.5
+        player_vel_y *= 0.5
       end
 
-      if player_vel_y > 0 then
-        player_vel_y -= slide_step_down
-      elseif player_vel_y < 0 then
-        player_vel_y += slide_step_down
-      end
-
-      if (player_vel_x <= slide_step_down and player_vel_x >= -slide_step_down) or can_move_x == false then
+      if can_move_x == false then
         player_vel_x = 0
       end
-      if (player_vel_y <= slide_step_down and player_vel_y >= -slide_step_down) or can_move_y == false then
+      if can_move_y == false then
         player_vel_y = 0
       end
 
-      if player_vel_x == 0 and player_vel_y == 0 and player_state == PLAYER_STATE_SLIDING then
+      if global_slide_counter > 30 or (player_vel_x == 0 and player_vel_y == 0 and player_state == PLAYER_STATE_SLIDING) then
         player_state = PLAYER_STATE_GROUNDED
-        player.slide_vel_x = 0
-        player.slide_vel_y = 0
+        player_slide_vel_x = 0
+        player_slide_vel_y = 0
         xsfx_slide()
+        printh("Slid for: "..global_slide_counter)
+        global_slide_counter = 0
       end
     end
 
+    if player_state == PLAYER_STATE_SLIDING then
+
+      printh("dx: "..player_vel_x + player_slide_vel_x)
+      printh("dy: "..player_vel_y + player_slide_vel_y)
+    end
     if can_move_x == true then
-      player.pos_x += player_vel_x + player.slide_vel_x
+      player.pos_x += player_vel_x + player_slide_vel_x
     end
 
     if can_move_y == true then
-      player.pos_y += player_vel_y + player.slide_vel_y
+      player.pos_y += player_vel_y + player_slide_vel_y
     end
 
   end
@@ -615,8 +628,7 @@ function new_gbeam()
         tmp_sprite = new_sprite(0, iter_pos_x, iter_pos_y - 2, 3, 3)
       end
       for k, ent in pairs(ent_man.ents) do
-        if ent.type != ENT_BEAM then
-          if collides(tmp_sprite, ent) then
+        if ent.type != ENT_BEAM and collides(tmp_sprite, ent) then
             tmp.tail_pos_x = iter_pos_x
             tmp.tail_pos_y = iter_pos_y
             collision_found = true
@@ -626,7 +638,6 @@ function new_gbeam()
             tmp.particles = flsrc(tmp.tail_pos_x, tmp.tail_pos_y, 0, {2, 13, 14})
             tmp.particles.direction = direction
             break
-          end
         end
       end
     end
@@ -699,6 +710,10 @@ function sc_sliding(player)
     player_state = PLAYER_STATE_SLIDING
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
     sfx_slide()
+    global_slide_counter = 0
+    player_vel_x *= 0.7
+    player_vel_y *= 0.7
+    printh("dxdy: "..player_vel_x..","..player_vel_y)
 end
 
 function get_center(sprite)
@@ -778,5 +793,5 @@ end
 
 function stop_player(player)
   player_vel_x, player_vel_y = 0,0 
-  player.slide_vel_x, player.slide_vel_y = 0,0 
+  player_slide_vel_x, player_slide_vel_y = 0,0 
 end
