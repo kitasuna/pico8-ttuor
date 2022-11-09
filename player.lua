@@ -1,3 +1,11 @@
+player_frame_base = 1
+player_frame_offset = 0
+player_frame_step = 0
+player_state = PLAYER_STATE_GROUNDED
+player_facing = DIRECTION_DOWN
+player_vel_x = 0
+player_vel_y = 0
+
 function new_player(sprite_num, pos_x, pos_y)
   local player = new_sprite(
   sprite_num,
@@ -10,18 +18,13 @@ function new_player(sprite_num, pos_x, pos_y)
   local velocity_max = 0.8
   -- after abs(velocity_min), we'll stop the player
   local velocity_min = 0.10
-  local slide_velocity = 1.3
+  local slide_step_down = 0.05
   local walk_init_vel = 0.2
   local walk_step_up = 0.04
 
-  player.state = PLAYER_STATE_GROUNDED
-  player.deaths = 0
+
   stop_player(player) -- inits vel values anyway
-  player.frame_base = 1
-  player.frame_offset = 0
-  player.frame_step = 0
-  player.facing = DIRECTION_DOWN
-  player.can_travel = (1 << FLAG_FLOOR)
+  player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
   player.gbeam = new_gbeam()
   player.wormhole = nil
   player.inventory = {
@@ -42,8 +45,8 @@ function new_player(sprite_num, pos_x, pos_y)
 
   -- API, allows other entities to check on player
   player.is_dead = function()
-    if player.state == PLAYER_STATE_DEAD_ZAPPED or
-      player.state == PLAYER_STATE_DEAD_FALLING then
+    if player_state == PLAYER_STATE_DEAD_ZAPPED or
+      player_state == PLAYER_STATE_DEAD_FALLING then
       return true
     end
 
@@ -51,11 +54,11 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.reset = function(l)
-    player.frame_base = 1
-    player.frame_offset = 1
-    player.facing = DIRECTION_DOWN
-    player.can_travel = 1 << FLAG_FLOOR
-    player.state = PLAYER_STATE_GROUNDED
+    player_frame_base = 1
+    player_frame_offset = 1
+    player_facing = DIRECTION_DOWN
+    player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
+    player_state = PLAYER_STATE_GROUNDED
     stop_player(player)
     player.pos_x = l.player_pos_x * 8
     player.pos_y = l.player_pos_y * 8
@@ -63,7 +66,7 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.remove_wormhole = function()
-    if player.state == PLAYER_STATE_FLOATING then
+    if player_state == PLAYER_STATE_FLOATING then
       sc_sliding(player)
     end
     player.wormhole = nil
@@ -109,14 +112,13 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.handle_beam_player_collision = function()
-      player.deaths += 1
       player.can_move_x = false
       player.can_move_y = false
       stop_player(player)
-      player.state = PLAYER_STATE_DEAD_ZAPPED
+      player_state = PLAYER_STATE_DEAD_ZAPPED
       sfx_zapped()
-      player.frame_step = 0
-      player.frame_offset = 0
+      player_frame_step = 0
+      player_frame_offset = 0
       add(timers, {
         ttl = 60,
         cleanup = function()
@@ -128,7 +130,7 @@ function new_player(sprite_num, pos_x, pos_y)
 
   player.handle_entity_reaches_target = function(payload)
     if payload.ent.type == ENT_BOX then
-      player.state = PLAYER_STATE_HOLDING
+      player_state = PLAYER_STATE_HOLDING
     elseif payload.ent.type == ENT_ITEM then
       qm.add_event("PLAYER_ITEM_COLLISION", { entity=payload.ent })
     end
@@ -141,38 +143,38 @@ function new_player(sprite_num, pos_x, pos_y)
     stop_player(player)
     player.wormhole = nil
     player.gbeam.disable()
-    player.facing = DIRECTION_DOWN
+    player_facing = DIRECTION_DOWN
     xsfx_all()
+    xsfx_slide() -- not sure why, but this is needed
   end
 
   player.handle_button = function(payload)
     local mask = payload.input_mask
     -- Change facing for certain states
-    if player.state == PLAYER_STATE_SLIDING or
-       player.state == PLAYER_STATE_HOLDING or
-       player.state == PLAYER_STATE_GROUNDED then
+    if player_state == PLAYER_STATE_SLIDING or
+       player_state == PLAYER_STATE_HOLDING or
+       player_state == PLAYER_STATE_GROUNDED then
        if is_pressed_u(mask) then
-         player.facing = DIRECTION_UP
+         player_facing = DIRECTION_UP
        elseif is_pressed_d(mask) then
-         player.facing = DIRECTION_DOWN
+         player_facing = DIRECTION_DOWN
        elseif is_pressed_l(mask) then
-         player.facing = DIRECTION_LEFT
+         player_facing = DIRECTION_LEFT
        elseif is_pressed_r(mask) then
-         player.facing = DIRECTION_RIGHT
+         player_facing = DIRECTION_RIGHT
        end
      end
 
     -- If they're sliding, they can tweak the direction of the slide
-    if player.state == PLAYER_STATE_SLIDING then
-      local total_vel = abs(player.vel_x) + abs(player.vel_y)
+    if player_state == PLAYER_STATE_SLIDING then
       if is_pressed_u(mask) then
-        player.slide_vel_y = -total_vel / 2
+        player.slide_vel_y -= 0.03
       elseif is_pressed_d(mask) then
-        player.slide_vel_y = total_vel / 2
+        player.slide_vel_y += 0.03
       elseif is_pressed_l(mask) then
-        player.slide_vel_x = -total_vel / 2
+        player.slide_vel_x -= 0.03
       elseif is_pressed_r(mask) then
-        player.slide_vel_x = total_vel / 2 
+        player.slide_vel_x += 0.03
       end
       return
     end
@@ -183,9 +185,9 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- If they're floating and the press isn't a float toggle, return
-    if player.state == PLAYER_STATE_FLOATING and not is_pressed_x(mask) then
+    if player_state == PLAYER_STATE_FLOATING and not is_pressed_x(mask) then
       return
-    elseif player.state == PLAYER_STATE_FLOATING then
+    elseif player_state == PLAYER_STATE_FLOATING then
       if player.wormhole != nil then
         player.remove_wormhole()
       end
@@ -193,23 +195,23 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- If they're holding, all they can do is change the facing or release holding
-    if player.state == PLAYER_STATE_HOLDING then
+    if player_state == PLAYER_STATE_HOLDING then
       -- TODO do we need this?
       if not is_pressed_o(mask) then
-        player.state = PLAYER_STATE_GROUNDED 
+        player_state = PLAYER_STATE_GROUNDED 
         return
       end
 
       local new_x = player.pos_x
       local new_y = player.pos_y
 
-      if player.facing == DIRECTION_UP then
+      if player_facing == DIRECTION_UP then
         new_y -= 8
-      elseif player.facing == DIRECTION_DOWN then
+      elseif player_facing == DIRECTION_DOWN then
         new_y +=8
-      elseif player.facing == DIRECTION_LEFT then
+      elseif player_facing == DIRECTION_LEFT then
         new_x -= 8
-      elseif player.facing == DIRECTION_RIGHT then
+      elseif player_facing == DIRECTION_RIGHT then
         new_x += 8
       end
       qm.add_event("player_rotation", {pos_x=new_x, pos_y=new_y})
@@ -219,26 +221,26 @@ function new_player(sprite_num, pos_x, pos_y)
 
     -- if they're holding the beam, change state
     if is_pressed_o(mask) and player.inventory.glove != 0 then
-      player.state = PLAYER_STATE_FIRING
-      player.vel_x = 0
-      player.vel_y = 0
+      player_state = PLAYER_STATE_FIRING
+      player_vel_x = 0
+      player_vel_y = 0
       if player.gbeam.state == "DISABLED" then
         local gbeam_pos_x = player.pos_x
         local gbeam_pos_y = player.pos_y
-        if player.facing == DIRECTION_UP then
+        if player_facing == DIRECTION_UP then
           gbeam_pos_y -= 2
           gbeam_pos_x += 1
-        elseif player.facing == DIRECTION_DOWN then
+        elseif player_facing == DIRECTION_DOWN then
           gbeam_pos_y += 8
           gbeam_pos_x += 6
-        elseif player.facing == DIRECTION_RIGHT then
+        elseif player_facing == DIRECTION_RIGHT then
           gbeam_pos_x += 7
           gbeam_pos_y += 4
-        elseif player.facing == DIRECTION_LEFT then
+        elseif player_facing == DIRECTION_LEFT then
           gbeam_pos_x -= 3
           gbeam_pos_y += 4
         end
-        player.gbeam.enable(gbeam_pos_x, gbeam_pos_y, player.facing)
+        player.gbeam.enable(gbeam_pos_x, gbeam_pos_y, player_facing)
         sfx_gbeam()
       end
       return
@@ -248,26 +250,25 @@ function new_player(sprite_num, pos_x, pos_y)
       -- Add event to stop affected items
       qm.add_event("gbeam_removed")
       xsfx_gbeam()
-      player.state = PLAYER_STATE_GROUNDED
+      player_state = PLAYER_STATE_GROUNDED
     end
 
     if is_pressed_x(mask) and player.wormhole == nil and player.inventory.wormhole != 0 then
-      local wh_pos_x = player.pos_x
-      local wh_pos_y = player.pos_y
-      if player.facing == DIRECTION_UP then
+      local wh_pos_x, wh_pos_y = player.pos_x, player.pos_y
+      if player_facing == DIRECTION_UP then
         wh_pos_y -= 8
-      elseif player.facing == DIRECTION_DOWN then
+      elseif player_facing == DIRECTION_DOWN then
         wh_pos_y += 8
-      elseif player.facing == DIRECTION_RIGHT then
+      elseif player_facing == DIRECTION_RIGHT then
         wh_pos_x += 8
       else -- DIRECTION_LEFT
         wh_pos_x -= 8
       end
-      player.wormhole = new_wormhole(wh_pos_x, wh_pos_y, player.facing)
-      sfx_wormhole()
+
+      player.wormhole = new_wormhole(wh_pos_x, wh_pos_y, player_facing)
     -- If they're grounded, there's a projectile, and the press is a float toggle, make them float!
-    elseif is_pressed_x(mask) and player.wormhole != nil and player.state == PLAYER_STATE_GROUNDED then
-        player.state = PLAYER_STATE_FLOATING
+    elseif is_pressed_x(mask) and player.wormhole != nil and player_state == PLAYER_STATE_GROUNDED then
+        player_state = PLAYER_STATE_FLOATING
         player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
         local grav_result = calc_cheat_grav(
         player.pos_x,
@@ -276,8 +277,8 @@ function new_player(sprite_num, pos_x, pos_y)
         player.wormhole.pos_y
         )
 
-        player.vel_x = grav_result.vel_x
-        player.vel_y = grav_result.vel_y
+        player_vel_x = grav_result.vel_x
+        player_vel_y = grav_result.vel_y
         sfx_floating()
 
         return
@@ -285,89 +286,85 @@ function new_player(sprite_num, pos_x, pos_y)
 
     -- Up
     if is_pressed_u(mask) then
-      if player.vel_y >= 0 then
-        player.vel_y = -walk_init_vel
-      elseif player.vel_y > -velocity_max then
-        player.vel_y -= walk_step_up
+      if player_vel_y >= 0 then
+        player_vel_y = -walk_init_vel
+      elseif player_vel_y > -velocity_max then
+        player_vel_y -= walk_step_up
       end
     -- Down
     elseif is_pressed_d(mask) then
-      if player.vel_y <= 0 then
-        player.vel_y = walk_init_vel
-      elseif player.vel_y < velocity_max then
-        player.vel_y += walk_step_up
+      if player_vel_y <= 0 then
+        player_vel_y = walk_init_vel
+      elseif player_vel_y < velocity_max then
+        player_vel_y += walk_step_up
       end
     end
 
     if not is_pressed_u(mask) and
       not is_pressed_d(mask) then
-      player.vel_y = 0
+      player_vel_y = 0
     end
 
     if is_pressed_l(mask) then
-      if player.vel_x >= 0 then
-        player.vel_x = -walk_init_vel
-      elseif player.vel_x > -velocity_max then
-        player.vel_x -= walk_step_up
+      if player_vel_x >= 0 then
+        player_vel_x = -walk_init_vel
+      elseif player_vel_x > -velocity_max then
+        player_vel_x -= walk_step_up
       end
     elseif is_pressed_r(mask) then
-      if player.vel_x <= 0 then
-        player.vel_x = walk_init_vel
-      elseif player.vel_x < velocity_max then
-        player.vel_x += walk_step_up
+      if player_vel_x <= 0 then
+        player_vel_x = walk_init_vel
+      elseif player_vel_x < velocity_max then
+        player_vel_x += walk_step_up
       end
     end
 
     if not is_pressed_l(mask) and
       not is_pressed_r(mask) then
-      player.vel_x = 0
+      player_vel_x = 0
     end
 
-    if player.facing == DIRECTION_DOWN then
-      player.frame_base = 1
-    elseif player.facing == DIRECTION_UP then
-      player.frame_base = 9
-    elseif player.facing == DIRECTION_RIGHT then
-      player.frame_base = 5
-    elseif player.facing == DIRECTION_LEFT then
-      player.frame_base = 5
+    if player_facing == DIRECTION_DOWN then
+      player_frame_base = 1
+    elseif player_facing == DIRECTION_UP then
+      player_frame_base = 9
+    elseif player_facing == DIRECTION_RIGHT then
+      player_frame_base = 5
+    elseif player_facing == DIRECTION_LEFT then
+      player_frame_base = 5
     end
 
     if is_pressed_u(mask) or is_pressed_r(mask) or is_pressed_d(mask) or is_pressed_l(mask) then
-      player.frame_step += 1
-      if player.frame_step > 6 then
-        player.frame_offset += 1
-        player.frame_step = 0
-        if player.frame_offset > 3 then
-          player.frame_offset = 0
-        end
+      player_frame_step = (player_frame_step + 1) % 7
+      if player_frame_step == 0 then
+        player_frame_offset = (player_frame_offset + 1) % 4
       end
     end
   end
 
   player.draw = function()
     local flip = false
-    if player.facing == DIRECTION_LEFT then
+    if player_facing == DIRECTION_LEFT then
       -- Only used for some states
       flip = true
     end
-    if player.state == PLAYER_STATE_GROUNDED then
-      -- spr(player.frame_base + player.frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
-      local frames = player.frames_walking[player.facing + 1]
-      spr(frames[player.frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, flip)
-    elseif player.state == PLAYER_STATE_FIRING then
-      spr(23 + player.facing, player.pos_x, player.pos_y)
-    elseif player.state == PLAYER_STATE_FLOATING then
+    if player_state == PLAYER_STATE_GROUNDED then
+      -- spr(player_frame_base + player_frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
+      local frames = player.frames_walking[player_facing + 1]
+      spr(frames[player_frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, flip)
+    elseif player_state == PLAYER_STATE_FIRING then
+      spr(23 + player_facing, player.pos_x, player.pos_y)
+    elseif player_state == PLAYER_STATE_FLOATING then
       spr(10, player.pos_x, player.pos_y)
-    elseif player.state == PLAYER_STATE_SLIDING then
-      spr(12 + player.facing, player.pos_x, player.pos_y)
-    elseif player.state == PLAYER_STATE_DEAD_FALLING then
-      local offset = player.frame_offset + 1
+    elseif player_state == PLAYER_STATE_SLIDING then
+      spr(12 + player_facing, player.pos_x, player.pos_y)
+    elseif player_state == PLAYER_STATE_DEAD_FALLING then
+      local offset = player_frame_offset + 1
       sspr(88, 0, 8, 8, player.pos_x + offset, player.pos_y + offset, 8 \ offset, 8 \ offset)
-    elseif player.state == PLAYER_STATE_DEAD_ZAPPED then
-      spr(player.frames_zapped[player.frame_offset + 1],player.pos_x, player.pos_y)
-    elseif player.state == PLAYER_STATE_HOLDING then
-      spr(19+player.facing,player.pos_x, player.pos_y, 1.0, 1.0, flip, false)
+    elseif player_state == PLAYER_STATE_DEAD_ZAPPED then
+      spr(player.frames_zapped[player_frame_offset + 1],player.pos_x, player.pos_y)
+    elseif player_state == PLAYER_STATE_HOLDING then
+      spr(19+player_facing,player.pos_x, player.pos_y, 1.0, 1.0, flip, false)
     end
   end
 
@@ -376,7 +373,7 @@ function new_player(sprite_num, pos_x, pos_y)
       player.wormhole.update(level)
 
       if collides(player.wormhole, player) then
-        if player.state == PLAYER_STATE_FLOATING then
+        if player_state == PLAYER_STATE_FLOATING then
           sc_sliding(player)
         end
         player.remove_wormhole()
@@ -388,13 +385,13 @@ function new_player(sprite_num, pos_x, pos_y)
 
     player.gbeam.update()
 
-    local approx_vel_x = player.vel_x + player.slide_vel_x
+    local approx_vel_x = player_vel_x + player.slide_vel_x
     if approx_vel_x < 0 then
       approx_vel_x = flr(approx_vel_x)
     elseif approx_vel_x > 0 then
       approx_vel_x = ceil(approx_vel_x)
     end
-    local approx_vel_y = player.vel_y + player.slide_vel_y
+    local approx_vel_y = player_vel_y + player.slide_vel_y
     if approx_vel_y < 0 then
       approx_vel_y = flr(approx_vel_y)
     elseif approx_vel_y > 0 then
@@ -402,19 +399,19 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     local center_x, center_y = get_center(player)
-    local player_next_x = center_x + approx_vel_x -- + (player.facing != 3 and 5 or 1)
-    local player_next_y = center_y + approx_vel_y -- + (player.facing == 2 and 7 or 0)
+    local player_next_x = center_x + approx_vel_x -- + (player_facing != 3 and 5 or 1)
+    local player_next_y = center_y + approx_vel_y -- + (player_facing == 2 and 7 or 0)
     local curr_map_x, curr_map_y = get_tile_from_pos(center_x, center_y, level)
     local next_map_x, next_map_y = get_tile_from_pos(player_next_x, player_next_y, level)
     local can_move_x, can_move_y = true,true
 
 
-    if player.state == PLAYER_STATE_DEAD_FALLING then
-      if player.frame_offset < 3 then
-        player.frame_step += 1
-        if player.frame_step > 20 then
-          player.frame_offset += 1
-          player.frame_step = 0
+    if player_state == PLAYER_STATE_DEAD_FALLING then
+      if player_frame_offset < 3 then
+        player_frame_step += 1
+        if player_frame_step > 20 then
+          player_frame_offset += 1
+          player_frame_step = 0
         end
       else
         qm.add_event("player_death", {level = level})
@@ -423,29 +420,20 @@ function new_player(sprite_num, pos_x, pos_y)
       return
     end
 
-    if player.state == PLAYER_STATE_DEAD_ZAPPED then
-      player.frame_step += 1
-      if player.frame_step > 5 then
-        player.frame_offset += 1
-        if player.frame_offset + 1 > #player.frames_zapped then
-          player.frame_offset = 0
-        end
-        player.frame_step = 0
+    if player_state == PLAYER_STATE_DEAD_ZAPPED then
+      player_frame_step = (player_frame_step + 1) % 6
+      if player_frame_step == 0 then
+        player_frame_offset = (player_frame_offset + 1) % #player.frames_zapped
       end
     end
 
-    -- if centered over a gap, and not floating, increment deaths (and probably trigger some event?)
-    if fget(mget(curr_map_x, curr_map_y), FLAG_GAP) and player.state != PLAYER_STATE_FLOATING and player.state != PLAYER_STATE_DEAD_FALLING then
-      player.deaths += 1
-      player.can_move_x = false
-      player.can_move_y = false
-      -- player.pos_x += player.vel_x
-      -- player.pos_y += player.vel_y
+    -- if centered over a gap, and not floating, fall!
+    if fget(mget(curr_map_x, curr_map_y), FLAG_GAP) and player_state != PLAYER_STATE_FLOATING and player_state != PLAYER_STATE_DEAD_FALLING then
       player.pos_x = (curr_map_x - level.start_tile_x) * 8
       player.pos_y = (curr_map_y - level.start_tile_y) * 8
-      player.state = PLAYER_STATE_DEAD_FALLING
-      player.frame_step = 0
-      player.frame_offset = 0
+      player_state = PLAYER_STATE_DEAD_FALLING
+      player_frame_step = 0
+      player_frame_offset = 0
       xsfx_slide()
       sfx_falling()
       return
@@ -473,8 +461,8 @@ function new_player(sprite_num, pos_x, pos_y)
     -- Make a hypothetical player sprite at the next location after update and check for collision
     local player_at_next = new_sprite(
       0, -- sprite num, doesn't matter
-      player.pos_x + player.vel_x + player.slide_vel_x,
-      player.pos_y + player.vel_y + player.slide_vel_y,
+      player.pos_x + player_vel_x + player.slide_vel_x,
+      player.pos_y + player_vel_y + player.slide_vel_y,
       player.size_x - 1, -- cheat with smaller player size for ents
       player.size_y - 1
     )
@@ -488,22 +476,28 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- the slide, deceleration and stopping
-    if player.state == PLAYER_STATE_SLIDING then
-      player.vel_x *= 0.95
-      player.vel_y *= 0.95
-
-      printh("vxy: "..player.vel_x..","..player.vel_y)
-      printh("svxy: "..player.slide_vel_x..","..player.slide_vel_y)
-
-      if (player.vel_x <= velocity_min and player.vel_x >= -velocity_min) or can_move_x == false then
-        player.vel_x = 0
-      end
-      if (player.vel_y <= velocity_min and player.vel_y >= -velocity_min) or can_move_y == false then
-        player.vel_y = 0
+    if player_state == PLAYER_STATE_SLIDING then
+      if player_vel_x > 0 then
+        player_vel_x -= slide_step_down
+      elseif player_vel_x < 0 then
+        player_vel_x += slide_step_down
       end
 
-      if player.vel_x == 0 and player.vel_y == 0 and player.state == PLAYER_STATE_SLIDING then
-        player.state = PLAYER_STATE_GROUNDED
+      if player_vel_y > 0 then
+        player_vel_y -= slide_step_down
+      elseif player_vel_y < 0 then
+        player_vel_y += slide_step_down
+      end
+
+      if (player_vel_x <= slide_step_down and player_vel_x >= -slide_step_down) or can_move_x == false then
+        player_vel_x = 0
+      end
+      if (player_vel_y <= slide_step_down and player_vel_y >= -slide_step_down) or can_move_y == false then
+        player_vel_y = 0
+      end
+
+      if player_vel_x == 0 and player_vel_y == 0 and player_state == PLAYER_STATE_SLIDING then
+        player_state = PLAYER_STATE_GROUNDED
         player.slide_vel_x = 0
         player.slide_vel_y = 0
         xsfx_slide()
@@ -511,11 +505,11 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     if can_move_x == true then
-      player.pos_x += player.vel_x + player.slide_vel_x
+      player.pos_x += player_vel_x + player.slide_vel_x
     end
 
     if can_move_y == true then
-      player.pos_y += player.vel_y + player.slide_vel_y
+      player.pos_y += player_vel_y + player.slide_vel_y
     end
 
   end
@@ -654,7 +648,6 @@ function new_wormhole(pos_x, pos_y, direction)
   tmp.colors = { CLR_PNK, CLR_BLK, CLR_PRP }
   tmp.frame_index = 1
   tmp.frame_half_step = 1
-  tmp.frame_step = 3
   tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
   tmp.ttl = 180
   local launch_velocity = 2
@@ -674,17 +667,10 @@ function new_wormhole(pos_x, pos_y, direction)
   end
 
   tmp.update = function(level)
-    tmp.frame_half_step += 1
-    if tmp.frame_half_step > tmp.frame_step then
-      tmp.frame_half_step = 1
-      tmp.bgcoloridx += 1
-      tmp.incoloridx += 1
-      if tmp.bgcoloridx > count(tmp.colors) then
-        tmp.bgcoloridx = 1
-      end
-      if tmp.incoloridx > count(tmp.colors) then
-        tmp.incoloridx = 1
-      end
+    tmp.frame_half_step = (tmp.frame_half_step + 1) % 3
+    if tmp.frame_half_step == 0 then
+      tmp.bgcoloridx = (tmp.bgcoloridx + 1) % #tmp.colors
+      tmp.incoloridx = (tmp.incoloridx + 1) % #tmp.colors
     end
 
     if tmp.vel_x < max_velocity then
@@ -705,12 +691,12 @@ function new_wormhole(pos_x, pos_y, direction)
     circfill(tmp.pos_x+4, tmp.pos_y+4, tmp.frame_half_step, tmp.colors[tmp.incoloridx])
   end
 
+  sfx_wormhole()
   return tmp
 end
 
 function sc_sliding(player)
-    printh("!!!!! INIT SLIDE !!!!!!")
-    player.state = PLAYER_STATE_SLIDING
+    player_state = PLAYER_STATE_SLIDING
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
     sfx_slide()
 end
@@ -791,6 +777,6 @@ function calc_cheat_grav(px, py, gx, gy)
 end
 
 function stop_player(player)
-  player.vel_x, player.vel_y = 0,0 
+  player_vel_x, player_vel_y = 0,0 
   player.slide_vel_x, player.slide_vel_y = 0,0 
 end

@@ -82,7 +82,6 @@ function new_entity_manager()
     tmp.can_travel = 1 << FLAG_FLOOR
     tmp.state = ENT_STATE_NORMAL
     tmp.frames = { NORMAL={frames={43},len=10}, HELD={frames={43},len=10} }
-    tmp.frame_step = 0
     tmp.frame_offset = 1
     tmp.feels_grav = true
     tmp.future_x,tmp.future_y = 0,0

@@ -15,6 +15,9 @@ end
 function xsfx_wormhole()
   sfx(6,-2)
 end
+function sfx_nowormhole()
+  sfx(12)
+end
 function sfx_gbeam()
   sfx(2)
 end
@@ -53,5 +56,5 @@ function sfx_get_inventory()
   sfx(7)
 end
 function sfx_start_game()
-  sfx(11)
+  sfx(13)
 end

@@ -112,6 +112,7 @@ function ent_at(ent_type, tile_x, tile_y)
 end
 
 function init_level(l)
+  printh("init_level!")
   player.reset(l)
   ent_man.reset()
   camera_x = -64 + player.pos_x
@@ -140,5 +141,5 @@ function init_level(l)
 
   qm.add_event("level_init")
   -- reset timers
-  timers = {}
+  -- timers = {}
 end
