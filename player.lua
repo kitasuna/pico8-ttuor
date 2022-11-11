@@ -451,15 +451,15 @@ function new_player(sprite_num, pos_x, pos_y)
       end
     end
 
-    if fget(mget(next_map_x, curr_map_y)) & player.can_travel == 0 then
+    if fmget(next_map_x, curr_map_y) & player.can_travel == 0 then
       can_move_x = false
     end
 
-    if fget(mget(curr_map_x, next_map_y)) & player.can_travel == 0 then
+    if fmget(curr_map_x, next_map_y) & player.can_travel == 0 then
       can_move_y = false
     end
 
-    if fget(mget(next_map_x, next_map_y)) & player.can_travel == 0 then
+    if fmget(next_map_x, next_map_y) & player.can_travel == 0 then
       can_move_x = false
       can_move_y = false
     end
@@ -610,7 +610,7 @@ function new_gbeam()
       local next_map_x, next_map_y = get_tile_from_pos(iter_pos_x, iter_pos_y, level)
 
       -- check for map collisions
-      if fget(mget(next_map_x, next_map_y)) & tmp.can_travel == 0 then
+      if fmget(next_map_x, next_map_y) & tmp.can_travel == 0 then
         tmp.tail_pos_x = iter_pos_x
         tmp.tail_pos_y = iter_pos_y
         tmp.particles = flsrc(tmp.tail_pos_x, tmp.tail_pos_y, 0, {2, 13, 14})

@@ -444,6 +444,10 @@ function get_tile_from_pos(pos_x, pos_y, level)
   return (pos_x \ 8) + level.start_tile_x, (pos_y \ 8) + level.start_tile_y
 end
 
+function fmget(x, y)
+  return fget(mget(x, y))
+end
+
 __gfx__
 00000000b090090bbbbbbbbbbbbbbbbbb090090bbbbbbbbbbbbbbbbbb090090bbbbbbbbbbbbbbbbbb090090bb090090bb090090bbb09090bb090090bb09090bb
 0000000009599590b090090bb090090b09599590b090090bb090090b09999990b090090bb090090b09c99c9009c99c9009999990b0959590095995900959590b

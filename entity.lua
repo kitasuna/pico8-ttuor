@@ -32,8 +32,7 @@ function new_entity_manager()
   end
   -- {pos_x: Int, pos_y: Int, item_index: Int}
   ent_man.add_item = function(item)
-    local tmp = new_item(item)
-    add(ent_man.ents, tmp)
+    add(ent_man.ents, new_item(item))
   end
 
   ent_man.add_glove = function(coords)
@@ -270,7 +269,7 @@ function beam_update(beam)
     local beam_max_x = beam.pos_x
     while collision == false do
       local next_map_x = ((beam_max_x + 1) \ 8) + level.start_tile_x
-      if (fget(mget(next_map_x, curr_map_y)) & beam.can_travel) == 0 then
+      if fmget(next_map_x, curr_map_y) & beam.can_travel == 0 then
         collision = true
         break;
       end
@@ -312,6 +311,7 @@ function ent_draw(ent)
   end
 end
 
+
 function ent_update(tmp)
   return function(level)
     local ent_center_x, ent_center_y = get_center(tmp)
@@ -320,13 +320,13 @@ function ent_update(tmp)
     local curr_map_x, curr_map_y = get_tile_from_pos(ent_center_x, ent_center_y, level)
     local next_map_x, next_map_y = get_tile_from_pos(ent_next_x, ent_next_y, level)
 
-    if fget(mget(next_map_x, curr_map_y)) & tmp.can_travel == 0 then
+    if fmget(next_map_x, curr_map_y) & tmp.can_travel == 0 then
       tmp.vel_x = 0
     else
       tmp.pos_x += tmp.vel_x
     end
 
-    if fget(mget(curr_map_x, next_map_y)) & tmp.can_travel == 0 then
+    if fmget(curr_map_x, next_map_y) & tmp.can_travel == 0 then
       tmp.vel_y = 0
     else
       tmp.pos_y += tmp.vel_y
@@ -337,17 +337,13 @@ function ent_update(tmp)
       local ginfo = ldistance(tmp.pos_x + 4, tmp.pos_y + 4, tmp.tgt_x, tmp.tgt_y)
       if ginfo.d < 8.1 then
         -- Center on the target
-        tmp.vel_x = 0
-        tmp.vel_y = 0
+        tmp.vel_x, tmp.vel_y = 0,0
         if tmp.type == ENT_BOX then
           tmp.state = ENT_STATE_HELD
         end
-        tmp.future_x = tmp.pos_x
-        tmp.future_y = tmp.pos_y
-        tmp.pos_x = tmp.tgt_x
-        tmp.pos_y = tmp.tgt_y
-        tmp.tgt_x = nil
-        tmp.tgt_y = nil
+        tmp.future_x,tmp.future_y = tmp.pos_x,tmp.pos_y
+        tmp.pos_x,tmp.pos_y = tmp.tgt_x,tmp.tgt_y
+        tmp.tgt_x, tmp.tgt_y = nil,nil
         qm.add_event("entity_reaches_target", {ent=tmp})
       end
     end
