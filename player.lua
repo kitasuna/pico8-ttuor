@@ -430,16 +430,26 @@ function new_player(sprite_num, pos_x, pos_y)
       end
     end
 
-    -- if centered over a gap, and not floating, fall!
-    if fget(mget(curr_map_x, curr_map_y), FLAG_GAP) and player_state != PLAYER_STATE_FLOATING then
-      local box_x = (center_x \ 8) * 8
-      local box_y = (center_y \ 8) * 8
-      local gap = new_sprite(99, box_x, box_y, 8, 8)
-        printh("box_x/y: "..box_x..","..box_y)
-      local result, per = fancy_collides(player, gap)
-        printh("per: "..per)
-      if per > 0.4 then
-        printh("Definite fall")
+    -- check for gaps
+    local over_gaps=0
+    if player_state != PLAYER_STATE_FLOATING then
+      for i=player.pos_x+1,player.pos_x+6 do
+        if fget(mget(get_tile_from_pos(i, player.pos_y+3, level)), FLAG_GAP) then
+          over_gaps+=1
+        end
+        if fget(mget(get_tile_from_pos(i, player.pos_y+4, level)), FLAG_GAP) then
+          over_gaps+=1
+        end
+      end
+      for i=player.pos_y+1,player.pos_y+6 do
+        if fget(mget(get_tile_from_pos(player.pos_x+3, i, level)), FLAG_GAP) then
+          over_gaps+=1
+        end
+        if fget(mget(get_tile_from_pos(player.pos_x+4, i, level)), FLAG_GAP) then
+          over_gaps+=1
+        end
+      end
+      if over_gaps >= 24 then
         player.pos_x = (curr_map_x - level.start_tile_x) * 8
         player.pos_y = (curr_map_y - level.start_tile_y) * 8
         player_state = PLAYER_STATE_DEAD_FALLING
@@ -447,9 +457,9 @@ function new_player(sprite_num, pos_x, pos_y)
         player_frame_offset = 0
         xsfx_slide()
         sfx_falling()
-        return
       end
     end
+
 
     if fmget(next_map_x, curr_map_y) & player.can_travel == 0 then
       can_move_x = false

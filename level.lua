@@ -26,9 +26,10 @@ function get_levels()
       player_pos_x = 2,
       player_pos_y = 9,
       map_tile_width = 8,
-      map_tile_height = 12,
+      map_tile_height = 14,
       boxes = "0301",
-      beams = "0202",
+      --beams = "0202",
+      beams = "",
       ents = {}
     },
     
