@@ -89,9 +89,7 @@ function new_player(sprite_num, pos_x, pos_y)
   player.handle_player_glove_collision = function(payload)
       player.inventory.glove = 1
       player.inventory.state = inv_state_glove
-      add(timers, {
-        ttl = 60,
-        cleanup = function()
+      add(timers, {60, function()
           player.inventory.state = inv_state_normal
         end
       })
@@ -101,9 +99,7 @@ function new_player(sprite_num, pos_x, pos_y)
   player.handle_player_wh_collision = function(payload)
       player.inventory.wormhole = 1
       player.inventory.state = inv_state_wormhole
-      add(timers, {
-        ttl = 60,
-        cleanup = function()
+      add(timers, {60, function()
           player.inventory.state = inv_state_normal
         end
       })
@@ -118,9 +114,7 @@ function new_player(sprite_num, pos_x, pos_y)
       sfx_zapped()
       player_frame_step = 0
       player_frame_offset = 0
-      add(timers, {
-        ttl = 60,
-        cleanup = function()
+      add(timers, {60,function()
           unstage_inventory(player.inventory)
           qm.add_event("player_death", {level = level})
         end

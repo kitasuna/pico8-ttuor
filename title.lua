@@ -1,14 +1,11 @@
-title_draw = function()
+function title_draw()
   cls()
   spr(196,16,32,12,4)
   print("press x or o to start", 24, 96, CLR_WHT)
 end
 
-fadeout_0 = function()
+function title_fadeout_0()
   cls()
-  for i=0,15 do
-    pal(i, 0)
-  end
   pal(2, 1)
   pal(7, 2)
   pal(14, 2)
@@ -16,75 +13,39 @@ fadeout_0 = function()
   pal()
 end
 
-fadeout_1 = function()
+function title_fadeout_1()
   cls()
-  for i=0,15 do
-    pal(i, 0)
-  end
-  pal(14, 1)
+  pal(2, 0)
   pal(7, 1)
+  pal(14, 1)
   title_draw()
   pal()
 end
 
 -- for levels
-fadeout_2 = function()
-  cls()
-  for i=0,15 do
-    pal(i, 0)
-  end
-  pal(5, 1)
-  pal(6, 2)
-  game_draw()
-  pal()
+function fade1()
+  level_fade({5,1,6,2})
 end
 
 -- for levels
-fadeout_3 = function()
+function fade0()
+  level_fade({7,2,6,1})
+end
+
+function level_fade(seq)
   cls()
   for i=0,15 do
     pal(i, 0)
   end
-  pal(7, 2)
-  pal(6, 1)
+  pal(seq[1], seq[2])
+  pal(seq[3], seq[4])
   game_draw()
   pal()
-end
-
-fadein_0 = function()
-  for i=0,15 do
-    pal(i, 0)
-  end
-  pal(7, 2)
-  pal(6, 1)
-  game_draw()
-  pal()
-end
-
-fadein_1 = function()
-  for i=0,15 do
-    pal(i, 0)
-  end
-  pal(5, 1)
-  pal(6, 2)
-  game_draw()
-  pal()
-end
-
-timers_only = function()
-  for k,timer in pairs(timers) do
-    if timer.ttl > 0 then
-      timer.ttl -= 1
-    else
-      timer.cleanup()
-      timers[k] = nil
-    end
-  end
 end
 
 timers_and_q = function()
     qm.proc()
-    timers_only()
+    do_timers()
 end
 
 title_update = function()
@@ -93,89 +54,71 @@ title_update = function()
       level = levels[level_index]
       init_level(level)
       -- second stage fade
-      add(timers, {
-        ttl = 30,
-        cleanup = function()
-          __draw = fadeout_1
-        end
-      })
+      add(timers, {30, function()
+        __draw = title_fadeout_1
+      end
+    })
 
       -- complete black
-      add(timers, {
-        ttl = 60,
-        cleanup = function()
+      add(timers, {60, function()
           __draw = function() cls() end
         end
       })
 
       -- first fadein
-      add(timers, {
-        ttl = 90,
-        cleanup = function()
-          __draw = fadein_0
+      add(timers, {90, function()
+          __draw = fade0
         end
       })
 
       -- second fadein
-      add(timers, {
-        ttl = 120,
-        cleanup = function()
-          __draw = fadein_1
+      add(timers, {120,function()
+          __draw = fade1
         end
       })
 
       -- start (fade in) game
-      add(timers, {
-        ttl = 150,
-        cleanup = function()
-          music(2)
+      add(timers, {150,function()
+          --music(2)
           __update = game_update
           __draw = game_draw
         end
       })
-      __update = timers_only
-      __draw = fadeout_0
+      __update = do_timers
+      __draw = title_fadeout_0
     end
 end
 
 function fofi()
   ent_man.reset()
   __update = timers_and_q
-  __draw = fadeout_2
+  __draw = fade1
 
   -- second fadeout
-  add(timers, {
-    ttl = 15,
-    cleanup = function()
+  add(timers, {15, function()
       printh("fadeout3")
-      __draw = fadeout_3
+      __draw = fade0
     end
   })
 
   -- first fadein
-  add(timers, {
-    ttl = 30,
-    cleanup = function()
-      printh("level init, fadein_0")
+  add(timers, {30, function()
+      printh("level init, fade0")
       level = levels[level_index]
       init_level(level)
-      __draw = fadein_0
+      __draw = fade0
     end
   })
 
   -- second fadein
-  add(timers, {
-    ttl = 45,
-    cleanup = function()
-      printh("fadein_1")
-      __draw = fadein_1
+  add(timers, {45, function()
+      printh("fade1")
+      __draw = fade1
     end
   })
 
   -- start (fade in) game
-  add(timers, {
-    ttl = 60,
-    cleanup = function()
+  add(timers, {60, function()
       timers = {}
       __update = game_update
       __draw = game_draw

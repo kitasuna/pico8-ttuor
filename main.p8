@@ -199,14 +199,7 @@ game_update = function()
 
     ent_man.collision()
 
-    for k,timer in pairs(timers) do
-      if timer.ttl > 0 then
-        timer.ttl -= 1
-      else
-        timer.cleanup()
-        timers[k] = nil
-      end
-    end
+    do_timers()
 
     frame_counter += 1
     if frame_counter == 60 then
@@ -406,6 +399,16 @@ function fmget(x, y)
   return fget(mget(x, y))
 end
 
+function do_timers()
+  for k,timer in pairs(timers) do
+    if timer[1] > 0 then
+      timer[1] -= 1
+    else
+      timer[2]()
+      timers[k] = nil
+    end
+  end
+end
 __gfx__
 00000000b090090bbbbbbbbbbbbbbbbbb090090bbbbbbbbbbbbbbbbbb090090bbbbbbbbbbbbbbbbbb090090bb090090bb090090bbb09090bb090090bb09090bb
 0000000009599590b090090bb090090b09599590b090090bb090090b09999990b090090bb090090b09c99c9009c99c9009999990b0959590095995900959590b
