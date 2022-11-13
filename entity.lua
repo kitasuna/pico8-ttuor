@@ -6,11 +6,14 @@ function new_entity_manager()
   ent_man.collision = function()
     for k, ent in pairs(ent_man.ents) do
       for j, ent_inner in pairs(ent_man.ents) do
-        if ent_inner.type == ENT_BEAM and ent.type == ENT_BOX and ent.state != ENT_STATE_HELD and collides(ent, ent_inner) then
+        if ent_inner.type != ENT_BEAM then
+          return
+        end
+        if ent.type == ENT_BOX and ent.state != ENT_STATE_HELD and collides(ent, ent_inner) then
           ent_inner.blocked_by = ent
         end
 
-        if ent_inner.type == ENT_BEAM and ent.type == ENT_ITEM and ent.state != ENT_STATE_BROKEN and collides(ent, ent_inner) then
+        if ent.type == ENT_ITEM and ent.state != ENT_STATE_BROKEN and collides(ent, ent_inner) then
           ent.state = ENT_STATE_BROKEN
           ent.feels_grav = false
           ent.vel_x,ent.vel_y = 0,0

@@ -19,12 +19,8 @@ function new_player(sprite_num, pos_x, pos_y)
   )
 
   local velocity_max = 0.8
-  -- after abs(velocity_min), we'll stop the player
-  local velocity_min = 0.10
-  local slide_step_down = 0.05
   local walk_init_vel = 0.2
   local walk_step_up = 0.04
-
 
   stop_player(player) -- inits vel values anyway
   player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
@@ -301,10 +297,7 @@ function new_player(sprite_num, pos_x, pos_y)
       elseif player_vel_y < velocity_max then
         player_vel_y += walk_step_up
       end
-    end
-
-    if not is_pressed_u(mask) and
-      not is_pressed_d(mask) then
+    else
       player_vel_y = 0
     end
 
@@ -320,10 +313,7 @@ function new_player(sprite_num, pos_x, pos_y)
       elseif player_vel_x < velocity_max then
         player_vel_x += walk_step_up
       end
-    end
-
-    if not is_pressed_l(mask) and
-      not is_pressed_r(mask) then
+    else
       player_vel_x = 0
     end
 
@@ -337,7 +327,8 @@ function new_player(sprite_num, pos_x, pos_y)
       player_frame_base = 5
     end
 
-    if is_pressed_u(mask) or is_pressed_r(mask) or is_pressed_d(mask) or is_pressed_l(mask) then
+    -- if pressing any direction
+    if mask & 15 > 0 then
       player_frame_step = (player_frame_step + 1) % 7
       if player_frame_step == 0 then
         player_frame_offset = (player_frame_offset + 1) % 4
