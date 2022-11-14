@@ -30,7 +30,9 @@ function get_levels()
       beams = "",
       mbeams = "0204/10",
       boxes = "",
-      ents = {}
+      ents = {
+        {ENT_ITEM, 24, 60, 1}
+      }
     },
     
     {
@@ -45,8 +47,8 @@ function get_levels()
       beams = "",
       mbeams="",
       ents = {
-        ent_at(ENT_GLOVE, 12, 4),
-        merge(ent_at(ENT_ITEM, 7, 10), {item_index=1}),
+        {ENT_GLOVE, 88, 32},
+        {ENT_ITEM, 56, 80, 1}
       }
     },
     {
@@ -61,7 +63,7 @@ function get_levels()
       beams = "0102:0103:0218:0221:0224",
       mbeams = "",
       ents = {
-        merge(ent_at(ENT_ITEM, 4, 1), {item_index=2}),
+        {ENT_ITEM, 32, 8, 2}
       }
     },
     {
@@ -76,7 +78,7 @@ function get_levels()
       beams = "0805",
       mbeams="",
       ents = {
-        merge(ent_at(ENT_ITEM, 2, 8), {item_index=3}),
+        {ENT_ITEM, 16, 64, 3},
         ent_at(ENT_WH, 3, 4),
       }
     },
@@ -92,7 +94,7 @@ function get_levels()
       beams = "1208:0101:0108",
       mbeams="",
       ents = {
-        merge(ent_at(ENT_ITEM, 13, 5), {item_index=4}),
+        {ENT_ITEM, 80, 40, 4}
       }
     },
     --[[
@@ -113,10 +115,7 @@ function get_levels()
 end
 
 function ent_at(ent_type, tile_x, tile_y)
-  printh("Type: "..ent_type)
-  printh("Tilex: "..tile_x)
-  printh("Tiley: "..tile_y)
-  return {type=ent_type, pos_x=tile_x*8, pos_y=tile_y*8}
+  return {ent_type, tile_x*8, tile_y*8}
 end
 
 function init_level(l)
@@ -127,32 +126,35 @@ function init_level(l)
   camera_y = -64 + player.pos_y
   local i=1
   while i<#l.boxes do
-    printh("in boxes")
     ent_man.add_box(ent_at(ENT_BOX,sub(l.boxes,i,i+1),sub(l.boxes,i+2,i+3)))
     i += 5 -- 5 because we want to skip over the separator
   end
   local i=1
   while i<#l.beams do
-    printh("in beams")
     ent_man.add_beam(ent_at(ENT_BEAM,sub(l.beams,i,i+1),sub(l.beams,i+2,i+3)))
     i += 5 -- 5 because we want to skip over the separator
   end
   local i=1
   while i<#l.mbeams do
-    printh("in mbeams: "..l.mbeams)
     ent_man.add_beam(
-      ent_at(ENT_BEAM,sub(l.mbeams,i,i+1),sub(l.mbeams,i+2,i+3)),
+      ent_at(
+        ENT_BEAM,
+        sub(l.mbeams,i,i+1),
+        sub(l.mbeams,i+2,i+3)
+      ),
       sub(l.mbeams,i+5,i+6) * 8
-    )
+      )
     i += 7 -- skip over this chunk + separator
   end
   for k, e in pairs(l.ents) do
-    if e.type==ENT_ITEM then
-      ent_man.add_item(e)
-    elseif e.type==ENT_GLOVE then
-      ent_man.add_glove(e)
-    elseif e.type==ENT_WH then
-      ent_man.add_wh(e)
+    if e[1]==ENT_ITEM then
+      ent_add_item(e)
+    elseif e[1]==ENT_GLOVE then
+      add(e, 38)
+      ent_add_powerup(e)
+    elseif e[1]==ENT_WH then
+      add(e, 40)
+      ent_add_powerup(e)
     else
       printh("unknown type")
     end

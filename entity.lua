@@ -28,17 +28,13 @@ function new_entity_manager()
       end
     end
   end
-  -- {pos_x: Int, pos_y: Int, item_index: Int}
-  ent_man.add_item = function(item)
-    add(ent_man.ents, new_item(item))
-  end
 
-  ent_man.add_glove = function(coords)
-    local tmp = new_sprite(38, coords.pos_x, coords.pos_y, 8, 6)
+  -- {type, pos_x, pos_y, sprite_num}
+  ent_add_powerup = function(info)
+    local tmp = new_sprite(info[4], info[2], info[3], 8, 6)
 
-    tmp.vel_x = 0
-    tmp.vel_y = 0
-    tmp.type = ENT_GLOVE
+    tmp.vel_x,tmp.vel_y = 0,0
+    tmp.type = info[1]
     tmp.can_travel = 1 << FLAG_FLOOR
     tmp.state = nil
 
@@ -46,33 +42,14 @@ function new_entity_manager()
     tmp.draw = function()
       palt(0, false)
       palt(15, true)
-      ent_draw(tmp)()
+      ent_draw(tmp)
       pal()
     end
     add(ent_man.ents, tmp)
   end
 
-  ent_man.add_wh = function(coords)
-    local tmp = new_sprite(40, coords.pos_x, coords.pos_y, 8, 6)
-
-    tmp.vel_x = 0
-    tmp.vel_y = 0
-    tmp.type = ENT_WH
-    tmp.can_travel = 1 << FLAG_FLOOR
-    tmp.state = nil
-
-    tmp.update = ent_update(tmp)
-    tmp.draw = function()
-      palt(0, false)
-      palt(15, true)
-      ent_draw(tmp)()
-      pal()
-    end
-    add(ent_man.ents, tmp)
-  end
-
-  ent_man.add_box = function(coords)
-    local tmp = new_sprite(43, coords.pos_x, coords.pos_y, 8, 8)
+  ent_man.add_box = function(info)
+    local tmp = new_sprite(43, info[2], info[3], 8, 8)
 
     tmp.vel_x,tmp.vel_y = 0,0
     tmp.type = ENT_BOX
@@ -100,20 +77,20 @@ function new_entity_manager()
         palt()
         return
       end
-      ent_draw(tmp)()
+      ent_draw(tmp)
     end
     add(ent_man.ents, tmp)
   end
 
-  ent_man.add_beam = function(coords, max_y)
-    local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 6)
-    tmp.min_y = coords.pos_y
+  ent_man.add_beam = function(info, max_y)
+    local tmp = new_sprite(50, info[2], info[3], 8, 6)
+    tmp.min_y = tmp.pos_y
     tmp.vel_x,tmp.vel_y = 0,0
     if max_y != nil then
       tmp.max_y = max_y
       tmp.vel_y = 0.2
     else
-      tmp.max_y = coords.pos_y
+      tmp.max_y = tmp.pos_y
     end
     tmp.type = ENT_BEAM
     tmp.blocked_by = nil
@@ -210,21 +187,23 @@ function do_gravity(ent, pos_x, pos_y, direction)
 end
 
 -- {pos_x: Int, pos_y: Int, item_index: Int}
-function new_item(item)
+function ent_add_item(info)
+  for v in all(info) do
+    printh("Item info: "..v)
+  end
   local tmp = {
     vel_x = 0,
     vel_y = 0,
-    item_index = item.item_index,
+    item_index = info[4],
     type = ENT_ITEM,
     can_travel = 1 << FLAG_FLOOR,
     state = ENT_STATE_NORMAL,
-    frames = { BROKEN={frames={28+item.item_index} } },
     frame_step = 0,
     frame_offset = 1,
     feels_grav = true,
-    particles = flsrc(item.pos_x, item.pos_y, 0, {CLR_DGN, CLR_GRN})
+    particles = flsrc(info[2], info[3], 0, {CLR_DGN, CLR_GRN})
   }
-  tmp = merge(tmp, new_sprite(28, item.pos_x, item.pos_y, 8, 8)) 
+  tmp = merge(tmp, new_sprite(28, info[2], info[3], 8, 8)) 
 
 
   tmp.update = function(level)
@@ -251,7 +230,8 @@ function new_item(item)
       tmp.particles.draw()
     end
   end
-  return tmp
+
+  add(ent_man.ents, tmp)
 end
 
 function beam_update(beam)
@@ -276,13 +256,11 @@ function beam_update(beam)
         beam.blocked_by = nil
       end
     end
-    local collision = false
     local curr_map_x, curr_map_y = get_tile_from_pos(beam.pos_x, beam.pos_y + 3, level)
     local beam_max_x = beam.pos_x
-    while collision == false do
+    while true do
       local next_map_x, next_map_y = get_tile_from_pos(beam_max_x, beam.pos_y + 3, level)
       if fmget(next_map_x, curr_map_y) & beam.can_travel == 0 then
-        collision = true
         break;
       end
 
@@ -311,17 +289,14 @@ end
 
 function ent_draw(ent)
   if ent.state != nil then
-    return function()
-      if ent.frames[ent.state] != nil then
-        spr(ent.frames[ent.state].frames[ent.frame_offset], ent.pos_x, ent.pos_y)  
-      else
-        spr(ent.sprite_num, ent.pos_x, ent.pos_y)  
-      end
+    if ent.frames[ent.state] != nil then
+      spr(ent.frames[ent.state].frames[ent.frame_offset], ent.pos_x, ent.pos_y)  
+    else
+      spr(ent.sprite_num, ent.pos_x, ent.pos_y)  
     end
   end
-  return function()
-    spr(ent.num, ent.pos_x, ent.pos_y)
-  end
+
+  spr(ent.num, ent.pos_x, ent.pos_y)
 end
 
 

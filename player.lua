@@ -502,7 +502,6 @@ function new_player(sprite_num, pos_x, pos_y)
         player_slide_vel_x = 0
         player_slide_vel_y = 0
         xsfx_slide()
-        printh("Slid for: "..global_slide_counter)
         global_slide_counter = 0
       end
     end
