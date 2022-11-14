@@ -105,9 +105,17 @@ function new_entity_manager()
     add(ent_man.ents, tmp)
   end
 
-  ent_man.add_beam = function(coords)
+  ent_man.add_beam = function(coords, max_y)
     local tmp = new_sprite(50, coords.pos_x, coords.pos_y, 8, 6)
+    tmp.min_y = coords.pos_y
     tmp.vel_x,tmp.vel_y = 0,0
+    if max_y != nil then
+      printh("Not nil max y!!!: "..max_y)
+      tmp.max_y = max_y
+      tmp.vel_y = 0.2
+    else
+      tmp.max_y = coords.pos_y
+    end
     tmp.type = ENT_BEAM
     tmp.blocked_by = nil
     tmp.can_travel = 1 << FLAG_FLOOR -- maybe need to add gaps here later
@@ -249,6 +257,16 @@ end
 
 function beam_update(beam)
   return function(level)
+    -- Update pos if vel != 0
+    if beam.vel_y != 0 then
+      printh("vel_y: "..beam.vel_y)
+      printh("max_y: "..beam.max_y)
+      printh("min_y: "..beam.min_y)
+      beam.pos_y += beam.vel_y
+      if beam.pos_y > beam.max_y or beam.pos_y < beam.min_y then
+        beam.vel_y = - beam.vel_y
+      end
+    end
     -- Check for horizonal, increasing case
     -- Maybe add a "facing" prop to this later
     if beam.blocked_by != nil then
