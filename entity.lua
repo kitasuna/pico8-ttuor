@@ -110,7 +110,6 @@ function new_entity_manager()
     tmp.min_y = coords.pos_y
     tmp.vel_x,tmp.vel_y = 0,0
     if max_y != nil then
-      printh("Not nil max y!!!: "..max_y)
       tmp.max_y = max_y
       tmp.vel_y = 0.2
     else
@@ -257,16 +256,14 @@ end
 
 function beam_update(beam)
   return function(level)
-    -- Update pos if vel != 0
+    -- This bit controls the beam moving back and forth
     if beam.vel_y != 0 then
-      printh("vel_y: "..beam.vel_y)
-      printh("max_y: "..beam.max_y)
-      printh("min_y: "..beam.min_y)
       beam.pos_y += beam.vel_y
       if beam.pos_y > beam.max_y or beam.pos_y < beam.min_y then
         beam.vel_y = - beam.vel_y
       end
     end
+
     -- Check for horizonal, increasing case
     -- Maybe add a "facing" prop to this later
     if beam.blocked_by != nil then
@@ -280,11 +277,10 @@ function beam_update(beam)
       end
     end
     local collision = false
-    local curr_map_x = (beam.pos_x \ 8) + level.start_tile_x
-    local curr_map_y = (beam.pos_y \ 8) + level.start_tile_y
+    local curr_map_x, curr_map_y = get_tile_from_pos(beam.pos_x, beam.pos_y + 3, level)
     local beam_max_x = beam.pos_x
     while collision == false do
-      local next_map_x = ((beam_max_x + 1) \ 8) + level.start_tile_x
+      local next_map_x, next_map_y = get_tile_from_pos(beam_max_x, beam.pos_y + 3, level)
       if fmget(next_map_x, curr_map_y) & beam.can_travel == 0 then
         collision = true
         break;
@@ -298,6 +294,7 @@ end
 
 function beam_draw(beam)
   return function()
+    spr(48, beam.pos_x-8, beam.pos_y)
     if frame_counter % 4 == 1 then
       return
     end
