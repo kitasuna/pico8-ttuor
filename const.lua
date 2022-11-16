@@ -58,3 +58,5 @@ inv_state_wormhole = "wormhole"
 ENT_STATE_NORMAL = "NORMAL"
 ENT_STATE_BROKEN = "BROKEN"
 ENT_STATE_HELD = "HELD"
+
+GRAV_COLORS ={ CLR_PNK, CLR_BLK, CLR_PRP } 

@@ -54,31 +54,31 @@ title_update = function()
       level = levels[level_index]
       init_level(level)
       -- second stage fade
-      add(timers, {30, function()
+      add(timers, {15, function()
         __draw = title_fadeout_1
       end
     })
 
       -- complete black
-      add(timers, {60, function()
+      add(timers, {30, function()
           __draw = function() cls() end
         end
       })
 
       -- first fadein
-      add(timers, {90, function()
+      add(timers, {45, function()
           __draw = fade0
         end
       })
 
       -- second fadein
-      add(timers, {120,function()
+      add(timers, {60,function()
           __draw = fade1
         end
       })
 
       -- start (fade in) game
-      add(timers, {150,function()
+      add(timers, {75,function()
           --music(2)
           __update = game_update
           __draw = game_draw
@@ -95,14 +95,14 @@ function fofi()
   __draw = fade1
 
   -- second fadeout
-  add(timers, {15, function()
+  add(timers, {5, function()
       printh("fadeout3")
       __draw = fade0
     end
   })
 
   -- first fadein
-  add(timers, {30, function()
+  add(timers, {10, function()
       printh("level init, fade0")
       level = levels[level_index]
       init_level(level)
@@ -111,14 +111,14 @@ function fofi()
   })
 
   -- second fadein
-  add(timers, {45, function()
+  add(timers, {15, function()
       printh("fade1")
       __draw = fade1
     end
   })
 
   -- start (fade in) game
-  add(timers, {60, function()
+  add(timers, {20, function()
       timers = {}
       __update = game_update
       __draw = game_draw

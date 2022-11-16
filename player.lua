@@ -506,11 +506,6 @@ function new_player(sprite_num, pos_x, pos_y)
       end
     end
 
-    if player_state == PLAYER_STATE_SLIDING then
-
-      printh("dx: "..player_vel_x + player_slide_vel_x)
-      printh("dy: "..player_vel_y + player_slide_vel_y)
-    end
     if can_move_x == true then
       player.pos_x += player_vel_x + player_slide_vel_x
     end
@@ -560,7 +555,7 @@ function new_gbeam()
 
   tmp.draw = function()
     if tmp.state == "ENABLED" then
-      local colors = sort_from({ CLR_PNK, CLR_BLK, CLR_PRP }, (frame_counter % 3) + 1)
+      local colors = sort_from(GRAV_COLORS, (frame_counter % 3) + 1)
       if tmp.direction == DIRECTION_UP or tmp.direction == DIRECTION_DOWN then
         for i=-1,1 do
           line(tmp.head_pos_x - i, tmp.head_pos_y, tmp.tail_pos_x - i, tmp.tail_pos_y, colors[i+2])
@@ -650,7 +645,7 @@ function new_wormhole(pos_x, pos_y, direction)
   local tmp = new_sprite(48, pos_x, pos_y, 6, 6, false, false)
   tmp.bgcoloridx = 1
   tmp.incoloridx = 2
-  tmp.colors = { CLR_PNK, CLR_BLK, CLR_PRP }
+  tmp.colors = GRAV_COLORS
   tmp.frame_index = 1
   tmp.frame_half_step = 1
   tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)

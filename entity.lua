@@ -55,18 +55,21 @@ function new_entity_manager()
     tmp.type = ENT_BOX
     tmp.can_travel = 1 << FLAG_FLOOR
     tmp.state = ENT_STATE_NORMAL
-    tmp.frames = { NORMAL={frames={43},len=10}, HELD={frames={43},len=10} }
+    tmp.frames = { NORMAL={frames={43}} }
     tmp.frame_offset = 1
     tmp.feels_grav = true
     tmp.future_x,tmp.future_y = 0,0
 
     tmp.update = ent_update(tmp)
     tmp.draw = function()
+      palt(0, false)
+      palt(10, true)
+      if tmp.vel_x != 0 or tmp.vel_y != 0 then
+        pal(0, GRAV_COLORS[frame_counter % 3])
+      end
       if tmp.state == ENT_STATE_HELD then
         spr(44, tmp.pos_x - 4, tmp.pos_y - 8)  
-        palt(10, true)
         if frame_counter % 10 < 5 then
-          palt(0, false)
           pal(7, 0)
           pal(0, 7)
           spr(45, tmp.future_x, tmp.future_y)
@@ -78,6 +81,7 @@ function new_entity_manager()
         return
       end
       ent_draw(tmp)
+      pal()
     end
     add(ent_man.ents, tmp)
   end
@@ -188,9 +192,6 @@ end
 
 -- {pos_x: Int, pos_y: Int, item_index: Int}
 function ent_add_item(info)
-  for v in all(info) do
-    printh("Item info: "..v)
-  end
   local tmp = {
     vel_x = 0,
     vel_y = 0,
@@ -214,6 +215,9 @@ function ent_add_item(info)
     if tmp.state == ENT_STATE_NORMAL then
       palt(0, false)
       palt(15, true)
+      if tmp.vel_x != 0 or tmp.vel_y != 0 then
+        pal(0, GRAV_COLORS[frame_counter % 3])
+      end
       tmp.frame_step += 1
       local pos_offsets = {0, 1, 1, 1, 0, -1, -1, -1}
       if tmp.frame_step > 10 then

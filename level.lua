@@ -19,6 +19,7 @@ function get_levels()
   ]]
   return {
     
+    --[[
     {
       label="00",
       start_tile_x = 0,
@@ -34,7 +35,7 @@ function get_levels()
         {ENT_ITEM, 24, 60, 1}
       }
     },
-    
+    --]] 
     {
       label="01",
       start_tile_x = 0,
