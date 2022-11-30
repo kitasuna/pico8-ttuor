@@ -16,50 +16,34 @@ function get_levels()
         ent_at(ENT_BOX, 8, 2),
       }
     },
-  ]]
+  --]]
   return {
     
-    --[[
-    {
-      label="00",
-      start_tile_x = 0,
-      start_tile_y = 15,
-      player_pos_x = 3,
-      player_pos_y = 2,
-      map_tile_width = 11,
-      map_tile_height = 12,
-      beams = "",
-      mbeams = "0204/10",
-      boxes = "",
-      ents = {
-        {ENT_ITEM, 24, 60, 1}
-      }
-    },
-    --]] 
     {
       label="01",
       start_tile_x = 0,
       start_tile_y = 0,
       player_pos_x = 2,
       player_pos_y = 4,
-      map_tile_width = 15,
-      map_tile_height = 12,
-      boxes = "0601:0702:0801:0608:0708:0808",
+      map_tile_width = 17,
+      map_tile_height = 13,
+      boxes = "0303:0403:0503:1305:1405:1505",
       beams = "",
-      mbeams="",
+      mbeams="0708/11",
       ents = {
-        {ENT_GLOVE, 88, 32},
-        {ENT_ITEM, 56, 80, 1}
+        {ENT_GLOVE, 112, 48},
+        {ENT_ITEM, 32, 8, 1}
       }
     },
+    --[[
     {
       label="02",
-      start_tile_x = 15,
-      start_tile_y = 0,
+      start_tile_x = 29,
+      start_tile_y = 1,
       player_pos_x = 5,
       player_pos_y = 11,
       map_tile_width = 11,
-      map_tile_height = 28,
+      map_tile_height = 29,
       boxes = "0301:0314:0415:0515:0615:0714:0418:0621:0626",
       beams = "0102:0103:0218:0221:0224",
       mbeams = "",
@@ -85,33 +69,51 @@ function get_levels()
     },
     {
       label="04",
-      start_tile_x = 59,
+      start_tile_x = 58,
       start_tile_y = 0,
       player_pos_x = 8,
       player_pos_y = 9,
       map_tile_width = 17,
-      map_tile_height = 14,
+      map_tile_height = 15,
       boxes = "1303:0109",
-      beams = "1208:0101:0108",
+      beams = "1308:0201:0108",
       mbeams="",
-      ents = {
-        {ENT_ITEM, 80, 40, 4}
+      ents = { 
+        {ENT_ITEM, 104, 16, 4}
       }
     },
-    --[[
     {
-      label="boxplayground",
-      start_tile_x = 0, -- x index of the upper-left map tile to draw
-      start_tile_y = 1, -- y index of the upper left map tile to draw
-      player_pos_x = 1*8,
-      player_pos_y = 3*8,
-      map_tile_width = 16,
-      map_tile_height = 14,
-      boxes = "0203:0403:0603:0205:0405:0605:0207:0407:0607"
-      beams = ""
-      ents = {}
+      label="05",
+      start_tile_x = 17,
+      start_tile_y = 0,
+      player_pos_x = 9,
+      player_pos_y = 1,
+      map_tile_width = 11,
+      map_tile_height = 22,
+      boxes = "0301:0302:0303:0506:0507:0510:0511:0915:0518:0519",
+      beams = "0102",
+      mbeams = "0105/09:0109/13:0114/17",
+      ents = {
+        {ENT_ITEM, 32, 16, 5},
+        {ENT_ITEM, 16, 152, 6}
+      }
     },
-    ]]
+    {
+      label="06",
+      start_tile_x = 0,
+      start_tile_y = 29,
+      player_pos_x = 8,
+      player_pos_y = 5,
+      map_tile_width = 14,
+      map_tile_height = 26,
+      beams = "",
+      mbeams = "0202/20",
+      boxes = "",
+      ents = {
+        {ENT_ITEM, 90, 150, 7}
+      }
+    },
+    --]]
   }
 end
 
@@ -145,7 +147,7 @@ function init_level(l)
       ),
       sub(l.mbeams,i+5,i+6) * 8
       )
-    i += 7 -- skip over this chunk + separator
+    i += 8 -- skip over this chunk + separator
   end
   for k, e in pairs(l.ents) do
     if e[1]==ENT_ITEM then

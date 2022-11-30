@@ -6,10 +6,6 @@ function new_entity_manager()
   ent_man.collision = function()
     for k, ent in pairs(ent_man.ents) do
       for j, ent_inner in pairs(ent_man.ents) do
-        if ent.type == ENT_BOX and ent_inner.type == ENT_BEAM and ent.state != ENT_STATE_HELD and collides(ent, ent_inner) then
-          ent_inner.blocked_by = ent
-        end
-
         if ent.type == ENT_ITEM and ent_inner.type == ENT_BEAM and ent.state != ENT_STATE_BROKEN and collides(ent, ent_inner) then
           ent.state = ENT_STATE_BROKEN
           ent.feels_grav = false
@@ -92,7 +88,7 @@ function new_entity_manager()
     tmp.vel_x,tmp.vel_y = 0,0
     if max_y != nil then
       tmp.max_y = max_y
-      tmp.vel_y = 0.2
+      tmp.vel_y = 0.3
     else
       tmp.max_y = tmp.pos_y
     end
@@ -247,19 +243,7 @@ function beam_update(beam)
         beam.vel_y = - beam.vel_y
       end
     end
-
-    -- Check for horizonal, increasing case
-    -- Maybe add a "facing" prop to this later
-    if beam.blocked_by != nil then
-      -- Update blocked_by if necessary
-      beam.size_x = 128
-      if collides(beam.blocked_by, beam) then
-        beam.size_x = beam.blocked_by.pos_x - beam.pos_x
-        return
-      else
-        beam.blocked_by = nil
-      end
-    end
+    beam.size_x = 128
     local curr_map_x, curr_map_y = get_tile_from_pos(beam.pos_x, beam.pos_y + 3, level)
     local beam_max_x = beam.pos_x
     while true do
@@ -271,6 +255,26 @@ function beam_update(beam)
       beam_max_x += 8
     end
     beam.size_x = beam_max_x - beam.pos_x
+
+    -- Check for horizonal, increasing case
+    -- Maybe add a "facing" prop to this later
+    for j, ent_other in pairs(ent_man.ents) do
+      if ent_other.type == ENT_BOX and ent_other.state != ENT_STATE_HELD and collides(beam, ent_other) then
+        beam.blocked_by = ent_other
+        -- Duplicating this next line to allow for boxes to 
+        -- block beams on level load
+        beam.size_x = ent_other.pos_x - beam.pos_x + 1
+        break
+      end
+    end
+
+    if beam.blocked_by != nil then
+      if not collides(beam.blocked_by, beam) then
+        beam.blocked_by = nil
+      else
+        return
+      end
+    end
   end
 end
 

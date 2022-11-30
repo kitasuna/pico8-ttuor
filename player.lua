@@ -30,7 +30,7 @@ function new_player(sprite_num, pos_x, pos_y)
     state = inv_state_normal,
     glove = 2,
     wormhole = 2,
-    items = {0,0,0,0},
+    items = {0,0,0,0,0,0,0},
   }
 
   player.frames_walking = {
@@ -66,7 +66,7 @@ function new_player(sprite_num, pos_x, pos_y)
 
   player.remove_wormhole = function()
     if player_state == PLAYER_STATE_FLOATING then
-      sc_sliding(player)
+      sc_sliding()
     end
     player.wormhole = nil
     xsfx_wormhole()
@@ -169,6 +169,11 @@ function new_player(sprite_num, pos_x, pos_y)
       elseif is_pressed_r(mask) and player_slide_vel_x < 0.5 then
         player_slide_vel_x += 0.03
       end
+      if is_pressed_x(mask) and player.wormhole == nil and player.inventory.wormhole != 0 then
+        player.wormhole = new_wormhole(player.pos_x, player.pos_y, player_facing)
+      elseif is_pressed_x(mask) and player.wormhole != nil then
+        sc_floating()
+      end
       return
     end
 
@@ -247,33 +252,11 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     if is_pressed_x(mask) and player.wormhole == nil and player.inventory.wormhole != 0 then
-      local wh_pos_x, wh_pos_y = player.pos_x, player.pos_y
-      if player_facing == DIRECTION_UP then
-        wh_pos_y -= 8
-      elseif player_facing == DIRECTION_DOWN then
-        wh_pos_y += 8
-      elseif player_facing == DIRECTION_RIGHT then
-        wh_pos_x += 8
-      else -- DIRECTION_LEFT
-        wh_pos_x -= 8
-      end
 
-      player.wormhole = new_wormhole(wh_pos_x, wh_pos_y, player_facing)
+      player.wormhole = new_wormhole(player.pos_x, player.pos_y, player_facing)
     -- If they're grounded, there's a projectile, and the press is a float toggle, make them float!
     elseif is_pressed_x(mask) and player.wormhole != nil and player_state == PLAYER_STATE_GROUNDED then
-        player_state = PLAYER_STATE_FLOATING
-        player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
-        local grav_result = calc_cheat_grav(
-        player.pos_x,
-        player.pos_y,
-        player.wormhole.pos_x,
-        player.wormhole.pos_y
-        )
-
-        player_vel_x = grav_result.vel_x
-        player_vel_y = grav_result.vel_y
-        sfx_floating()
-
+        sc_floating()
         return
     end
 
@@ -362,7 +345,7 @@ function new_player(sprite_num, pos_x, pos_y)
 
       if collides(player.wormhole, player) then
         if player_state == PLAYER_STATE_FLOATING then
-          sc_sliding(player)
+          sc_sliding()
         end
         player.remove_wormhole()
       elseif player.wormhole.ttl < 0 then
@@ -645,7 +628,7 @@ function new_wormhole(pos_x, pos_y, direction)
   local tmp = new_sprite(48, pos_x, pos_y, 6, 6, false, false)
   tmp.bgcoloridx = 1
   tmp.incoloridx = 2
-  tmp.colors = GRAV_COLORS
+  tmp.colors = { CLR_PNK, CLR_BLK, CLR_PRP }
   tmp.frame_index = 1
   tmp.frame_half_step = 1
   tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
@@ -655,15 +638,19 @@ function new_wormhole(pos_x, pos_y, direction)
   if direction == DIRECTION_UP then
     tmp.vel_x = 0
     tmp.vel_y = -launch_velocity
+    tmp.pos_y -= 8
   elseif direction == DIRECTION_DOWN then
     tmp.vel_x = 0
     tmp.vel_y = launch_velocity
+    tmp.pos_y += 8
   elseif direction == DIRECTION_RIGHT then
     tmp.vel_x = launch_velocity
     tmp.vel_y = 0
+    tmp.pos_x += 8
   elseif direction == DIRECTION_LEFT then
     tmp.vel_x = -launch_velocity
     tmp.vel_y = 0
+    tmp.pos_x -= 8
   end
 
   tmp.update = function(level)
@@ -695,14 +682,26 @@ function new_wormhole(pos_x, pos_y, direction)
   return tmp
 end
 
-function sc_sliding(player)
+function sc_floating()
+    player_state = PLAYER_STATE_FLOATING
+    player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
+    player_vel_x, player_vel_y = calc_cheat_grav(
+    player.pos_x,
+    player.pos_y,
+    player.wormhole.pos_x,
+    player.wormhole.pos_y
+    )
+
+    sfx_floating()
+end
+
+function sc_sliding()
     player_state = PLAYER_STATE_SLIDING
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
     sfx_slide()
     global_slide_counter = 0
     player_vel_x *= 0.7
     player_vel_y *= 0.7
-    printh("dxdy: "..player_vel_x..","..player_vel_y)
 end
 
 function get_center(sprite)
@@ -775,9 +774,9 @@ function calc_cheat_grav(px, py, gx, gy)
     new_vel_y = 0
   end
   if ginfo.d < 0.5 then
-    return { vel_x = 0, vel_y = 0 }
+    return 0, 0
   end
-  return { vel_x = new_vel_x, vel_y = new_vel_y }
+  return new_vel_x, new_vel_y
 end
 
 function stop_player(player)
