@@ -35,7 +35,6 @@ function get_levels()
         {ENT_ITEM, 32, 8, 1}
       }
     },
-    --[[
     {
       label="02",
       start_tile_x = 29,
@@ -75,7 +74,7 @@ function get_levels()
       player_pos_y = 9,
       map_tile_width = 17,
       map_tile_height = 15,
-      boxes = "1303:0109",
+      boxes = "1304:0109",
       beams = "1308:0201:0108",
       mbeams="",
       ents = { 
@@ -90,9 +89,9 @@ function get_levels()
       player_pos_y = 1,
       map_tile_width = 11,
       map_tile_height = 22,
-      boxes = "0301:0302:0303:0506:0507:0510:0511:0915:0518:0519",
+      boxes = "0301:0302:0303:0506:0507:0510:0511:0915",
       beams = "0102",
-      mbeams = "0105/09:0109/13:0114/17",
+      mbeams = "0105/08:0109/12:0113/17",
       ents = {
         {ENT_ITEM, 32, 16, 5},
         {ENT_ITEM, 16, 152, 6}
@@ -113,7 +112,6 @@ function get_levels()
         {ENT_ITEM, 90, 150, 7}
       }
     },
-    --]]
   }
 end
 

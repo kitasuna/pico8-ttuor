@@ -25,11 +25,11 @@ function new_player(sprite_num, pos_x, pos_y)
   stop_player(player) -- inits vel values anyway
   player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
   player.gbeam = new_gbeam()
-  player.wormhole = nil
   player.inventory = {
-    state = inv_state_normal,
-    glove = 2,
-    wormhole = 2,
+    flash_at = -1,
+    flash_til = 0,
+    glove = 0,
+    wormhole = 0,
     items = {0,0,0,0,0,0,0},
   }
 
@@ -64,56 +64,46 @@ function new_player(sprite_num, pos_x, pos_y)
     player.gbeam.disable()
   end
 
-  player.remove_wormhole = function()
-    if player_state == PLAYER_STATE_FLOATING then
-      sc_sliding()
-    end
-    player.wormhole = nil
-    xsfx_wormhole()
-  end
-
-  player.handle_proj_box_collision = function()
-    if player.wormhole != nil then
-      player.wormhole.vel_x = 0
-      player.wormhole.vel_y = 0
-    end
-  end
-
   player.handle_player_item_collision = function(payload)
       -- set to "1" here (uncommitted)
       -- will be set to "2" (committed) at the end of the level
-      player.inventory.items[payload.entity.item_index] = 1
+      player.inventory.items[payload.item_index] = 1
+      player.inventory.flash_at = 1 + payload.item_index -- offset for powerups
+      player.inventory.flash_til = 60
       sfx_get_item()
   end
 
   player.handle_player_glove_collision = function(payload)
       player.inventory.glove = 1
-      player.inventory.state = inv_state_glove
-      add(timers, {60, function()
-          player.inventory.state = inv_state_normal
-        end
-      })
+      player.inventory.flash_at = 0
+      player.inventory.flash_til = 60
       sfx_get_inventory()
   end
 
   player.handle_player_wh_collision = function(payload)
       player.inventory.wormhole = 1
-      player.inventory.state = inv_state_wormhole
-      add(timers, {60, function()
-          player.inventory.state = inv_state_normal
-        end
-      })
+      player.inventory.flash_at = 1
+      player.inventory.flash_til = 60
       sfx_get_inventory()
   end
 
   player.handle_beam_player_collision = function()
-      player.can_move_x = false
-      player.can_move_y = false
+      player.can_move_x, player.can_move_y = false, false
       stop_player(player)
       player_state = PLAYER_STATE_DEAD_ZAPPED
+
+    plfx.pos_x = player.pos_x
+    plfx.pos_y = player.pos_y
+    for i=0,40 do
+      plfx.add(4, 4, true, true, 59) 
+    end
+      xsfx_gbeam()
+      xsfx_floating()
       sfx_zapped()
       player_frame_step = 0
       player_frame_offset = 0
+      player.gbeam.disable()
+      qm.add_event("gbeam_removed")
       add(timers, {60,function()
           unstage_inventory(player.inventory)
           qm.add_event("player_death", {level = level})
@@ -134,11 +124,10 @@ function new_player(sprite_num, pos_x, pos_y)
 
   player.handle_level_init = function()
     stop_player(player)
-    player.wormhole = nil
     player.gbeam.disable()
     player_facing = DIRECTION_DOWN
-    xsfx_all()
     xsfx_slide() -- not sure why, but this is needed
+    xsfx_floating()
   end
 
   player.handle_button = function(payload)
@@ -169,11 +158,11 @@ function new_player(sprite_num, pos_x, pos_y)
       elseif is_pressed_r(mask) and player_slide_vel_x < 0.5 then
         player_slide_vel_x += 0.03
       end
-      if is_pressed_x(mask) and player.wormhole == nil and player.inventory.wormhole != 0 then
-        player.wormhole = new_wormhole(player.pos_x, player.pos_y, player_facing)
-      elseif is_pressed_x(mask) and player.wormhole != nil then
+
+      if is_pressed_x(mask) and player.inventory.wormhole != 0 then
         sc_floating()
       end
+
       return
     end
 
@@ -186,9 +175,7 @@ function new_player(sprite_num, pos_x, pos_y)
     if player_state == PLAYER_STATE_FLOATING and not is_pressed_x(mask) then
       return
     elseif player_state == PLAYER_STATE_FLOATING then
-      if player.wormhole != nil then
-        player.remove_wormhole()
-      end
+      sc_sliding()
       return
     end
 
@@ -251,11 +238,7 @@ function new_player(sprite_num, pos_x, pos_y)
       player_state = PLAYER_STATE_GROUNDED
     end
 
-    if is_pressed_x(mask) and player.wormhole == nil and player.inventory.wormhole != 0 then
-
-      player.wormhole = new_wormhole(player.pos_x, player.pos_y, player_facing)
-    -- If they're grounded, there's a projectile, and the press is a float toggle, make them float!
-    elseif is_pressed_x(mask) and player.wormhole != nil and player_state == PLAYER_STATE_GROUNDED then
+    if is_pressed_x(mask) and player.inventory.wormhole != 0 and player_state == PLAYER_STATE_GROUNDED then
         sc_floating()
         return
     end
@@ -326,32 +309,29 @@ function new_player(sprite_num, pos_x, pos_y)
     elseif player_state == PLAYER_STATE_FIRING then
       spr(23 + player_facing, player.pos_x, player.pos_y)
     elseif player_state == PLAYER_STATE_FLOATING then
-      spr(10, player.pos_x, player.pos_y)
+      spr(54 + player_facing, player.pos_x, player.pos_y)
+      circfill(player.pos_x+1, player.pos_y+8, 2, GRAV_COLORS[(frame_counter % 3) + 1])
+      circfill(player.pos_x+1, player.pos_y+8, frame_counter % 2, GRAV_COLORS[(frame_counter % 3) + 2])
+      circfill(player.pos_x+6, player.pos_y+8, 2, GRAV_COLORS[(frame_counter % 3) + 1])
+      circfill(player.pos_x+6, player.pos_y+8, frame_counter % 2, GRAV_COLORS[(frame_counter % 3) + 2])
     elseif player_state == PLAYER_STATE_SLIDING then
       spr(12 + player_facing, player.pos_x, player.pos_y)
     elseif player_state == PLAYER_STATE_DEAD_FALLING then
       local offset = player_frame_offset + 1
       sspr(88, 0, 8, 8, player.pos_x + offset, player.pos_y + offset, 8 \ offset, 8 \ offset)
     elseif player_state == PLAYER_STATE_DEAD_ZAPPED then
-      spr(player.frames_zapped[player_frame_offset + 1],player.pos_x, player.pos_y)
+      -- spr(player.frames_zapped[player_frame_offset + 1],player.pos_x, player.pos_y)
     elseif player_state == PLAYER_STATE_HOLDING then
       spr(19+player_facing,player.pos_x, player.pos_y, 1.0, 1.0, flip, false)
     end
   end
 
   player.update = function(ent_man, level)
-    if player.wormhole != nil then
-      player.wormhole.update(level)
-
-      if collides(player.wormhole, player) then
-        if player_state == PLAYER_STATE_FLOATING then
-          sc_sliding()
-        end
-        player.remove_wormhole()
-      elseif player.wormhole.ttl < 0 then
-        player.remove_wormhole()
+    if player.inventory.flash_til > 0 then
+      player.inventory.flash_til -= 1
+      if player.inventory.flash_til == 0 then
+        player.inventory.flash_at = -1
       end
-
     end
 
     player.gbeam.update()
@@ -444,8 +424,9 @@ function new_player(sprite_num, pos_x, pos_y)
 
     if fget(mget(curr_map_x, curr_map_y), FLAG_STAIRS) then
       commit_inventory(player.inventory)
-      xsfx_all()
       qm.add_event("player_goal")
+      xsfx_slide()
+      xsfx_floating()
     end
 
     -- Make a hypothetical player sprite at the next location after update and check for collision
@@ -624,73 +605,20 @@ function new_gbeam()
 
 end
 
-function new_wormhole(pos_x, pos_y, direction)
-  local tmp = new_sprite(48, pos_x, pos_y, 6, 6, false, false)
-  tmp.bgcoloridx = 1
-  tmp.incoloridx = 2
-  tmp.colors = { CLR_PNK, CLR_BLK, CLR_PRP }
-  tmp.frame_index = 1
-  tmp.frame_half_step = 1
-  tmp.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
-  tmp.ttl = 180
-  local launch_velocity = 2
-  local max_velocity = 4
-  if direction == DIRECTION_UP then
-    tmp.vel_x = 0
-    tmp.vel_y = -launch_velocity
-    tmp.pos_y -= 8
-  elseif direction == DIRECTION_DOWN then
-    tmp.vel_x = 0
-    tmp.vel_y = launch_velocity
-    tmp.pos_y += 8
-  elseif direction == DIRECTION_RIGHT then
-    tmp.vel_x = launch_velocity
-    tmp.vel_y = 0
-    tmp.pos_x += 8
-  elseif direction == DIRECTION_LEFT then
-    tmp.vel_x = -launch_velocity
-    tmp.vel_y = 0
-    tmp.pos_x -= 8
-  end
-
-  tmp.update = function(level)
-    tmp.frame_half_step = (tmp.frame_half_step + 1) % 3
-    if tmp.frame_half_step == 0 then
-      tmp.bgcoloridx = (tmp.bgcoloridx + 1) % #tmp.colors
-      tmp.incoloridx = (tmp.incoloridx + 1) % #tmp.colors
-    end
-
-    if tmp.vel_x < max_velocity then
-      tmp.vel_x *= 1.1
-    end
-    if tmp.vel_y < max_velocity then
-      tmp.vel_y *= 1.1
-    end
-
-    tmp.ttl -= 1
-
-    ent_update(tmp)(level)
-
-  end
-
-  tmp.draw = function()
-    circfill(tmp.pos_x+4, tmp.pos_y+4, 3, tmp.colors[tmp.bgcoloridx])
-    circfill(tmp.pos_x+4, tmp.pos_y+4, tmp.frame_half_step, tmp.colors[tmp.incoloridx])
-  end
-
-  sfx_wormhole()
-  return tmp
-end
-
 function sc_floating()
+    xsfx_slide()
     player_state = PLAYER_STATE_FLOATING
+    player_slide_vel_x, player_slide_vel_y = 0,0 
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
-    player_vel_x, player_vel_y = calc_cheat_grav(
-    player.pos_x,
-    player.pos_y,
-    player.wormhole.pos_x,
-    player.wormhole.pos_y
-    )
+    if player_facing == DIRECTION_RIGHT then
+      player_vel_x, player_vel_y = 1.5, 0
+    elseif player_facing == DIRECTION_LEFT then
+      player_vel_x, player_vel_y = -1.5, 0
+    elseif player_facing == DIRECTION_DOWN then
+      player_vel_x, player_vel_y = 0, 1.5
+    elseif player_facing == DIRECTION_UP then
+      player_vel_x, player_vel_y = 0, -1.5
+    end
 
     sfx_floating()
 end
@@ -698,6 +626,7 @@ end
 function sc_sliding()
     player_state = PLAYER_STATE_SLIDING
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
+    xsfx_floating()
     sfx_slide()
     global_slide_counter = 0
     player_vel_x *= 0.7

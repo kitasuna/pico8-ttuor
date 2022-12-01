@@ -1,7 +1,8 @@
 function title_draw()
   cls()
   spr(196,16,32,12,4)
-  print("press x or o to start", 24, 96, CLR_WHT)
+  print("press x or o to start", 22, 96, CLR_DGY)
+  print("press x or o to start", 23, 96, CLR_WHT)
 end
 
 function title_fadeout_0()
@@ -79,7 +80,7 @@ title_update = function()
 
       -- start (fade in) game
       add(timers, {75,function()
-          --music(2)
+          music(2)
           __update = game_update
           __draw = game_draw
         end

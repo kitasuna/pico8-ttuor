@@ -119,7 +119,7 @@ function new_entity_manager()
   end
 
   ent_man.handle_player_item_collision = function(payload)
-      del(ent_man.ents, payload.entity)
+      del(ent_man.ents, payload)
   end
 
   ent_man.handle_gbeam_removed = function(payload)

@@ -9,14 +9,11 @@ handle_beam_item_collision = function()
   sfx(5)
 end,
 }
-function sfx_wormhole()
+function sfx_floating()
   sfx(6)
 end
-function xsfx_wormhole()
+function xsfx_floating()
   sfx(6,-2)
-end
-function sfx_nowormhole()
-  sfx(12)
 end
 function sfx_gbeam()
   sfx(2)
@@ -41,16 +38,6 @@ end
 function sfx_falling()
   xsfx_slide()
   sfx(9)
-end
-function sfx_floating()
-  xsfx_slide()
-  sfx(8)
-end
-function xsfx_all()
-  sfx(-1,1)
-  sfx(-1,2)
-  sfx(-1,3)
-  sfx(-1,4)
 end
 function sfx_get_inventory()
   sfx(7)
