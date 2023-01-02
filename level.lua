@@ -27,9 +27,10 @@ function get_levels()
       player_pos_y = 4,
       map_tile_width = 17,
       map_tile_height = 13,
-      boxes = "0303:0403:0503:1305:1405:1505",
+      boxes = "0303:0403:0503:1303:1403:1503",
       beams = "",
-      mbeams="0708/11",
+      mbeams="0707/11",
+      -- mbeams="",
       ents = {
         {ENT_GLOVE, 112, 48},
         {ENT_ITEM, 32, 8, 1}

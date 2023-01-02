@@ -349,13 +349,12 @@ function new_player(sprite_num, pos_x, pos_y)
       approx_vel_y = ceil(approx_vel_y)
     end
 
-    -- local center_x, center_y = get_center(player)
-    local center_x = player.pos_x + (approx_vel_x > 0 and 7 or 0)
-    local center_y = player.pos_y + (approx_vel_y > 0 and 7 or 0)
-    local player_next_x = center_x + approx_vel_x -- + (player_facing != 3 and 5 or 1)
-    local player_next_y = center_y + approx_vel_y -- + (player_facing == 2 and 7 or 0)
+    local center_x, center_y = get_center(player)
+    -- local player_next_x = player.pos_x + approx_vel_x
+    -- local player_next_y = player.pos_y + approx_vel_y
+    local player_next_x = player.pos_x + approx_vel_x -- + (player_facing != 3 and 5 or 1)
+    local player_next_y = player.pos_y + approx_vel_y -- + (player_facing == 2 and 7 or 0)
     local curr_map_x, curr_map_y = get_tile_from_pos(center_x, center_y, level)
-    local next_map_x, next_map_y = get_tile_from_pos(player_next_x, player_next_y, level)
     local can_move_x, can_move_y = true,true
 
     if player_state == PLAYER_STATE_DEAD_FALLING then
@@ -409,19 +408,41 @@ function new_player(sprite_num, pos_x, pos_y)
       end
     end
 
+    if ((fmget(get_tile_from_pos(player_next_x, player.pos_y, level))
+       & player.can_travel) == 0 or 
+    (fmget(get_tile_from_pos(player_next_x, player.pos_y + 7, level))
+     & player.can_travel) == 0)
+     and player_vel_x < 0 
+       then
+       can_move_x = false
+   end
 
-    if fmget(next_map_x, curr_map_y) & player.can_travel == 0 then
-      can_move_x = false
-    end
+    if ((fmget(get_tile_from_pos(player_next_x + 7, player.pos_y, level))
+       & player.can_travel) == 0 or 
+    (fmget(get_tile_from_pos(player_next_x+ 7, player.pos_y + 7, level))
+     & player.can_travel) == 0)
+     and player_vel_x > 0 
+       then
+       can_move_x = false
+   end
 
-    if fmget(curr_map_x, next_map_y) & player.can_travel == 0 then
-      can_move_y = false
-    end
+    if ((fmget(get_tile_from_pos(player.pos_x, player_next_y, level))
+       & player.can_travel) == 0 or 
+    (fmget(get_tile_from_pos(player.pos_x + 7, player_next_y, level))
+     & player.can_travel) == 0)
+     and player_vel_y < 0 
+       then
+       can_move_y = false
+   end
 
-    if fmget(next_map_x, next_map_y) & player.can_travel == 0 then
-      can_move_x = false
-      can_move_y = false
-    end
+    if ((fmget(get_tile_from_pos(player.pos_x, player_next_y + 7, level))
+       & player.can_travel) == 0 or 
+    (fmget(get_tile_from_pos(player.pos_x + 7, player_next_y + 7, level))
+     & player.can_travel) == 0)
+     and player_vel_y > 0 
+       then
+       can_move_y = false
+   end
 
     if fget(mget(curr_map_x, curr_map_y), FLAG_STAIRS) then
       commit_inventory(player.inventory)
