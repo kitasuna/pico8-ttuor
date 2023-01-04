@@ -95,6 +95,8 @@ function new_entity_manager()
     tmp.type = ENT_BEAM
     tmp.blocked_by = nil
     tmp.can_travel = 1 << FLAG_FLOOR -- maybe need to add gaps here later
+    tmp.sprites0 = {}
+    tmp.sprites1 = {}
 
     tmp.update = beam_update(tmp)
     tmp.draw = beam_draw(tmp)
@@ -281,19 +283,44 @@ end
 function beam_draw(beam)
   return function()
     spr(48, beam.pos_x-8, beam.pos_y)
-    if frame_counter % 4 == 1 then
-      return
+    local length = beam.size_x
+    if frame_counter % 2 == 0 then
+      -- Reset length of state tables
+      beam.sprites0 = {}
+      beam.sprites1 = {}
+
+      -- Handle all full 8-pixel blocks
+      for i=1,length \ 8 do
+        beam.sprites0[i] = 104 + flr(rnd(4))
+        beam.sprites1[i] = 108 + flr(rnd(4))
+      end
+
+      -- Add one more if length is not a multiple of 8
+      if length % 8 > 0 then
+        beam.sprites0[#beam.sprites0 + 1] = 104 + flr(rnd(4))
+        beam.sprites1[#beam.sprites1 + 1] = 108 + flr(rnd(4))
+      end
     end
+
     local y_offset = beam.pos_y + 2
-    local x_max = beam.pos_x + beam.size_x - 1
-    for i=1,beam.size_x do
-      line(beam.pos_x, y_offset, x_max, y_offset, CLR_BLU)
-      for j=1,3 do
-        line(beam.pos_x, y_offset + j, x_max, y_offset + j)
+      -- Draw all full 8-pixel blocks, except the last one
+      for i=1,#beam.sprites0 - 1 do
+        spr(beam.sprites1[i],beam.pos_x + i*8-8,beam.pos_y) -- White beam
+        spr(beam.sprites0[i],beam.pos_x + i*8-8,beam.pos_y) -- Blue beam
+      end
+
+      local overflow = length % 8
+      if overflow == 0 then
+        -- No overflow, draw last sprite normally
+        spr(beam.sprites1[#beam.sprites1],beam.pos_x + length-8,beam.pos_y) -- White beam
+        spr(beam.sprites0[#beam.sprites0],beam.pos_x + length-8,beam.pos_y) -- Blue beam
+      else
+        -- Some overflow, draw partial sprite
+        spr(beam.sprites1[#beam.sprites1], beam.pos_x + length-overflow, beam.pos_y, overflow/8, 1.0) -- White beam
+        spr(beam.sprites0[#beam.sprites0], beam.pos_x + length-overflow, beam.pos_y, overflow/8, 1.0) -- Blue beam
       end
     end
   end
-end
 
 function ent_draw(ent)
   if ent.state != nil then
