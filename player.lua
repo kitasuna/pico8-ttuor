@@ -1,4 +1,3 @@
-player_frame_base = 1
 player_frame_offset = 0
 player_frame_step = 0
 player_state = PLAYER_STATE_GROUNDED
@@ -53,7 +52,6 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.reset = function(l)
-    player_frame_base = 1
     player_frame_offset = 1
     player_facing = DIRECTION_DOWN
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
@@ -88,9 +86,9 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.handle_beam_player_collision = function()
-      player.can_move_x, player.can_move_y = false, false
-      stop_player(player)
-      player_state = PLAYER_STATE_DEAD_ZAPPED
+    player.can_move_x, player.can_move_y = false, false
+    stop_player(player)
+    player_state = PLAYER_STATE_DEAD_ZAPPED
 
     plfx.pos_x = player.pos_x
     plfx.pos_y = player.pos_y
@@ -277,16 +275,6 @@ function new_player(sprite_num, pos_x, pos_y)
       player_vel_x = 0
     end
 
-    if player_facing == DIRECTION_DOWN then
-      player_frame_base = 1
-    elseif player_facing == DIRECTION_UP then
-      player_frame_base = 9
-    elseif player_facing == DIRECTION_RIGHT then
-      player_frame_base = 5
-    elseif player_facing == DIRECTION_LEFT then
-      player_frame_base = 5
-    end
-
     -- if pressing any direction
     if mask & 15 > 0 then
       player_frame_step = (player_frame_step + 1) % 7
@@ -302,27 +290,27 @@ function new_player(sprite_num, pos_x, pos_y)
       -- Only used for some states
       flip = true
     end
+    local pos_x, pos_y = player.pos_x, player.pos_y
     if player_state == PLAYER_STATE_GROUNDED then
-      -- spr(player_frame_base + player_frame_offset, player.pos_x, player.pos_y, 1.0, 1.0, player.flip_x, player.flip_y)
       local frames = player.frames_walking[player_facing + 1]
-      spr(frames[player_frame_offset + 1],player.pos_x, player.pos_y, 1.0, 1.0, flip)
+      spr(frames[player_frame_offset + 1],pos_x, pos_y, 1.0, 1.0, flip)
     elseif player_state == PLAYER_STATE_FIRING then
-      spr(23 + player_facing, player.pos_x, player.pos_y)
+      spr(23 + player_facing, pos_x, pos_y)
     elseif player_state == PLAYER_STATE_FLOATING then
-      spr(54 + player_facing, player.pos_x, player.pos_y)
-      circfill(player.pos_x+1, player.pos_y+8, 2, GRAV_COLORS[(frame_counter % 3) + 1])
-      circfill(player.pos_x+1, player.pos_y+8, frame_counter % 2, GRAV_COLORS[(frame_counter % 3) + 2])
-      circfill(player.pos_x+6, player.pos_y+8, 2, GRAV_COLORS[(frame_counter % 3) + 1])
-      circfill(player.pos_x+6, player.pos_y+8, frame_counter % 2, GRAV_COLORS[(frame_counter % 3) + 2])
+      spr(54 + player_facing, pos_x, pos_y)
+      circfill(pos_x+1, pos_y+8, 2, GRAV_COLORS[(frame_counter % 3) + 1])
+      circfill(pos_x+1, pos_y+8, frame_counter % 2, GRAV_COLORS[(frame_counter % 3) + 2])
+      circfill(pos_x+6, pos_y+8, 2, GRAV_COLORS[(frame_counter % 3) + 1])
+      circfill(pos_x+6, pos_y+8, frame_counter % 2, GRAV_COLORS[(frame_counter % 3) + 2])
     elseif player_state == PLAYER_STATE_SLIDING then
-      spr(12 + player_facing, player.pos_x, player.pos_y)
+      spr(12 + player_facing, pos_x, pos_y)
     elseif player_state == PLAYER_STATE_DEAD_FALLING then
       local offset = player_frame_offset + 1
-      sspr(88, 0, 8, 8, player.pos_x + offset, player.pos_y + offset, 8 \ offset, 8 \ offset)
+      sspr(88, 0, 8, 8, pos_x + offset, pos_y + offset, 8 \ offset, 8 \ offset)
     elseif player_state == PLAYER_STATE_DEAD_ZAPPED then
       -- spr(player.frames_zapped[player_frame_offset + 1],player.pos_x, player.pos_y)
     elseif player_state == PLAYER_STATE_HOLDING then
-      spr(19+player_facing,player.pos_x, player.pos_y, 1.0, 1.0, flip, false)
+      spr(19+player_facing,pos_x, pos_y, 1.0, 1.0, flip, false)
     end
   end
 
