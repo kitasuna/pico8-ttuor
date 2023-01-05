@@ -94,7 +94,7 @@ function new_entity_manager()
     end
     tmp.type = ENT_BEAM
     tmp.blocked_by = nil
-    tmp.can_travel = 1 << FLAG_FLOOR -- maybe need to add gaps here later
+    tmp.can_travel = 1 << FLAG_FLOOR | 1 << FLAG_GAP
     tmp.sprites0 = {}
     tmp.sprites1 = {}
 
