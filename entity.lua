@@ -7,23 +7,27 @@ function new_entity_manager()
     for k, ent in pairs(ent_man.ents) do
       for j, ent_inner in pairs(ent_man.ents) do
         if ent.type == ENT_ITEM and ent_inner.type == ENT_BEAM and ent.state != ENT_STATE_BROKEN and collides(ent, ent_inner) then
-          ent.state = ENT_STATE_BROKEN
-          ent.feels_grav = false
-          ent.vel_x,ent.vel_y = 0,0
-          add(timers, {120, function()
-              del(ent_man.ents, ent)
-            end
-          })
-          ent.particles.pos_x = ent.pos_x
-          ent.particles.pos_y = ent.pos_y
-          for i=0,80 do
-            ent.particles.add(rnd(1) - 0.5, rnd(1) - 0.5, true, true, 30) 
-          end
-          qm.add_event("beam_item_collision")
+          qm.add_event("beam_item_collision", ent)
         end
       end
     end
   end
+
+  ent_man.handle_beam_item_collision = function(item)
+    item.state = ENT_STATE_BROKEN
+    item.feels_grav = false
+    item.vel_x,item.vel_y = 0,0
+    add(timers, {120, function()
+      del(ent_man.ents, item)
+    end
+  })
+  item.particles.pos_x = item.pos_x + 4
+  item.particles.pos_y = item.pos_y + 4
+  for i=0,40 do
+    item.particles.add(0.8, 0.8, true, true, 30) 
+  end
+
+end
 
   -- {type, pos_x, pos_y, sprite_num}
   ent_add_powerup = function(info)
@@ -200,7 +204,7 @@ function ent_add_item(info)
     frame_step = 0,
     frame_offset = 1,
     feels_grav = true,
-    particles = flsrc(info[2], info[3], 0, {CLR_DGN, CLR_GRN})
+    particles = flsrc(info[2] + 4, info[3] + 4, 0, info[4] == 8 and {CLR_PNK, CLR_PRP} or {CLR_DGN, CLR_GRN})
   }
   tmp = merge(tmp, new_sprite(28, info[2], info[3], 8, 8)) 
 
@@ -213,6 +217,10 @@ function ent_add_item(info)
     if tmp.state == ENT_STATE_NORMAL then
       palt(0, false)
       palt(15, true)
+      if tmp.item_index == 8 then
+        pal(3, 2)
+        pal(11, 14)
+      end
       if tmp.vel_x != 0 or tmp.vel_y != 0 then
         pal(0, GRAV_COLORS[frame_counter % 3])
       end
@@ -234,6 +242,7 @@ function ent_add_item(info)
   end
 
   add(ent_man.ents, tmp)
+  return tmp
 end
 
 function beam_update(beam)

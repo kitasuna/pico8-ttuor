@@ -29,7 +29,7 @@ function new_player(sprite_num, pos_x, pos_y)
     flash_til = 0,
     glove = 2,
     wormhole = 2,
-    items = {0,0,0,0,0,0,0},
+    items = {0,0,0,0,0,0,0,0},
   }
 
   player.frames_walking = {
@@ -38,8 +38,6 @@ function new_player(sprite_num, pos_x, pos_y)
     {1, 2, 1, 3},
     {4, 5, 4, 6},
   }
-
-  player.frames_zapped = { 16, 17, 18 }
 
   -- API, allows other entities to check on player
   player.is_dead = function()
@@ -51,6 +49,16 @@ function new_player(sprite_num, pos_x, pos_y)
     return false
   end
 
+  player.gems_count = function()
+    local count = 0
+    for i=1,#player.inventory.items do
+      if player.inventory.items[i] > 0 then
+        count += 1
+      end
+    end
+    return count
+  end
+
   player.reset = function(l)
     player_frame_offset = 1
     player_facing = DIRECTION_DOWN
@@ -60,6 +68,10 @@ function new_player(sprite_num, pos_x, pos_y)
     player.pos_x = l.player_pos_x * 8
     player.pos_y = l.player_pos_y * 8
     player.gbeam.disable()
+  end
+
+  player.handle_player_goal = function(payload)
+    player.inventory.flash_at = -1
   end
 
   player.handle_player_item_collision = function(payload)
@@ -357,13 +369,6 @@ function new_player(sprite_num, pos_x, pos_y)
         unstage_inventory(player.inventory)
       end
       return
-    end
-
-    if player_state == PLAYER_STATE_DEAD_ZAPPED then
-      player_frame_step = (player_frame_step + 1) % 6
-      if player_frame_step == 0 then
-        player_frame_offset = (player_frame_offset + 1) % #player.frames_zapped
-      end
     end
 
     -- check for gaps

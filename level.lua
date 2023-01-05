@@ -152,7 +152,6 @@ function ent_at(ent_type, tile_x, tile_y)
 end
 
 function init_level(l)
-  printh("init_level!")
   player.reset(l)
   ent_man.reset()
   camera_x = -64 + player.pos_x
@@ -179,9 +178,25 @@ function init_level(l)
       )
     i += 8 -- skip over this chunk + separator
   end
+  -- check player's inventory
+  local gems_count = player.gems_count()
+  local self_destruct = 50
+  local last_item = nil
   for k, e in pairs(l.ents) do
     if e[1]==ENT_ITEM then
-      ent_add_item(e)
+      if e[4] < 8 or (e[4] == 8 and gems_count == 7) then
+        last_item = ent_add_item(e)
+        if e[4] == 8 then
+          if timer_minutes < 2 then
+            self_destruct = 180
+          end
+          add(timers, {
+            self_destruct, function()
+              qm.add_event("beam_item_collision", last_item)
+            end
+          })
+        end
+      end
     elseif e[1]==ENT_GLOVE then
       add(e, 38)
       ent_add_powerup(e)
