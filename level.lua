@@ -129,6 +129,21 @@ function get_levels()
         {ENT_ITEM, 90, 150, 7}
       }
     },
+    {
+      label="07",
+      start_tile_x = 76,
+      start_tile_y = 0,
+      player_pos_x = 1,
+      player_pos_y = 11,
+      map_tile_width = 11,
+      map_tile_height = 12,
+      boxes = "",
+      beams = "",
+      mbeams = "",
+      ents = {
+        {ENT_ITEM, 48, 32, 8}
+      }
+    },
   }
 end
 
