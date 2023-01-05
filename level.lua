@@ -18,7 +18,23 @@ function get_levels()
     },
   --]]
   return {
-    
+    --[[ 
+    {
+      label="00",
+      start_tile_x = 114, -- x index of the upper-left map tile to draw
+      start_tile_y = 35, -- y index of the upper left map tile to draw
+      player_pos_x = 2,
+      player_pos_y = 4,
+      -- Map tile width / height is the total number of tiles to draw
+      map_tile_width = 15,
+      map_tile_height = 15,
+      boxes = "0303:0403:0503",
+      beams = "",
+      mbeams = "",
+      ents = { -- x/y tile indexes, from the starting tile, at which to place the entity
+      }
+    },
+    ]]--
     {
       label="01",
       start_tile_x = 0,
@@ -27,13 +43,13 @@ function get_levels()
       player_pos_y = 4,
       map_tile_width = 17,
       map_tile_height = 13,
-      boxes = "0303:0403:0503:1303:1403:1503",
+      boxes = "0103:0203:0303:0403:0503:1303:1403:1503",
       beams = "",
       mbeams="0707/11",
       -- mbeams="",
       ents = {
         {ENT_GLOVE, 112, 48},
-        {ENT_ITEM, 32, 8, 1}
+        {ENT_ITEM, 24, 8, 1}
       }
     },
     {
