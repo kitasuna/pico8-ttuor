@@ -260,7 +260,7 @@ function beam_update(beam)
 
     for j, ent_other in pairs(ent_man.ents) do
       -- Try cheating size here to make boxes more protective
-      if ent_other.type == ENT_BOX and ent_other.state != ENT_STATE_HELD and collides(beam, {pos_x=ent_other.pos_x, pos_y=ent_other.pos_y, size_x = 10, size_y =10}) then
+      if ent_other.type == ENT_BOX and ent_other.state != ENT_STATE_HELD and collides(beam, ent_other) then
         beam.blocked_by = ent_other
         -- Duplicating this next line to allow for boxes to 
         -- block beams on level load
