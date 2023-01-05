@@ -20,7 +20,7 @@ function new_player(sprite_num, pos_x, pos_y)
 
   local velocity_max = 0.8
   local walk_init_vel = 0.2
-  local walk_step_up = 0.04
+  local walk_step_up = 0.02
 
   stop_player(player) -- inits vel values anyway
   player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
@@ -28,8 +28,8 @@ function new_player(sprite_num, pos_x, pos_y)
   player.inventory = {
     flash_at = -1,
     flash_til = 0,
-    glove = 0,
-    wormhole = 0,
+    glove = 2,
+    wormhole = 2,
     items = {0,0,0,0,0,0,0},
   }
 
@@ -247,14 +247,14 @@ function new_player(sprite_num, pos_x, pos_y)
     if is_pressed_u(mask) then
       if player_vel_y >= 0 then
         player_vel_y = -walk_init_vel
-      elseif player_vel_y > -velocity_max then
+      elseif abs(player_vel_y) + abs(player_vel_x) < velocity_max then
         player_vel_y -= walk_step_up
       end
     -- Down
     elseif is_pressed_d(mask) then
       if player_vel_y <= 0 then
         player_vel_y = walk_init_vel
-      elseif player_vel_y < velocity_max then
+      elseif abs(player_vel_y) + abs(player_vel_x) < velocity_max then
         player_vel_y += walk_step_up
       end
     else
@@ -264,13 +264,13 @@ function new_player(sprite_num, pos_x, pos_y)
     if is_pressed_l(mask) then
       if player_vel_x >= 0 then
         player_vel_x = -walk_init_vel
-      elseif player_vel_x > -velocity_max then
+      elseif abs(player_vel_y) + abs(player_vel_x) < velocity_max then
         player_vel_x -= walk_step_up
       end
     elseif is_pressed_r(mask) then
       if player_vel_x <= 0 then
         player_vel_x = walk_init_vel
-      elseif player_vel_x < velocity_max then
+      elseif abs(player_vel_y) + abs(player_vel_x) < velocity_max then
         player_vel_x += walk_step_up
       end
     else
