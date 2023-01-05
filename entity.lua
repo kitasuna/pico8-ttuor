@@ -290,9 +290,12 @@ end
 
 function beam_draw(beam)
   return function()
+    
+    palt(0, false)
+    palt(15, true)
     spr(48, beam.pos_x-8, beam.pos_y)
     local length = beam.size_x
-    if frame_counter % 2 == 0 then
+    if frame_counter % 3 == 0 then
       -- Reset length of state tables
       beam.sprites0 = {}
       beam.sprites1 = {}
@@ -327,6 +330,7 @@ function beam_draw(beam)
         spr(beam.sprites1[#beam.sprites1], beam.pos_x + length-overflow, beam.pos_y, overflow/8, 1.0) -- White beam
         spr(beam.sprites0[#beam.sprites0], beam.pos_x + length-overflow, beam.pos_y, overflow/8, 1.0) -- Blue beam
       end
+    pal()
     end
   end
 
