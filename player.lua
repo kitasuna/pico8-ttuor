@@ -707,25 +707,6 @@ function ldistance(x0, y0, x1, y1)
   return {d=gdistance, dxc=dist_x_component, dyc=dist_y_component}
 end
 
-function calc_cheat_grav(px, py, gx, gy)
-
-  local mass_p, mass_g = 1.0, 128
-  local float_velocity = 1.5
-  local ginfo = ldistance(px, py, gx, gy)
-  local new_vel_x = ginfo.dxc * float_velocity
-  local new_vel_y = ginfo.dyc * float_velocity
-  if (new_vel_x > 0 and new_vel_x < 0.1) or (new_vel_x < 0 and new_vel_x > -0.1) then
-    new_vel_x = 0
-  end
-  if (new_vel_y > 0 and new_vel_y < 0.1) or (new_vel_y < 0 and new_vel_y > -0.1) then
-    new_vel_y = 0
-  end
-  if ginfo.d < 0.5 then
-    return 0, 0
-  end
-  return new_vel_x, new_vel_y
-end
-
 function stop_player(player)
   player_vel_x, player_vel_y = 0,0 
   player_slide_vel_x, player_slide_vel_y = 0,0 
