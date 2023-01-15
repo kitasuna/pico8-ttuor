@@ -39,6 +39,9 @@ function new_player(sprite_num, pos_x, pos_y)
     {4, 5, 4, 6},
   }
 
+  player.gems_count = 0
+  player.sec_gems_count = 0
+
   -- API, allows other entities to check on player
   player.is_dead = function()
     if player_state == PLAYER_STATE_DEAD_ZAPPED or
@@ -47,16 +50,6 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     return false
-  end
-
-  player.gems_count = function()
-    local count = 0
-    for i=1,#player.inventory.items do
-      if player.inventory.items[i] > 0 then
-        count += 1
-      end
-    end
-    return count
   end
 
   player.reset = function(l)
@@ -80,6 +73,11 @@ function new_player(sprite_num, pos_x, pos_y)
       player.inventory.items[payload.item_index] = 1
       player.inventory.flash_at = 1 + payload.item_index -- offset for powerups
       player.inventory.flash_til = 60
+      if payload.item_index == #player.inventory.items then
+        player.sec_gems_count += 1
+      else
+        player.gems_count += 1
+      end
       sfx_get_item()
   end
 
@@ -685,6 +683,11 @@ function modify_inventory(inventory, tgt)
   for i=1,#inventory.items do
     if inventory.items[i] == 1 then
       inventory.items[i] = tgt
+      if tgt == 0 and i < #player.inventory.items then
+        player.gems_count -= 1
+      elseif tgt == 0 then
+        player.sec_gems_count -= 1
+      end
     end
   end
 end

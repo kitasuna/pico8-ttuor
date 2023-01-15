@@ -179,12 +179,11 @@ function init_level(l)
     i += 8 -- skip over this chunk + separator
   end
   -- check player's inventory
-  local gems_count = player.gems_count()
   local self_destruct = 50
   local last_item = nil
   for k, e in pairs(l.ents) do
     if e[1]==ENT_ITEM then
-      if e[4] < 8 or (e[4] == 8 and gems_count == 7) then
+      if e[4] < 8 or (e[4] == 8 and player.gems_count == 7) then
         last_item = ent_add_item(e)
         if e[4] == 8 then
           if timer_minutes < 2 then
