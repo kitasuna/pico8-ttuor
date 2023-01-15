@@ -1,3 +1,5 @@
+item_particles = flsrc(0, 0, 0.05, {CLR_DGN, CLR_GRN, CLR_GRN})
+sec_item_particles = flsrc(0, 0, 0, {CLR_PNK, CLR_PNK, CLR_PRP})
 function new_entity_manager()
   local ent_man = {
     ents = {},
@@ -14,17 +16,26 @@ function new_entity_manager()
   end
 
   ent_man.handle_beam_item_collision = function(item)
-    item.state = ENT_STATE_BROKEN
-    item.feels_grav = false
-    item.vel_x,item.vel_y = 0,0
-    add(timers, {120, function()
-      del(ent_man.ents, item)
+    if item.state == ENT_STATE_NORMAL then
+      item.state = ENT_STATE_BROKEN
+      item.feels_grav = false
+      item.vel_x,item.vel_y = 0,0
+      sfx(5)
+      add(timers, {120, function()
+        del(ent_man.ents, item)
+      end
+    })
+    local p = nil
+    if item.item_index == #player.inventory.items then
+      p = sec_item_particles
+    else
+      p = item_particles
     end
-  })
-  item.particles.pos_x = item.pos_x + 4
-  item.particles.pos_y = item.pos_y + 4
-  for i=0,40 do
-    item.particles.add(0.8, 0.8, true, true, 30) 
+    p.pos_x = item.pos_x + 4
+    p.pos_y = item.pos_y + 4
+    for i=0,40 do
+      p.add(4, 4, true, true, 30) 
+    end
   end
 
 end
@@ -125,6 +136,21 @@ end
   end
 
   ent_man.handle_player_item_collision = function(payload)
+      payload.state = ENT_STATE_HELD
+      local p = nil
+      if payload.item_index == #player.inventory.items then
+        p = sec_item_particles
+      elseif payload.item_index != nil then
+        p = item_particles
+      end
+      if p != nil then
+        p.pos_x = payload.pos_x
+        p.pos_y = payload.pos_y + 4
+        p.direction = DIRECTION_UP
+        for i=0,20 do
+          p.addDir(2, 2, 30) 
+        end
+      end
       del(ent_man.ents, payload)
   end
 
@@ -199,19 +225,19 @@ function ent_add_item(info)
     vel_y = 0,
     item_index = info[4],
     type = ENT_ITEM,
-    can_travel = 1 << FLAG_FLOOR,
+    can_travel = 1 << FLAG_FLOOR | 1 << FLAG_GAP,
     state = ENT_STATE_NORMAL,
     frame_step = 0,
     frame_offset = 1,
     feels_grav = true,
-    particles = flsrc(info[2] + 4, info[3] + 4, 0, info[4] == 8 and {CLR_PNK, CLR_PRP} or {CLR_DGN, CLR_GRN})
+    -- particles = flsrc(info[2] + 4, info[3] + 4, 0, info[4] == 8 and {CLR_PNK, CLR_PRP} or {CLR_DGN, CLR_GRN})
   }
   tmp = merge(tmp, new_sprite(28, info[2], info[3], 8, 8)) 
 
 
   tmp.update = function(level)
     ent_update(tmp)(level)
-    tmp.particles.update()
+    -- tmp.particles.update()
   end
   tmp.draw = function()
     if tmp.state == ENT_STATE_NORMAL then
@@ -237,7 +263,7 @@ function ent_add_item(info)
       spr(tmp.num, tmp.pos_x, tmp.pos_y + y_offset)  
       pal()
     else
-      tmp.particles.draw()
+      -- tmp.particles.draw()
     end
   end
 

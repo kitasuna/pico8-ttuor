@@ -55,16 +55,16 @@ function get_levels()
     {
       label="02",
       start_tile_x = 29,
-      start_tile_y = 1,
+      start_tile_y = 0,
       player_pos_x = 5,
-      player_pos_y = 11,
+      player_pos_y = 10,
       map_tile_width = 11,
       map_tile_height = 29,
-      boxes = "0301:0314:0415:0515:0615:0714:0418:0621:0626",
-      beams = "0103:0218:0221:0224",
-      mbeams = "",
+      boxes = "0313:0414:0514:0614:0713:0518:0621:0724",
+      beams = "0217:0220:0223",
+      mbeams = "0101/06",
       ents = {
-        {ENT_ITEM, 32, 8, 2}
+        {ENT_ITEM, 40, 48, 2}
       }
     },
     {
@@ -87,8 +87,8 @@ function get_levels()
       label="04",
       start_tile_x = 58,
       start_tile_y = 0,
-      player_pos_x = 8,
-      player_pos_y = 9,
+      player_pos_x = 9,
+      player_pos_y = 11,
       map_tile_width = 17,
       map_tile_height = 15,
       boxes = "1304:0109",
@@ -126,7 +126,7 @@ function get_levels()
       mbeams = "0202/20",
       boxes = "",
       ents = {
-        {ENT_ITEM, 90, 150, 7}
+        {ENT_ITEM, 87, 140, 7}
       }
     },
     {
@@ -154,6 +154,9 @@ end
 function init_level(l)
   player.reset(l)
   ent_man.reset()
+  item_particles.reset()
+  sec_item_particles.reset()
+
   camera_x = -64 + player.pos_x
   camera_y = -64 + player.pos_y
   local i=1
@@ -179,18 +182,14 @@ function init_level(l)
     i += 8 -- skip over this chunk + separator
   end
   -- check player's inventory
-  local self_destruct = 50
   local last_item = nil
   for k, e in pairs(l.ents) do
     if e[1]==ENT_ITEM then
-      if e[4] < 8 or (e[4] == 8 and player.gems_count == 7) then
+      if e[4] < #player.inventory.items or (e[4] == #player.inventory.items and player.gems_count == #player.inventory.items - 1 and timer_minutes < 2) then
         last_item = ent_add_item(e)
         if e[4] == 8 then
-          if timer_minutes < 2 then
-            self_destruct = 180
-          end
           add(timers, {
-            self_destruct, function()
+            180, function()
               qm.add_event("beam_item_collision", last_item)
             end
           })

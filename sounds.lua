@@ -5,9 +5,6 @@ end,
 handle_player_death = function()
   sfx(3, -2)
 end,
-handle_beam_item_collision = function()
-  sfx(5)
-end,
 }
 function sfx_floating()
   sfx(6)
