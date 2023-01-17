@@ -321,6 +321,11 @@ function beam_draw(beam)
     palt(15, true)
     spr(48, beam.pos_x-8, beam.pos_y)
     local length = beam.size_x
+    if length <= 0 then
+      -- don't bother drawing anything here
+      return
+    end
+
     if frame_counter % 3 == 0 then
       -- Reset length of state tables
       beam.sprites0 = {}
