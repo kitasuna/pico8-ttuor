@@ -230,14 +230,12 @@ function ent_add_item(info)
     frame_step = 0,
     frame_offset = 1,
     feels_grav = true,
-    -- particles = flsrc(info[2] + 4, info[3] + 4, 0, info[4] == 8 and {CLR_PNK, CLR_PRP} or {CLR_DGN, CLR_GRN})
   }
   tmp = merge(tmp, new_sprite(28, info[2], info[3], 8, 8)) 
 
 
   tmp.update = function(level)
     ent_update(tmp)(level)
-    -- tmp.particles.update()
   end
   tmp.draw = function()
     if tmp.state == ENT_STATE_NORMAL then
@@ -262,8 +260,6 @@ function ent_add_item(info)
       local y_offset = pos_offsets[tmp.frame_offset + 1]
       spr(tmp.num, tmp.pos_x, tmp.pos_y + y_offset)  
       pal()
-    else
-      -- tmp.particles.draw()
     end
   end
 

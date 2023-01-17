@@ -8,6 +8,7 @@ player_slide_vel_x = 0
 player_slide_vel_y = 0
 slide_counter = 0
 player_inventory = {}
+slide_parts = flsrc(0, 0, 0, {2, 14, 14})
 
 function new_player(sprite_num, pos_x, pos_y)
   local player = new_sprite(
@@ -158,6 +159,7 @@ function new_player(sprite_num, pos_x, pos_y)
 
     -- If they're sliding, they can tweak the direction of the slide
     if player_state == PLAYER_STATE_SLIDING then
+
       if is_pressed_u(mask) and player_slide_vel_y > -0.5 then
         player_slide_vel_y -= 0.03
       elseif is_pressed_d(mask) and player_slide_vel_y < 0.5 then
@@ -475,6 +477,11 @@ function new_player(sprite_num, pos_x, pos_y)
         player_vel_y = 0
       end
 
+      slide_parts.pos_x, slide_parts.pos_y = player.pos_x+4, player.pos_y+5
+      for i=0,5 do
+        slide_parts.add(1, 1, true, false, 10) 
+      end
+
       if global_slide_counter > 30 or (player_vel_x == 0 and player_vel_y == 0 and player_state == PLAYER_STATE_SLIDING) then
         player_state = PLAYER_STATE_GROUNDED
         player_slide_vel_x = 0
@@ -641,7 +648,7 @@ function sc_sliding()
     player_state = PLAYER_STATE_SLIDING
     player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
     xsfx_floating()
-    sfx_slide()
+    sfx(1)
     global_slide_counter = 0
     player_vel_x *= 0.7
     player_vel_y *= 0.7

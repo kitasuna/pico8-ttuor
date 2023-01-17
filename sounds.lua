@@ -18,9 +18,6 @@ end
 function xsfx_gbeam()
   sfx(2, -2)
 end
-function sfx_slide()
-  sfx(1)
-end
 function xsfx_slide()
   sfx(1, -2)
 end
