@@ -18,7 +18,7 @@ function get_levels()
     },
   --]]
   return {
-    --[[ 
+    --[[
     {
       label="00",
       start_tile_x = 114, -- x index of the upper-left map tile to draw
@@ -34,7 +34,7 @@ function get_levels()
       ents = { -- x/y tile indexes, from the starting tile, at which to place the entity
       }
     },
-    ]]--
+    -]]
     {
       label="01",
       start_tile_x = 0,
@@ -185,9 +185,9 @@ function init_level(l)
   local last_item = nil
   for k, e in pairs(l.ents) do
     if e[1]==ENT_ITEM then
-      if e[4] < #player.inventory.items or (e[4] == #player.inventory.items and player.gems_count == #player.inventory.items - 1 and timer_minutes < 2) then
+      if e[4] < #player_items or (e[4] == #player_items and player.gems_count == #player_items - 1 and timer_minutes < 2) then
         last_item = ent_add_item(e)
-        if e[4] == 8 then
+        if e[4] == #player_items then
           add(timers, {
             180, function()
               qm.add_event("beam_item_collision", last_item)

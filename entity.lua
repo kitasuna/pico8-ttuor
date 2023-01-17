@@ -26,7 +26,7 @@ function new_entity_manager()
       end
     })
     local p = nil
-    if item.item_index == #player.inventory.items then
+    if item.item_index == #player_items then
       p = sec_item_particles
     else
       p = item_particles
@@ -138,7 +138,7 @@ end
   ent_man.handle_player_item_collision = function(payload)
       payload.state = ENT_STATE_HELD
       local p = nil
-      if payload.item_index == #player.inventory.items then
+      if payload.item_index == #player_items then
         p = sec_item_particles
       elseif payload.item_index != nil then
         p = item_particles
@@ -243,7 +243,7 @@ function ent_add_item(info)
     if tmp.state == ENT_STATE_NORMAL then
       palt(0, false)
       palt(15, true)
-      if tmp.item_index == 8 then
+      if tmp.item_index == #player_items then
         pal(3, 2)
         pal(11, 14)
       end

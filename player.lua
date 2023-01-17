@@ -7,6 +7,7 @@ player_vel_y = 0
 player_slide_vel_x = 0
 player_slide_vel_y = 0
 slide_counter = 0
+player_inventory = {}
 
 function new_player(sprite_num, pos_x, pos_y)
   local player = new_sprite(
@@ -24,13 +25,13 @@ function new_player(sprite_num, pos_x, pos_y)
   stop_player(player) -- inits vel values anyway
   player.can_travel = (1 << FLAG_FLOOR) | (1 << FLAG_GAP)
   player.gbeam = new_gbeam()
-  player.inventory = {
+  player_inventory = {
     flash_at = -1,
     flash_til = 0,
     glove = 2,
     wormhole = 2,
-    items = {0,0,0,0,0,0,0,0},
   }
+  player_items = {0,0,0,0,0,0,0,0}
 
   player.frames_walking = {
     {7, 8, 7, 9},
@@ -64,16 +65,16 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.handle_player_goal = function(payload)
-    player.inventory.flash_at = -1
+    player_inventory.flash_at = -1
   end
 
   player.handle_player_item_collision = function(payload)
       -- set to "1" here (uncommitted)
       -- will be set to "2" (committed) at the end of the level
-      player.inventory.items[payload.item_index] = 1
-      player.inventory.flash_at = 1 + payload.item_index -- offset for powerups
-      player.inventory.flash_til = 60
-      if payload.item_index == #player.inventory.items then
+      player_items[payload.item_index] = 1
+      player_inventory.flash_at = 1 + payload.item_index -- offset for powerups
+      player_inventory.flash_til = 60
+      if payload.item_index == #player_items then
         player.sec_gems_count += 1
       else
         player.gems_count += 1
@@ -82,16 +83,16 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.handle_player_glove_collision = function(payload)
-      player.inventory.glove = 1
-      player.inventory.flash_at = 0
-      player.inventory.flash_til = 60
+      player_inventory.glove = 1
+      player_inventory.flash_at = 0
+      player_inventory.flash_til = 60
       sfx_get_inventory()
   end
 
   player.handle_player_wh_collision = function(payload)
-      player.inventory.wormhole = 1
-      player.inventory.flash_at = 1
-      player.inventory.flash_til = 60
+      player_inventory.wormhole = 1
+      player_inventory.flash_at = 1
+      player_inventory.flash_til = 60
       sfx_get_inventory()
   end
 
@@ -113,7 +114,7 @@ function new_player(sprite_num, pos_x, pos_y)
       player.gbeam.disable()
       qm.add_event("gbeam_removed")
       add(timers, {60,function()
-          unstage_inventory(player.inventory)
+          unstage_inventory()
           qm.add_event("player_death", {level = level})
         end
       })
@@ -167,7 +168,7 @@ function new_player(sprite_num, pos_x, pos_y)
         player_slide_vel_x += 0.03
       end
 
-      if is_pressed_x(mask) and player.inventory.wormhole != 0 then
+      if is_pressed_x(mask) and player_inventory.wormhole != 0 then
         sc_floating()
       end
 
@@ -213,7 +214,7 @@ function new_player(sprite_num, pos_x, pos_y)
     end
 
     -- if they're holding the beam, change state
-    if is_pressed_o(mask) and player.inventory.glove != 0 then
+    if is_pressed_o(mask) and player_inventory.glove != 0 then
       player_state = PLAYER_STATE_FIRING
       player_vel_x = 0
       player_vel_y = 0
@@ -246,7 +247,7 @@ function new_player(sprite_num, pos_x, pos_y)
       player_state = PLAYER_STATE_GROUNDED
     end
 
-    if is_pressed_x(mask) and player.inventory.wormhole != 0 and player_state == PLAYER_STATE_GROUNDED then
+    if is_pressed_x(mask) and player_inventory.wormhole != 0 and player_state == PLAYER_STATE_GROUNDED then
         sc_floating()
         return
     end
@@ -325,10 +326,10 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.update = function(ent_man, level)
-    if player.inventory.flash_til > 0 then
-      player.inventory.flash_til -= 1
-      if player.inventory.flash_til == 0 then
-        player.inventory.flash_at = -1
+    if player_inventory.flash_til > 0 then
+      player_inventory.flash_til -= 1
+      if player_inventory.flash_til == 0 then
+        player_inventory.flash_at = -1
       end
     end
 
@@ -364,7 +365,7 @@ function new_player(sprite_num, pos_x, pos_y)
         end
       else
         qm.add_event("player_death", {level = level})
-        unstage_inventory(player.inventory)
+        unstage_inventory()
       end
       return
     end
@@ -436,7 +437,7 @@ function new_player(sprite_num, pos_x, pos_y)
    end
 
     if fget(mget(curr_map_x, curr_map_y), FLAG_STAIRS) then
-      commit_inventory(player.inventory)
+      commit_inventory()
       qm.add_event("player_goal")
       xsfx_slide()
       xsfx_floating()
@@ -667,23 +668,23 @@ is_pressed_d = is_pressed(BTN_D)
 is_pressed_x = is_pressed(BTN_X)
 is_pressed_o = is_pressed(BTN_O)
 
-function commit_inventory(inventory)
-  modify_inventory(inventory, 2)
+function commit_inventory()
+  modify_inventory(2)
 end
 
-function modify_inventory(inventory, tgt)
-  if inventory.glove == 1 then
-    inventory.glove = tgt
+function modify_inventory(tgt)
+  if player_inventory.glove == 1 then
+    player_inventory.glove = tgt
   end
 
-  if inventory.wormhole == 1 then
-    inventory.wormhole = tgt
+  if player_inventory.wormhole == 1 then
+    player_inventory.wormhole = tgt
   end
 
-  for i=1,#inventory.items do
-    if inventory.items[i] == 1 then
-      inventory.items[i] = tgt
-      if tgt == 0 and i < #player.inventory.items then
+  for i=1,#player_items do
+    if player_items[i] == 1 then
+      player_items[i] = tgt
+      if tgt == 0 and i < #player_items then
         player.gems_count -= 1
       elseif tgt == 0 then
         player.sec_gems_count -= 1
@@ -692,8 +693,8 @@ function modify_inventory(inventory, tgt)
   end
 end
 
-function unstage_inventory(inventory)
-  modify_inventory(inventory, 0)
+function unstage_inventory()
+  modify_inventory(0)
 end
 
 function ldistance(x0, y0, x1, y1)

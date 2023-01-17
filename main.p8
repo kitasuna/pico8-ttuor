@@ -43,7 +43,7 @@ victory_draw = function()
 
   if victory_frames > 180 then
     spr(29, 48, 64)
-    print("X "..player.gems_count.."/"..#player.inventory.items - 1, 61, 66, CLR_WHT)
+    print("X "..player.gems_count.."/"..#player_items - 1, 61, 66, CLR_WHT)
   end
 
   if victory_frames > 225 then
@@ -129,16 +129,15 @@ game_draw = function()
   palt(15, true)
   spr(42, 10, 119)
   spr(42, 34, 119)
-  if player.inventory.glove > 0 then
-    -- if player.inventory.state == inv_state_glove and frame_counter % 3 != 0 then
+  if player_inventory.glove > 0 then
     spr(38, 10, 119)
-    if player.inventory.flash_at == 0 and frame_counter % 3 != 0 then
+    if player_inventory.flash_at == 0 and frame_counter % 3 != 0 then
       spr(39, 10, 119)
     end
   end
-  if player.inventory.wormhole > 0 then
+  if player_inventory.wormhole > 0 then
     spr(40, 34, 119)
-    if player.inventory.flash_at == 1 and frame_counter % 3 != 0 then
+    if player_inventory.flash_at == 1 and frame_counter % 3 != 0 then
       spr(41, 34, 119)
     end
   end
@@ -146,7 +145,7 @@ game_draw = function()
   line(46, 118, 46, 128, CLR_BLK)
   spr(29, 48, 119)
   print("X"..player.gems_count, 56, 121, CLR_BLK)
-  if player.gems_count >= #player.inventory.items - 1 then
+  if player.gems_count >= #player_items - 1 then
     spr(32, 66, 119)
     print("X"..player.sec_gems_count, 74, 121, CLR_BLK)
   end
