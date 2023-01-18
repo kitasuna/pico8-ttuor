@@ -80,7 +80,7 @@ title_update = function()
 
       -- start (fade in) game
       add(timers, {75,function()
-          music(2)
+          -- music(2)
           __update = game_update
           __draw = game_draw
         end

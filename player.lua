@@ -7,8 +7,38 @@ player_vel_y = 0
 player_slide_vel_x = 0
 player_slide_vel_y = 0
 slide_counter = 0
-player_inventory = {}
 slide_parts = flsrc(0, 0, 0, {2, 14, 14})
+player_inventory = {}
+function inventory_draw(fc)
+  camera()
+  rectfill(0, 118, 128, 128, CLR_WHT)
+  print(O_CHAR, 2, 121, CLR_BLK)
+  print(X_CHAR, 26, 121, CLR_BLK)
+  palt(0, false)
+  palt(15, true)
+  spr(42, 10, 119)
+  spr(42, 34, 119)
+  if player_inventory.glove > 0 then
+    spr(38, 10, 119)
+    if player_inventory.flash_at == 0 and fc % 3 != 0 then
+      spr(39, 10, 119)
+    end
+  end
+  if player_inventory.wormhole > 0 then
+    spr(40, 34, 119)
+    if player_inventory.flash_at == 1 and fc % 3 != 0 then
+      spr(41, 34, 119)
+    end
+  end
+end
+function inventory_update()
+  if player_inventory.flash_til > 0 then
+    player_inventory.flash_til -= 1
+    if player_inventory.flash_til == 0 then
+      player_inventory.flash_at = -1
+    end
+  end
+end
 
 function new_player(sprite_num, pos_x, pos_y)
   local player = new_sprite(
@@ -29,8 +59,8 @@ function new_player(sprite_num, pos_x, pos_y)
   player_inventory = {
     flash_at = -1,
     flash_til = 0,
-    glove = 2,
-    wormhole = 2,
+    glove = 0,
+    wormhole = 0,
   }
   player_items = {0,0,0,0,0,0,0,0}
 
@@ -328,12 +358,6 @@ function new_player(sprite_num, pos_x, pos_y)
   end
 
   player.update = function(ent_man, level)
-    if player_inventory.flash_til > 0 then
-      player_inventory.flash_til -= 1
-      if player_inventory.flash_til == 0 then
-        player_inventory.flash_at = -1
-      end
-    end
 
     player.gbeam.update()
 
@@ -453,7 +477,7 @@ function new_player(sprite_num, pos_x, pos_y)
       player.size_x - 1, -- cheat with smaller player size for ents
       player.size_y - 1
     )
-    for k, ent in pairs(ent_man.ents) do
+    for ent in all(ent_man.ents) do
       if fget(ent.num, FLAG_COLLIDES_PLAYER) == true then
         if collides(player_at_next, ent) then 
           can_move_x = false
@@ -575,7 +599,6 @@ function new_gbeam()
     -- 1) a sprite
     -- 2) a bad tile
     -- 3) our max extent
-    -- TODO: Add collision with map tiles
     local iter_pos_x = tmp.head_pos_x
     local iter_pos_y = tmp.head_pos_y
     local collision_found = false
@@ -601,7 +624,7 @@ function new_gbeam()
       else
         tmp_sprite = new_sprite(0, iter_pos_x, iter_pos_y - 2, 3, 3)
       end
-      for k, ent in pairs(ent_man.ents) do
+      for ent in all(ent_man.ents) do
         if ent.type != ENT_BEAM and collides(tmp_sprite, ent) then
             tmp.tail_pos_x = iter_pos_x
             tmp.tail_pos_y = iter_pos_y

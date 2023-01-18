@@ -6,8 +6,8 @@ function new_entity_manager()
   }
 
   ent_man.collision = function()
-    for k, ent in pairs(ent_man.ents) do
-      for j, ent_inner in pairs(ent_man.ents) do
+    for ent in all(ent_man.ents) do
+      for ent_inner in all(ent_man.ents) do
         if ent.type == ENT_ITEM and ent_inner.type == ENT_BEAM and ent.state != ENT_STATE_BROKEN and collides(ent, ent_inner) then
           qm.add_event("beam_item_collision", ent)
         end
@@ -127,7 +127,7 @@ end
     if payload.ent.type != ENT_BOX then
       return
     end
-    for k, ent in pairs(ent_man.ents) do
+    for ent in all(ent_man.ents) do
       if ent.type == ENT_BEAM and ent.blocked_by == payload.ent then
         ent.blocked_by = nil
         return
@@ -155,7 +155,7 @@ end
   end
 
   ent_man.handle_gbeam_removed = function(payload)
-    for k, ent in pairs(ent_man.ents) do
+    for ent in all(ent_man.ents) do
       if ent.tgt_x != nil or ent.tgt_y != nil then
         ent.vel_x,ent.vel_y = 0,0
         ent.tgt_x,ent.tgt_y = nil,nil
@@ -164,7 +164,7 @@ end
   end
 
   ent_man.handle_button = function(payload)
-    for k, ent in pairs(ent_man.ents) do
+    for ent in all(ent_man.ents) do
       if ent.state == ENT_STATE_HELD then
         if not is_pressed_o(payload.input_mask) then
           -- unhand that item!
@@ -177,7 +177,7 @@ end
 
   -- String -> { rotation: Rotation, pos_x: Int, pos_y Int }
   ent_man.handle_player_rotation = function(payload)
-    for k, ent in pairs(ent_man.ents) do
+    for ent in all(ent_man.ents) do
       if ent.state == ENT_STATE_HELD then
         ent.future_x,ent.future_y = payload.pos_x,payload.pos_y
         --ent.future_y = payload.pos_y
@@ -233,7 +233,6 @@ function ent_add_item(info)
   }
   tmp = merge(tmp, new_sprite(28, info[2], info[3], 8, 8)) 
 
-
   tmp.update = function(level)
     ent_update(tmp)(level)
   end
@@ -248,14 +247,10 @@ function ent_add_item(info)
       if tmp.vel_x != 0 or tmp.vel_y != 0 then
         pal(0, GRAV_COLORS[frame_counter % 3])
       end
-      tmp.frame_step += 1
       local pos_offsets = {0, 1, 1, 1, 0, -1, -1, -1}
-      if tmp.frame_step > 10 then
-        tmp.frame_offset += 1
-        tmp.frame_step = 0
-        if tmp.frame_offset + 1 > #pos_offsets then
-          tmp.frame_offset = 0
-        end
+      tmp.frame_step = (tmp.frame_step + 1) % 10
+      if tmp.frame_step == 0 then
+        tmp.frame_offset = (tmp.frame_offset + 1) % #pos_offsets
       end
       local y_offset = pos_offsets[tmp.frame_offset + 1]
       spr(tmp.num, tmp.pos_x, tmp.pos_y + y_offset)  
@@ -289,7 +284,7 @@ function beam_update(beam)
     end
     beam.size_x = beam_max_x - beam.pos_x
 
-    for j, ent_other in pairs(ent_man.ents) do
+    for ent_other in all(ent_man.ents) do
       -- Try cheating size here to make boxes more protective
       if ent_other.type == ENT_BOX and ent_other.state != ENT_STATE_HELD and collides(beam, ent_other) then
         beam.blocked_by = ent_other

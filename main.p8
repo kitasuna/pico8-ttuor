@@ -79,7 +79,7 @@ end
 function timer_draw(x, y, color)
   print(lz(timer_minutes)..":"..lz(timer_seconds)..":"..lz(frame_counter), x, y, color)
 end
-game_draw = function()
+function game_draw()
   cls()
 
   if player_state != PLAYER_STATE_DEAD_FALLING then
@@ -120,29 +120,8 @@ game_draw = function()
 
   item_particles.draw()
   sec_item_particles.draw()
+  inventory_draw(frame_counter)
 
-  -- Draw inventory
-  camera()
-  rectfill(0, 118, 128, 128, CLR_WHT)
-  print("🅾️", 2, 121, CLR_BLK)
-  print("❎", 26, 121, CLR_BLK)
-  palt(0, false)
-  palt(15, true)
-  spr(42, 10, 119)
-  spr(42, 34, 119)
-  if player_inventory.glove > 0 then
-    spr(38, 10, 119)
-    if player_inventory.flash_at == 0 and frame_counter % 3 != 0 then
-      spr(39, 10, 119)
-    end
-  end
-  if player_inventory.wormhole > 0 then
-    spr(40, 34, 119)
-    if player_inventory.flash_at == 1 and frame_counter % 3 != 0 then
-      spr(41, 34, 119)
-    end
-  end
-  -- gems_draw(48, 119)
   line(46, 118, 46, 128, CLR_BLK)
   spr(29, 48, 119)
   print("X"..player.gems_count, 56, 121, CLR_BLK)
@@ -156,7 +135,7 @@ game_draw = function()
   print("cpu: "..stat(1), 92, 0, CLR_WHT)
 end
 
-game_update = function()
+function game_update()
     local input_mask = 0
     if btn(BTN_U) then
       input_mask = input_mask | (1 << BTN_U)
@@ -220,6 +199,7 @@ game_update = function()
     item_particles.update()
     sec_item_particles.update()
     slide_parts.update()
+    inventory_update()
 
     ent_man.collision()
 
@@ -258,17 +238,46 @@ function _gm_handle_player_goal(payload)
   end
 end
 
+
+msg_box_fc = 0
+function msg_box_update()
+  msg_box_fc += 1
+  inventory_update()
+  qm.proc()
+  if msg_box_fc > 30 and (btn(BTN_X) or btn(BTN_O)) then
+    __update = game_update
+    __draw = game_draw
+    msg_box_fc = 0
+  end
+end
+
+function msg_box_draw(str)
+  return function()
+    inventory_draw(msg_box_fc)
+    rectfill(6,30,mid(6,msg_box_fc*6,122),mid(30,msg_box_fc*5,90),CLR_PNK) 
+    rectfill(8,32,mid(8,msg_box_fc*6,120),mid(32,msg_box_fc*5,88),CLR_PRP) 
+    if msg_box_fc > 20 then
+      local new_str = sub(str, 1, mid(1, msg_box_fc * 2, #str))
+      print(new_str, 9, 36, CLR_DGY)
+      print(new_str, 10, 37, CLR_WHT)
+    end
+  end
+end
+
+function _gm_handle_player_glove_collision()
+  __update = msg_box_update
+  __draw = msg_box_draw("you got: a cool glove!\n\npress and hold "..O_CHAR.."\nto pull boxes towards you!\n\nthen use "..U_CHAR..D_CHAR..R_CHAR..L_CHAR.."\nto reposition the box")
+end
+
 function _init()
   cls()
   printh"!!!!init"
 
   -- Set up our entity manager
   ent_man = new_entity_manager()
-  -- ^^ this is intentional, only need to delete the glove/wh from the table
 
   -- Add sprite
   player = new_player(1, 64, 64, 6, 6)
-  -- ^^ might not need this since logic is internal
 
   -- Set up player particle source
   plfx = flsrc(0, 0, 0.05, {CLR_ORN, CLR_PCH, CLR_DGN, CLR_PNK, CLR_PNK})
@@ -286,7 +295,7 @@ function _init()
   qm.add_subs("entity_reaches_target", {sound_man.handle_entity_reaches_target, ent_man.handle_entity_reaches_target, player.handle_entity_reaches_target})
   qm.add_sub("player_rotation", ent_man.handle_player_rotation)
   qm.add_subs("player_item_collision", {player.handle_player_item_collision, ent_man.handle_player_item_collision})
-  qm.add_subs("player_glove_collision", {player.handle_player_glove_collision, ent_man.handle_player_item_collision})
+  qm.add_subs("player_glove_collision", {player.handle_player_glove_collision, ent_man.handle_player_item_collision,_gm_handle_player_glove_collision})
   qm.add_subs("player_wh_collision", {player.handle_player_wh_collision, ent_man.handle_player_item_collision})
   qm.add_sub("level_init", player.handle_level_init)
   -- Load levels
@@ -297,27 +306,14 @@ function _init()
   -- Set up timers table for later...
   timers = {}
 
-  -- Frame counter, used for animation flashing and maybe other things eventually?
-  frame_counter = 0
-
-  -- Game timer, used to measure how quickly the player reaches the final goal
-  timer_minutes = 0
-  timer_seconds = 0
-
-  camera_x = 0
-  camera_y = 0
-
+  -- Initialize some numbers!
+  frame_counter,timer_minutes,timer_seconds,camera_x,camera_y = 0,0,0,0,0
 
   __draw = title_draw
   __update = title_update
 end
 
 function _update60()
-  -- Kinda hacky; but if we're in "game mode" do this stuff
-  -- currently unused
-  if __update == game_update then
-  end
-
   __update()
 end
 
