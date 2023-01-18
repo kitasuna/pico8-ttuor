@@ -625,7 +625,7 @@ function new_gbeam()
         tmp_sprite = new_sprite(0, iter_pos_x, iter_pos_y - 2, 3, 3)
       end
       for ent in all(ent_man.ents) do
-        if ent.type != ENT_BEAM and collides(tmp_sprite, ent) then
+        if ent.feels_grav == true and collides(tmp_sprite, ent) then
             tmp.tail_pos_x = iter_pos_x
             tmp.tail_pos_y = iter_pos_y
             collision_found = true

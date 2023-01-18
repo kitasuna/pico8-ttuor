@@ -192,30 +192,23 @@ end
 
 -- Entity -> XPos -> YPos -> Direction -> Entity
 function do_gravity(ent, pos_x, pos_y, direction)
-  if ent.feels_grav == true then
-    local ent_vel = 1
-    ent.tgt_x = pos_x
-    ent.tgt_y = pos_y
+  local ent_vel = 1
+  ent.tgt_x,ent.tgt_y = pos_x, pos_y
+  ent.vel_x, ent.vel_y = (function()
     if direction == DIRECTION_UP then
       -- vel should be downwards
-      ent.vel_x = 0
-      ent.vel_y = ent_vel
-      elseif direction == DIRECTION_DOWN then
+      return 0, ent_vel
+    elseif direction == DIRECTION_DOWN then
       -- vel should be upwards
-      ent.vel_x = 0
-      ent.vel_y = -ent_vel
-      elseif direction == DIRECTION_RIGHT then
-        --vel should be to the left
-      ent.vel_x = -ent_vel
-      ent.vel_y = 0
-      elseif direction == DIRECTION_LEFT then
+      return 0, -ent_vel
+    elseif direction == DIRECTION_RIGHT then
+      --vel should be to the left
+      return -ent_vel, 0
+    elseif direction == DIRECTION_LEFT then
       --vel should be to the right
-      ent.vel_x = ent_vel
-      ent.vel_y = 0
+      return ent_vel, 0
     end
-  end
-
-  return ent
+  end)()
 end
 
 -- {pos_x: Int, pos_y: Int, item_index: Int}
