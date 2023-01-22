@@ -365,8 +365,8 @@ end
 function ent_update(tmp)
   return function(level)
     local ent_center_x, ent_center_y = get_center(tmp)
-    local ent_next_x = (ent_center_x + tmp.vel_x)
-    local ent_next_y = (ent_center_y + tmp.vel_y)
+    local ent_next_x = ent_center_x + tmp.vel_x
+    local ent_next_y = ent_center_y + tmp.vel_y
     local curr_map_x, curr_map_y = get_tile_from_pos(ent_center_x, ent_center_y)
     local next_map_x, next_map_y = get_tile_from_pos(ent_next_x, ent_next_y)
 

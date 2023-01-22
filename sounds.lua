@@ -24,14 +24,7 @@ end
 function sfx_get_item()
   sfx(4)
 end
-function sfx_zapped()
-  -- stop slide noise
-  xsfx_slide()
-  sfx(3)
-end
 function sfx_falling()
-  xsfx_slide()
-  sfx(9)
 end
 function sfx_get_inventory()
   sfx(7)

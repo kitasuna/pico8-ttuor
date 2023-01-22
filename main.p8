@@ -235,9 +235,9 @@ function game_update()
     qm.proc()
 end
 
-function _gm_handle_player_death(payload)
+function _gm_handle_player_death()
   timers = {}
-  init_level(payload.level)
+  init_level(level)
 end
 
 function _gm_handle_player_goal(payload)

@@ -139,14 +139,15 @@ function new_player(sprite_num, pos_x, pos_y)
     end
       xsfx_gbeam()
       xsfx_floating()
-      sfx_zapped()
+      xsfx_slide()
+      sfx(3)
       player_frame_step = 0
       player_frame_offset = 0
       player.gbeam.disable()
       qm.add_event("gbeam_removed")
       add(timers, {60,function()
           unstage_inventory()
-          qm.add_event("player_death", {level = level})
+          qm.add_event("player_death")
         end
       })
   end
@@ -390,7 +391,7 @@ function new_player(sprite_num, pos_x, pos_y)
           player_frame_step = 0
         end
       else
-        qm.add_event("player_death", {level = level})
+        qm.add_event("player_death")
         unstage_inventory()
       end
       return
@@ -419,35 +420,35 @@ function new_player(sprite_num, pos_x, pos_y)
         player.pos_x = (curr_map_x - level.start_tile_x) * 8
         player.pos_y = (curr_map_y - level.start_tile_y) * 8
         player_state = PLAYER_STATE_DEAD_FALLING
-        player_frame_step = 0
-        player_frame_offset = 0
+        player_frame_step,player_frame_offset = 0,0
         xsfx_slide()
-        sfx_falling()
+        xsfx_slide()
+        sfx(9)
       end
     end
 
-    if ((fmget(get_tile_from_pos(player_next_x, player.pos_y))
-       & player.can_travel) == 0 or 
-    (fmget(get_tile_from_pos(player_next_x, player.pos_y + 7))
-     & player.can_travel) == 0)
+    if (fmget(get_tile_from_pos(player_next_x, player.pos_y))
+       & player.can_travel == 0 or 
+    fmget(get_tile_from_pos(player_next_x, player.pos_y + 7))
+     & player.can_travel == 0)
      and player_vel_x < 0 
        then
        can_move_x = false
    end
 
-    if ((fmget(get_tile_from_pos(player_next_x + 7, player.pos_y))
-       & player.can_travel) == 0 or 
-    (fmget(get_tile_from_pos(player_next_x+ 7, player.pos_y + 7))
-     & player.can_travel) == 0)
+    if (fmget(get_tile_from_pos(player_next_x + 7, player.pos_y))
+       & player.can_travel == 0 or 
+    fmget(get_tile_from_pos(player_next_x+ 7, player.pos_y + 7))
+     & player.can_travel == 0)
      and player_vel_x > 0 
        then
        can_move_x = false
    end
 
-    if ((fmget(get_tile_from_pos(player.pos_x, player_next_y))
-       & player.can_travel) == 0 or 
-    (fmget(get_tile_from_pos(player.pos_x + 7, player_next_y))
-     & player.can_travel) == 0)
+    if (fmget(get_tile_from_pos(player.pos_x, player_next_y))
+       & player.can_travel == 0 or 
+    fmget(get_tile_from_pos(player.pos_x + 7, player_next_y))
+     & player.can_travel == 0)
      and player_vel_y < 0 
        then
        can_move_y = false
