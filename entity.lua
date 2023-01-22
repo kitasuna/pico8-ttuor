@@ -265,10 +265,10 @@ function beam_update(beam)
       end
     end
     beam.size_x = 128
-    local curr_map_x, curr_map_y = get_tile_from_pos(beam.pos_x, beam.pos_y + 3, level)
+    local curr_map_x, curr_map_y = get_tile_from_pos(beam.pos_x, beam.pos_y + 3)
     local beam_max_x = beam.pos_x
     while true do
-      local next_map_x, next_map_y = get_tile_from_pos(beam_max_x, beam.pos_y + 3, level)
+      local next_map_x, next_map_y = get_tile_from_pos(beam_max_x, beam.pos_y + 3)
       if fmget(next_map_x, curr_map_y) & beam.can_travel == 0 then
         break;
       end
@@ -367,8 +367,8 @@ function ent_update(tmp)
     local ent_center_x, ent_center_y = get_center(tmp)
     local ent_next_x = (ent_center_x + tmp.vel_x)
     local ent_next_y = (ent_center_y + tmp.vel_y)
-    local curr_map_x, curr_map_y = get_tile_from_pos(ent_center_x, ent_center_y, level)
-    local next_map_x, next_map_y = get_tile_from_pos(ent_next_x, ent_next_y, level)
+    local curr_map_x, curr_map_y = get_tile_from_pos(ent_center_x, ent_center_y)
+    local next_map_x, next_map_y = get_tile_from_pos(ent_next_x, ent_next_y)
 
     if fmget(next_map_x, curr_map_y) & tmp.can_travel == 0 then
       tmp.vel_x = 0

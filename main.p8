@@ -424,8 +424,11 @@ function sort_from(arr, start_idx)
 end
 
 
-function get_tile_from_pos(pos_x, pos_y, level)
-  return (pos_x \ 8) + level.start_tile_x, (pos_y \ 8) + level.start_tile_y
+get_tile_from_pos = nil
+function _get_tile_from_pos(level)
+  return function(pos_x, pos_y)
+    return (pos_x \ 8) + level.start_tile_x, (pos_y \ 8) + level.start_tile_y
+  end
 end
 
 function fmget(x, y)

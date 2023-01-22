@@ -152,6 +152,7 @@ function ent_at(ent_type, tile_x, tile_y)
 end
 
 function init_level(l)
+  get_tile_from_pos = _get_tile_from_pos(level)
   player.reset(l)
   ent_man.reset()
   item_particles.reset()

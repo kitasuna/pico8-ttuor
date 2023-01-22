@@ -379,7 +379,7 @@ function new_player(sprite_num, pos_x, pos_y)
     -- local player_next_y = player.pos_y + approx_vel_y
     local player_next_x = player.pos_x + approx_vel_x -- + (player_facing != 3 and 5 or 1)
     local player_next_y = player.pos_y + approx_vel_y -- + (player_facing == 2 and 7 or 0)
-    local curr_map_x, curr_map_y = get_tile_from_pos(center_x, center_y, level)
+    local curr_map_x, curr_map_y = get_tile_from_pos(center_x, center_y)
     local can_move_x, can_move_y = true,true
 
     if player_state == PLAYER_STATE_DEAD_FALLING then
@@ -400,18 +400,18 @@ function new_player(sprite_num, pos_x, pos_y)
     local over_gaps=0
     if player_state != PLAYER_STATE_FLOATING then
       for i=player.pos_x+1,player.pos_x+6 do
-        if fget(mget(get_tile_from_pos(i, player.pos_y+3, level)), FLAG_GAP) then
+        if fget(mget(get_tile_from_pos(i, player.pos_y+3)), FLAG_GAP) then
           over_gaps+=1
         end
-        if fget(mget(get_tile_from_pos(i, player.pos_y+4, level)), FLAG_GAP) then
+        if fget(mget(get_tile_from_pos(i, player.pos_y+4)), FLAG_GAP) then
           over_gaps+=1
         end
       end
       for i=player.pos_y+1,player.pos_y+6 do
-        if fget(mget(get_tile_from_pos(player.pos_x+3, i, level)), FLAG_GAP) then
+        if fget(mget(get_tile_from_pos(player.pos_x+3, i)), FLAG_GAP) then
           over_gaps+=1
         end
-        if fget(mget(get_tile_from_pos(player.pos_x+4, i, level)), FLAG_GAP) then
+        if fget(mget(get_tile_from_pos(player.pos_x+4, i)), FLAG_GAP) then
           over_gaps+=1
         end
       end
@@ -426,36 +426,36 @@ function new_player(sprite_num, pos_x, pos_y)
       end
     end
 
-    if ((fmget(get_tile_from_pos(player_next_x, player.pos_y, level))
+    if ((fmget(get_tile_from_pos(player_next_x, player.pos_y))
        & player.can_travel) == 0 or 
-    (fmget(get_tile_from_pos(player_next_x, player.pos_y + 7, level))
+    (fmget(get_tile_from_pos(player_next_x, player.pos_y + 7))
      & player.can_travel) == 0)
      and player_vel_x < 0 
        then
        can_move_x = false
    end
 
-    if ((fmget(get_tile_from_pos(player_next_x + 7, player.pos_y, level))
+    if ((fmget(get_tile_from_pos(player_next_x + 7, player.pos_y))
        & player.can_travel) == 0 or 
-    (fmget(get_tile_from_pos(player_next_x+ 7, player.pos_y + 7, level))
+    (fmget(get_tile_from_pos(player_next_x+ 7, player.pos_y + 7))
      & player.can_travel) == 0)
      and player_vel_x > 0 
        then
        can_move_x = false
    end
 
-    if ((fmget(get_tile_from_pos(player.pos_x, player_next_y, level))
+    if ((fmget(get_tile_from_pos(player.pos_x, player_next_y))
        & player.can_travel) == 0 or 
-    (fmget(get_tile_from_pos(player.pos_x + 7, player_next_y, level))
+    (fmget(get_tile_from_pos(player.pos_x + 7, player_next_y))
      & player.can_travel) == 0)
      and player_vel_y < 0 
        then
        can_move_y = false
    end
 
-    if ((fmget(get_tile_from_pos(player.pos_x, player_next_y + 7, level))
+    if ((fmget(get_tile_from_pos(player.pos_x, player_next_y + 7))
        & player.can_travel) == 0 or 
-    (fmget(get_tile_from_pos(player.pos_x + 7, player_next_y + 7, level))
+    (fmget(get_tile_from_pos(player.pos_x + 7, player_next_y + 7))
      & player.can_travel) == 0)
      and player_vel_y > 0 
        then
@@ -604,7 +604,7 @@ function new_gbeam()
     local collision_found = false
     while abs(iter_pos_x - tmp.head_pos_x) < 30 and abs(iter_pos_y - tmp.head_pos_y) < 30 and not collision_found do
       iter_pos_x, iter_pos_y = move_in_direction(direction, iter_pos_x, iter_pos_y, 1)
-      local next_map_x, next_map_y = get_tile_from_pos(iter_pos_x, iter_pos_y, level)
+      local next_map_x, next_map_y = get_tile_from_pos(iter_pos_x, iter_pos_y)
 
       -- check for map collisions
       if fmget(next_map_x, next_map_y) & tmp.can_travel == 0 then
