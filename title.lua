@@ -1,8 +1,7 @@
 function title_draw()
   cls()
   spr(196,16,32,12,4)
-  print("press x or o to start", 22, 96, CLR_DGY)
-  print("press x or o to start", 23, 96, CLR_WHT)
+  dshad("press "..O_CHAR.." or "..X_CHAR.." to start", 20, 96)
 end
 
 function title_fadeout_0()

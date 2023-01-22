@@ -28,13 +28,18 @@ __lua__
 function __draw() end
 function __update() end
 
+-- track these so we don't cause unintended actions
+-- when exiting from message boxes
+delay_btn_o = false
+delay_btn_x = false
+
 victory_frames = 0
 
 victory_draw = function()
   cls()
   camera()
   palt(15, true)
-  print("victory", 50, 49, CLR_DGN)
+  print("victory", 52, 48, CLR_DGN)
   print("victory", 51, 49, CLR_GRN)
   -- gems_draw(37,72)
   if victory_frames > 135 then
@@ -43,16 +48,15 @@ victory_draw = function()
 
   if victory_frames > 180 then
     spr(29, 48, 64)
-    print("X "..player.gems_count.."/"..#player_items - 1, 61, 66, CLR_WHT)
+    dshad("X "..player.gems_count.."/"..#player_items - 1, 61, 66)
   end
 
   if victory_frames > 225 then
     spr(32, 48, 72)
-    print("X "..player.sec_gems_count.."/1", 61, 74, CLR_WHT)
+    dshad("X "..player.sec_gems_count.."/1", 61, 74)
+    dshad("press "..O_CHAR.." or "..X_CHAR.." to restart", 18, 96, CLR_WHT)
   end
 
-  print("press x + o to restart", 23, 96, CLR_DGY)
-  print("press x + o to restart", 24, 96, CLR_WHT)
   pal()
 end
 
@@ -66,7 +70,7 @@ victory_update = function()
     -- play sfx
     sfx(12)
   end
-  if (btn(BTN_X) and btnp(BTN_O)) or (btn(BTN_O) and btnp(BTN_X)) then
+  if victory_frames > 225 and (btn(BTN_O) or btn(BTN_X)) then
     _init()
     victory_frames = 0
   end
@@ -77,7 +81,12 @@ function lz(val)
 end
 
 function timer_draw(x, y, color)
-  print(lz(timer_minutes)..":"..lz(timer_seconds)..":"..lz(frame_counter), x, y, color)
+  local str = lz(timer_minutes)..":"..lz(timer_seconds)..":"..lz(frame_counter)
+  if color == CLR_BLK then
+    print(str, x, y, color)
+  else 
+    dshad(str,x,y)
+  end
 end
 function game_draw()
   cls()
@@ -153,12 +162,16 @@ function game_update()
       input_mask = input_mask | (1 << BTN_R)
     end
 
-    if btn(BTN_O) then
+    if btn(BTN_O) and not delay_btn_o then
       input_mask = input_mask | (1 << BTN_O)
+    elseif delay_btn_o and not btn(BTN_O) then
+      delay_btn_o = false
     end
 
-    if btnp(BTN_X) then
+    if btnp(BTN_X) and not delay_btn_x then
       input_mask = input_mask | (1 << BTN_X)
+    elseif delay_btn_x and not btn(BTN_X) then
+      delay_btn_x = false
     end
 
     player.update(ent_man, level)
@@ -244,10 +257,12 @@ function msg_box_update()
   msg_box_fc += 1
   inventory_update()
   qm.proc()
-  if msg_box_fc > 30 and (btn(BTN_X) or btn(BTN_O)) then
+  if msg_box_fc > 60 and (btn(BTN_X) or btn(BTN_O)) then
     __update = game_update
     __draw = game_draw
     msg_box_fc = 0
+    delay_btn_o = true
+    delay_btn_x = true
   end
 end
 
@@ -258,8 +273,7 @@ function msg_box_draw(str)
     rectfill(8,32,mid(8,msg_box_fc*6,120),mid(32,msg_box_fc*5,88),CLR_PRP) 
     if msg_box_fc > 20 then
       local new_str = sub(str, 1, mid(1, msg_box_fc * 2, #str))
-      print(new_str, 9, 36, CLR_DGY)
-      print(new_str, 10, 37, CLR_WHT)
+      dshad(new_str, 10, 37, CLR_WHT)
     end
   end
 end
@@ -267,6 +281,11 @@ end
 function _gm_handle_player_glove_collision()
   __update = msg_box_update
   __draw = msg_box_draw("you got: a cool glove!\n\npress and hold "..O_CHAR.."\nto pull boxes towards you!\n\nthen use "..U_CHAR..D_CHAR..R_CHAR..L_CHAR.."\nto reposition the box")
+end
+
+function _gm_handle_player_wh_collision()
+  __update = msg_box_update
+  __draw = msg_box_draw("you got: some cool boots!\n\npress "..X_CHAR.."\nto float across gaps!\n\npress "..X_CHAR.." again to land!\ntry steering your slide too")
 end
 
 function _init()
@@ -296,7 +315,7 @@ function _init()
   qm.add_sub("player_rotation", ent_man.handle_player_rotation)
   qm.add_subs("player_item_collision", {player.handle_player_item_collision, ent_man.handle_player_item_collision})
   qm.add_subs("player_glove_collision", {player.handle_player_glove_collision, ent_man.handle_player_item_collision,_gm_handle_player_glove_collision})
-  qm.add_subs("player_wh_collision", {player.handle_player_wh_collision, ent_man.handle_player_item_collision})
+  qm.add_subs("player_wh_collision", {player.handle_player_wh_collision, ent_man.handle_player_item_collision, _gm_handle_player_wh_collision})
   qm.add_sub("level_init", player.handle_level_init)
   -- Load levels
   levels = get_levels()
@@ -423,6 +442,12 @@ function do_timers()
     end
   end
 end
+
+function dshad(str, x, y)
+  print(str, x+1, y-1, CLR_DGY)
+  print(str, x, y, CLR_WHT)
+end
+
 __gfx__
 00000000b090090bbbbbbbbbbbbbbbbbb090090bbbbbbbbbbbbbbbbbb090090bbbbbbbbbbbbbbbbb00000000b090090bb090090bbb09090bb090090bb09090bb
 0000000009599590b090090bb090090b09599590b090090bb090090b09999990b090090bb090090b000000000959959009999990b0959590095995900959590b
@@ -557,8 +582,8 @@ __gff__
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
 4543434343434043434343434043434346454343434343434343434600454343434343434600000000606045434343000043434343434600000000454343434343460000000000000000000060606060606060606060606000000000000000000000000000000000000000000000000000000000000000000000000000000000
-4174717171774d74747474744d74747442417474767674747474334262507474747474744200000000606041337474606074747474744200000000417474747474426060606060434343460060606060606060606060606000000000000000000000000000000000000000000000000000000000000000000000000000000000
-4174747171774d74747474744d74327442417474767674744f74744262527474747474744260606000606041747474606074747474744200000000417474747474606060606060747474420060606060606060606043466000000000000000000000000000000000000000000000000000000000000000000000000000000000
+4174717171774d74747474744d74327442417474767674747474334262507474747474744200000000606041337474606074747474744200000000417474747474426060606060434343460060606060606060606060606000000000000000000000000000000000000000000000000000000000000000000000000000000000
+4174747171774d74747474744d74747442417474767674744f74744262527474747474744260606000606041747474606074747474744200000000417474747474606060606060747474420060606060606060606043466000000000000000000000000000000000000000000000000000000000000000000000000000000000
 4174747474704e74747474744d74747442417474767674744d74744262527474747474744260606060606041747474606074747474744200000000417474747474606060606060747474420060606060606060606074426000000000000000000000000000000000000000000000000000000000000000000000000000000000
 4174747474747474747474744d74747442417474747474744e74744262527474747474744260606060606041747474604574747474744200000000417474747432606060606041747474420060607477606060606032606000000000000000000000000000000000000000000000000000000000000000000000000000000000
 4174747474747474747474744d74747442417474747474747474744262527474747474744260606060606048444444604174747474744200000000417474744a44606060606041747474420060666760606060606060606000000000000000000000000000000000000000000000000000000000000000000000000000000000

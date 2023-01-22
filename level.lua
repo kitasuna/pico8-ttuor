@@ -34,7 +34,7 @@ function get_levels()
       ents = { -- x/y tile indexes, from the starting tile, at which to place the entity
       }
     },
-    -]]
+    --]]
     {
       label="01",
       start_tile_x = 0,
@@ -43,12 +43,12 @@ function get_levels()
       player_pos_y = 4,
       map_tile_width = 17,
       map_tile_height = 13,
-      boxes = "0103:0203:0303:0403:0503:1303:1403:1503",
+      boxes = "0103:0203:0303:0403:0503:1302:1402:1502",
       beams = "",
       mbeams="0707/11",
       -- mbeams="",
       ents = {
-        {ENT_GLOVE, 112, 48},
+        {ENT_GLOVE, 112, 40},
         {ENT_ITEM, 24, 8, 1}
       }
     },
