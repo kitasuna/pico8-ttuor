@@ -35,16 +35,16 @@ function get_levels()
       label="03",
       start_tile_x = 41,
       start_tile_y = 0,
-      player_pos_x = 3,
-      player_pos_y = 1,
+      player_pos_x = 2,
+      player_pos_y = 2,
       map_tile_width = 15,
       map_tile_height = 13,
-      boxes = "1001",
-      beams = "0805",
+      boxes = "1201",
+      beams = "0905",
       mbeams="",
       ents = {
         {ENT_ITEM, 16, 64, 3},
-        ent_at(ENT_WH, 3, 4),
+        ent_at(ENT_WH, 5, 2),
       }
     },
     {
