@@ -9,6 +9,11 @@ function flsrc(pos_x, pos_y, grav, colors)
     colors = colors,
     direction = nil,
   }
+
+  tmp.reset = function()
+    tmp.ps = {}
+  end
+
   tmp.update = function()
     for k, p in pairs(tmp.ps) do
       -- Accel
