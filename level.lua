@@ -1,40 +1,5 @@
 function get_levels()
-  --[[
-  Level Template:
-    {
-      label="01",
-      start_tile_x = 0, -- x index of the upper-left map tile to draw
-      start_tile_y = 19, -- y index of the upper left map tile to draw
-      player_pos_x = 2*8,
-      player_pos_y = 4*8,
-      -- Map tile width / height is the total number of tiles to draw
-      map_tile_width = 15,
-      map_tile_height = 9,
-      ents = { -- x/y tile indexes, from the starting tile, at which to place the entity
-        ent_at(ENT_BOX, 6, 2),
-        ent_at(ENT_BOX, 7, 3),
-        ent_at(ENT_BOX, 8, 2),
-      }
-    },
-  --]]
   return {
-    --[[
-    {
-      label="00",
-      start_tile_x = 114, -- x index of the upper-left map tile to draw
-      start_tile_y = 35, -- y index of the upper left map tile to draw
-      player_pos_x = 2,
-      player_pos_y = 4,
-      -- Map tile width / height is the total number of tiles to draw
-      map_tile_width = 15,
-      map_tile_height = 15,
-      boxes = "0303:0403:0503",
-      beams = "",
-      mbeams = "",
-      ents = { -- x/y tile indexes, from the starting tile, at which to place the entity
-      }
-    },
-    --]]
     {
       label="01",
       start_tile_x = 0,
@@ -46,7 +11,6 @@ function get_levels()
       boxes = "0103:0203:0303:0403:0503:1302:1402:1502",
       beams = "",
       mbeams="0707/11",
-      -- mbeams="",
       ents = {
         {ENT_GLOVE, 112, 40},
         {ENT_ITEM, 24, 8, 1}
@@ -208,6 +172,4 @@ function init_level(l)
   end
 
   qm.add_event"level_init"
-  -- reset timers
-  -- timers = {}
 end
