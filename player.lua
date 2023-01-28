@@ -59,7 +59,7 @@ function new_player(sprite_num, pos_x, pos_y)
   player_inventory = {
     flash_at = -1,
     flash_til = 0,
-    glove = 0,
+    glove = 2,
     wormhole = 0,
   }
   player_items = {0,0,0,0,0,0,0,0}
@@ -256,7 +256,7 @@ function new_player(sprite_num, pos_x, pos_y)
         local gbeam_pos_y = player.pos_y
         if player_facing == DIRECTION_UP then
           gbeam_pos_y -= 2
-          gbeam_pos_x += 1
+          gbeam_pos_x += 2
         elseif player_facing == DIRECTION_DOWN then
           gbeam_pos_y += 8
           gbeam_pos_x += 6
