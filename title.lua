@@ -2,8 +2,8 @@ function title_draw()
   cls()
   spr(196,16,32,12,4)
   dshad("press "..O_CHAR.." or "..X_CHAR.." to start", 20, 84)
-  print("@kitasuna", 93, 116, CLR_DBL)
-  print("v0.1", 113, 122, CLR_DBL)
+  print("@radicalslice", 77, 116, CLR_DBL)
+  print("v1.0.0", 105, 122, CLR_DBL)
   -- line(127,0,127,127,CLR_PNK)
 end
 
