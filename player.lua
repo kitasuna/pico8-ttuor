@@ -59,7 +59,7 @@ function new_player(sprite_num, pos_x, pos_y)
   player_inventory = {
     flash_at = -1,
     flash_til = 0,
-    glove = 2,
+    glove = 0,
     wormhole = 0,
   }
   player_items = {0,0,0,0,0,0,0,0}
