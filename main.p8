@@ -2,7 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 37
 __lua__
 -- ttuor
--- by radical slice
+-- by kitasuna
 #include const.lua
 #include qico.lua
 #include fleas.lua
@@ -132,7 +132,7 @@ function game_draw()
   sec_item_particles.draw()
   inventory_draw(frame_counter)
 
-  local sec_color = (timer_minutes < 2 and player.gems_count < #player_items) and CLR_BLK or CLR_DGY
+  local sec_color = (timer_minutes < 2 or player.sec_gems_count > 0) and CLR_BLK or CLR_DGY
 
   line(46, 118, 46, 128, CLR_BLK)
   spr(29, 48, 119)
