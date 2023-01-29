@@ -307,6 +307,7 @@ function beam_draw(beam)
     local length = beam.size_x
     if length <= 0 then
       -- don't bother drawing anything here
+      pal()
       return
     end
 

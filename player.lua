@@ -256,7 +256,7 @@ function new_player(sprite_num, pos_x, pos_y)
         local gbeam_pos_y = player.pos_y
         if player_facing == DIRECTION_UP then
           gbeam_pos_y -= 2
-          gbeam_pos_x += 1
+          gbeam_pos_x += 2
         elseif player_facing == DIRECTION_DOWN then
           gbeam_pos_y += 8
           gbeam_pos_x += 6
@@ -431,7 +431,7 @@ function new_player(sprite_num, pos_x, pos_y)
        & player.can_travel == 0 or 
     fmget(get_tile_from_pos(player_next_x, player.pos_y + 7))
      & player.can_travel == 0)
-     and player_vel_x < 0 
+     and approx_vel_x < 0 
        then
        can_move_x = false
    end
@@ -440,7 +440,7 @@ function new_player(sprite_num, pos_x, pos_y)
        & player.can_travel == 0 or 
     fmget(get_tile_from_pos(player_next_x+ 7, player.pos_y + 7))
      & player.can_travel == 0)
-     and player_vel_x > 0 
+     and approx_vel_x > 0 
        then
        can_move_x = false
    end
@@ -449,16 +449,16 @@ function new_player(sprite_num, pos_x, pos_y)
        & player.can_travel == 0 or 
     fmget(get_tile_from_pos(player.pos_x + 7, player_next_y))
      & player.can_travel == 0)
-     and player_vel_y < 0 
+     and approx_vel_y < 0 
        then
        can_move_y = false
    end
 
-    if ((fmget(get_tile_from_pos(player.pos_x, player_next_y + 7))
-       & player.can_travel) == 0 or 
-    (fmget(get_tile_from_pos(player.pos_x + 7, player_next_y + 7))
-     & player.can_travel) == 0)
-     and player_vel_y > 0 
+    if (fmget(get_tile_from_pos(player.pos_x, player_next_y + 7))
+       & player.can_travel == 0 or 
+    fmget(get_tile_from_pos(player.pos_x + 7, player_next_y + 7))
+     & player.can_travel == 0)
+     and approx_vel_y > 0 
        then
        can_move_y = false
    end
@@ -473,8 +473,8 @@ function new_player(sprite_num, pos_x, pos_y)
     -- Make a hypothetical player sprite at the next location after update and check for collision
     local player_at_next = new_sprite(
       0, -- sprite num, doesn't matter
-      player.pos_x + player_vel_x + player_slide_vel_x,
-      player.pos_y + player_vel_y + player_slide_vel_y,
+      player.pos_x + approx_vel_x,
+      player.pos_y + approx_vel_y,
       player.size_x - 1, -- cheat with smaller player size for ents
       player.size_y - 1
     )
